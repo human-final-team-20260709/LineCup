@@ -1,38 +1,97 @@
-.App {
-  text-align: center;
+* {
+  box-sizing: border-box;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+html,
+body,
+#root {
+  min-width: 1024px;
   min-height: 100vh;
+  margin: 0;
+}
+
+body {
+  background: #0b1326;
+  color: #dae2fd;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.App {
+  min-width: 1024px;
+  min-height: 100vh;
+  background: #0b1326;
+  color: #dae2fd;
+}
+
+.App > nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
-  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px 32px;
+  border-bottom: 1px solid #334155;
+  background: rgba(11, 19, 38, 0.96);
+  backdrop-filter: blur(10px);
+  overflow-x: auto;
+}
+
+.App > nav a {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-width: max-content;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #131b2e;
+  color: #bccbb9;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  text-decoration: none;
 }
 
-.App-link {
-  color: #61dafb;
+.App > nav a:hover {
+  border-color: #869585;
+  color: #dae2fd;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.App > nav a.active {
+  border-color: #4be277;
+  background: rgba(75, 226, 119, 0.14);
+  color: #4be277;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  border: 0;
+}
+
+table {
+  border-spacing: 0;
+}
+
+img,
+svg {
+  display: block;
 }
