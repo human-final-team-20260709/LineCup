@@ -395,6 +395,20 @@
   background: rgba(6, 14, 32, 0.46);
 }
 
+.alarm-detail-page .alarm-clickable-row {
+  cursor: pointer;
+}
+
+.alarm-detail-page .alarm-clickable-row:hover {
+  background: rgba(75, 226, 119, 0.06);
+}
+
+.alarm-detail-page .alarm-clickable-row:focus {
+  outline: 2px solid #4be277;
+  outline-offset: -2px;
+  background: rgba(75, 226, 119, 0.08);
+}
+
 .alarm-detail-page .alarm-time-cell {
   display: grid;
   gap: 2px;

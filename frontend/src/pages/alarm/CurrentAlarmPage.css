@@ -230,7 +230,6 @@
 
 .current-alarm-page .alarm-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 16px;
 }
 
@@ -240,7 +239,15 @@
   background: #171f33;
 }
 
+.current-alarm-page .alarm-main-grid > .alarm-panel:first-child {
+  min-height: 680px;
+}
+
 .current-alarm-page .alarm-current-side-panel {
+  display: none;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 10px 16px;
   padding: 16px;
 }
 
@@ -249,6 +256,29 @@
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
+}
+
+.current-alarm-page .alarm-current-side-panel h2,
+.current-alarm-page .alarm-current-side-panel .alarm-queue-list {
+  grid-column: 1;
+}
+
+.current-alarm-page .alarm-current-side-panel > .alarm-panel-label:first-child {
+  grid-column: 1;
+}
+
+.current-alarm-page .alarm-current-side-panel > .alarm-panel-label:nth-of-type(2),
+.current-alarm-page .alarm-current-side-panel .alarm-event-list {
+  grid-column: 2;
+}
+
+.current-alarm-page .alarm-current-side-panel > .alarm-panel-label:nth-of-type(2) {
+  grid-row: 1;
+}
+
+.current-alarm-page .alarm-current-side-panel .alarm-event-list {
+  grid-row: 2 / span 2;
+  margin-top: 4px;
 }
 
 .current-alarm-page .alarm-panel-header {
@@ -279,18 +309,52 @@
 }
 
 .current-alarm-page .alarm-table-frame {
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  overflow-x: visible;
 }
 
 .current-alarm-page .alarm-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 0;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.current-alarm-page .alarm-table th:nth-child(1),
+.current-alarm-page .alarm-table td:nth-child(1) {
+  width: 132px;
+}
+
+.current-alarm-page .alarm-table th:nth-child(2),
+.current-alarm-page .alarm-table td:nth-child(2) {
+  width: 190px;
+}
+
+.current-alarm-page .alarm-table th:nth-child(4),
+.current-alarm-page .alarm-table td:nth-child(4) {
+  width: 84px;
+}
+
+.current-alarm-page .alarm-table th:nth-child(5),
+.current-alarm-page .alarm-table td:nth-child(5) {
+  width: 168px;
+}
+
+.current-alarm-page .alarm-table th:nth-child(6),
+.current-alarm-page .alarm-table td:nth-child(6) {
+  width: 112px;
+}
+
+.current-alarm-page .alarm-table th:nth-child(7),
+.current-alarm-page .alarm-table td:nth-child(7) {
+  width: 92px;
 }
 
 .current-alarm-page .alarm-table th,
 .current-alarm-page .alarm-table td {
-  padding: 10px 12px;
+  padding: 13px 12px;
   border-bottom: 1px solid #2d3449;
   text-align: left;
   vertical-align: middle;
@@ -309,6 +373,7 @@
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
+  overflow-wrap: anywhere;
 }
 
 .current-alarm-page .alarm-table tbody tr:nth-child(even) {
@@ -317,6 +382,64 @@
 
 .current-alarm-page .alarm-table tbody tr:hover {
   background: rgba(75, 226, 119, 0.06);
+}
+
+.current-alarm-page .alarm-clickable-row {
+  cursor: pointer;
+}
+
+.current-alarm-page .alarm-clickable-row:focus {
+  outline: 2px solid #4be277;
+  outline-offset: -2px;
+  background: rgba(75, 226, 119, 0.08);
+}
+
+.current-alarm-page .alarm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 1px solid #334155;
+}
+
+.current-alarm-page .alarm-pagination-meta {
+  color: #bccbb9;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.current-alarm-page .alarm-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.current-alarm-page .alarm-pagination-button {
+  min-width: 34px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #131b2e;
+  color: #dae2fd;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.current-alarm-page .alarm-pagination-button:hover:not(:disabled),
+.current-alarm-page .alarm-pagination-button.is-active {
+  border-color: #4be277;
+  background: rgba(75, 226, 119, 0.14);
+  color: #4be277;
+}
+
+.current-alarm-page .alarm-pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .current-alarm-page .alarm-equipment-cell,
@@ -404,8 +527,9 @@
 }
 
 .current-alarm-page .alarm-divider {
+  display: none;
   height: 1px;
-  margin: 16px 0;
+  margin: 0;
   background: #334155;
 }
 

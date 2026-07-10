@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AlarmHistoryPage.css';
 import {
   FiCalendar,
@@ -76,10 +77,12 @@ const alarmHistoryRows = [
 function AlarmHistoryPage() {
   const [showEmpty, setShowEmpty] = useState(false);
   const [selectedAlarm, setSelectedAlarm] = useState(null);
+  const navigate = useNavigate();
 
   const alarms = useMemo(() => (showEmpty ? [] : alarmHistoryRows), [showEmpty]);
   const handledCount = alarms.filter((alarm) => alarm.handled).length;
   const pendingCount = alarms.length - handledCount;
+  const openDetail = (alarmId) => navigate(`/alarm/detail/${alarmId}`);
 
   return (
     <PageShell>
@@ -125,11 +128,11 @@ function AlarmHistoryPage() {
       <FilterPanel>
         <FilterField>
           <FiCalendar />
-          <input aria-label="시작 일자" defaultValue="2026-07-09" />
+          <input type="date" aria-label="시작 일자" defaultValue="2026-07-09" />
         </FilterField>
         <FilterField>
           <FiCalendar />
-          <input aria-label="종료 일자" defaultValue="2026-07-09" />
+          <input type="date" aria-label="종료 일자" defaultValue="2026-07-09" />
         </FilterField>
         <FilterField>
           <FiSearch />
@@ -178,11 +181,22 @@ function AlarmHistoryPage() {
               </thead>
               <tbody>
                 {alarms.map((alarm) => (
-                  <tr key={alarm.id}>
+                  <tr
+                    key={alarm.id}
+                    className="alarm-clickable-row"
+                    tabIndex={0}
+                    onClick={() => openDetail(alarm.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openDetail(alarm.id);
+                      }
+                    }}
+                  >
                     <td>
                       <TimeCell>
                         <MonoText>{alarm.occurredAt}</MonoText>
-                        <span>{alarm.id}</span>
+                        <MonoText>{alarm.id}</MonoText>
                       </TimeCell>
                     </td>
                     <td>{alarm.equipment}</td>
@@ -197,7 +211,13 @@ function AlarmHistoryPage() {
                       <StatusChip $handled={alarm.handled}>{alarm.handled ? '처리 완료' : '미처리'}</StatusChip>
                     </td>
                     <td>
-                      <TextButton type="button" onClick={() => setSelectedAlarm(alarm)}>
+                      <TextButton
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedAlarm(alarm);
+                        }}
+                      >
                         <FiFileText />
                         메모 보기
                       </TextButton>

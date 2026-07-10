@@ -83,6 +83,15 @@ textarea {
   font-family: inherit;
 }
 
+select {
+  color: #dae2fd;
+}
+
+select option {
+  background: #131b2e;
+  color: #dae2fd;
+}
+
 button {
   border: 0;
 }

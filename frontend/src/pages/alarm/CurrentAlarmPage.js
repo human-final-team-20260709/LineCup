@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './CurrentAlarmPage.css';
 import {
   FiAlertTriangle,
@@ -68,13 +69,109 @@ const responseQueue = [
   { label: '모니터링', value: 1, tone: 'info' },
 ];
 
+const paginatedAlarmRows = currentAlarmRows.concat([
+  {
+    id: 'ALM-260709-014',
+    equipment: '포장기 PK-01',
+    location: '포장 공정 / 필름 텐션부',
+    message: '포장 텐션 제어부 온도 경고',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-09 17:58:44',
+    elapsed: '01:01:55',
+    status: '처리 완료',
+    owner: '김민재',
+  },
+  {
+    id: 'ALM-260709-013',
+    equipment: '튀김기 FR-01',
+    location: '튀김 공정 / 유온 제어부',
+    message: '튀김 온도 측정값 허용 범위 초과',
+    severity: 'critical',
+    severityLabel: '심각',
+    occurredAt: '2026-07-09 17:41:19',
+    elapsed: '01:19:20',
+    status: '처리 완료',
+    owner: '정유진',
+  },
+  {
+    id: 'ALM-260709-012',
+    equipment: '제면기 NM-01',
+    location: '제면 공정 / 면대 공급 롤러',
+    message: '면대 공급 시간 지연',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-09 16:52:05',
+    elapsed: '02:08:34',
+    status: '처리 완료',
+    owner: '라인 A',
+  },
+  {
+    id: 'ALM-260709-011',
+    equipment: '검사기 IN-01',
+    location: '검사 공정 / 조명 모듈',
+    message: '비전 검사 조명 보정',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 15:33:27',
+    elapsed: '03:27:12',
+    status: '자동 등록',
+    owner: '자동 처리',
+  },
+  {
+    id: 'ALM-260709-010',
+    equipment: '검사기 IN-01',
+    location: '검사 공정 / 비전 조명',
+    message: '비전 검사 조명 모듈 점검 예정',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 14:21:39',
+    elapsed: '04:38:60',
+    status: '미처리',
+    owner: '미배정',
+  },
+  {
+    id: 'ALM-260709-008',
+    equipment: '배합기 MX-01',
+    location: '배합 공정 / 원료 투입부',
+    message: '배합 원료 투입 시간 지연',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 12:17:09',
+    elapsed: '06:43:30',
+    status: '처리 완료',
+    owner: '자동 처리',
+  },
+  {
+    id: 'ALM-260708-044',
+    equipment: '배합기 MX-01',
+    location: '배합 공정 / 구동 모터',
+    message: '배합 모터 부하율 기준치 근접',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-08 21:04:36',
+    elapsed: '21:56:03',
+    status: '처리 완료',
+    owner: '라인 A',
+  },
+]);
+
+const PAGE_SIZE = 8;
+
 
 function CurrentAlarmPage() {
   const [showEmpty, setShowEmpty] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
-  const alarms = useMemo(() => (showEmpty ? [] : currentAlarmRows), [showEmpty]);
+  const alarms = useMemo(() => (showEmpty ? [] : paginatedAlarmRows), [showEmpty]);
   const criticalCount = alarms.filter((alarm) => alarm.severity === 'critical').length;
   const warningCount = alarms.filter((alarm) => alarm.severity === 'warning').length;
+  const totalPages = Math.max(1, Math.ceil(alarms.length / PAGE_SIZE));
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageAlarms = alarms.slice(pageStart, pageStart + PAGE_SIZE);
+  const openDetail = (alarmId) => navigate(`/alarm/detail/${alarmId}`);
+  const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages));
 
   return (
     <PageShell>
@@ -97,10 +194,10 @@ function CurrentAlarmPage() {
       </PageHeader>
 
       <StateSwitch aria-label="데이터 상태 미리보기">
-        <SwitchButton type="button" $active={!showEmpty} onClick={() => setShowEmpty(false)}>
+        <SwitchButton type="button" $active={!showEmpty} onClick={() => { setShowEmpty(false); setCurrentPage(1); }}>
           데이터 있음
         </SwitchButton>
-        <SwitchButton type="button" $active={showEmpty} onClick={() => setShowEmpty(true)}>
+        <SwitchButton type="button" $active={showEmpty} onClick={() => { setShowEmpty(true); setCurrentPage(1); }}>
           데이터 없음
         </SwitchButton>
       </StateSwitch>
@@ -189,8 +286,19 @@ function CurrentAlarmPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {alarms.map((alarm) => (
-                    <tr key={alarm.id}>
+                  {pageAlarms.map((alarm) => (
+                    <tr
+                      key={alarm.id}
+                      className="alarm-clickable-row"
+                      tabIndex={0}
+                      onClick={() => openDetail(alarm.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          openDetail(alarm.id);
+                        }
+                      }}
+                    >
                       <td>
                         <MonoText>{alarm.id}</MonoText>
                       </td>
@@ -218,6 +326,29 @@ function CurrentAlarmPage() {
                   ))}
                 </tbody>
               </AlarmTable>
+              <Pagination>
+                <PaginationMeta>
+                  {pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, alarms.length)} / {alarms.length}
+                </PaginationMeta>
+                <PaginationControls>
+                  <PaginationButton type="button" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
+                    이전
+                  </PaginationButton>
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <PaginationButton
+                      key={page}
+                      type="button"
+                      className={page === currentPage ? 'is-active' : undefined}
+                      onClick={() => goToPage(page)}
+                    >
+                      {page}
+                    </PaginationButton>
+                  ))}
+                  <PaginationButton type="button" disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
+                    다음
+                  </PaginationButton>
+                </PaginationControls>
+              </Pagination>
             </TableFrame>
           ) : (
             <EmptyState>
@@ -291,6 +422,10 @@ const PanelLabel = withClass('span', 'alarm-panel-label');
 const PanelMeta = withClass('span', 'alarm-panel-meta');
 const TableFrame = withClass('div', 'alarm-table-frame');
 const AlarmTable = withClass('table', 'alarm-table');
+const Pagination = withClass('div', 'alarm-pagination');
+const PaginationMeta = withClass('span', 'alarm-pagination-meta');
+const PaginationControls = withClass('div', 'alarm-pagination-controls');
+const PaginationButton = withClass('button', 'alarm-pagination-button');
 const EquipmentCell = withClass('div', 'alarm-equipment-cell');
 const TimeStack = withClass('div', 'alarm-time-stack');
 const MonoText = withClass('span', 'alarm-mono');

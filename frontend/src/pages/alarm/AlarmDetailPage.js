@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import './AlarmDetailPage.css';
 import {
   FiAlertTriangle,
@@ -23,6 +24,170 @@ const alarmDetail = {
   handler: '박현우',
   status: '조치 중',
   action: '스팀 조절 밸브 개도율 확인 중이며, 압력 안정화 후 제품 샘플 품질 확인 예정입니다.',
+};
+
+const alarmDetails = {
+  [alarmDetail.id]: alarmDetail,
+  'ALM-260709-018': {
+    ...alarmDetail,
+    id: 'ALM-260709-018',
+    equipment: '배합기 MX-01',
+    process: '배합 공정',
+    location: '배합 공정 / 원료 계량부',
+    message: '분말 투입 계량 인터록 센서 응답 지연',
+    description: '배합기 MX-01의 계량 인터록 센서 응답이 기준 시간보다 늦어졌습니다. 원료 투입 상태와 센서 연결 상태를 확인해야 합니다.',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-09 18:42:15',
+    clearedAt: '미해제',
+    handler: '미배정',
+    status: '확인 대기',
+    action: '센서 응답 로그와 원료 투입 밸브 상태를 확인한 뒤 담당자를 배정합니다.',
+  },
+  'ALM-260709-016': {
+    ...alarmDetail,
+    id: 'ALM-260709-016',
+    equipment: '튀김기 FR-01',
+    process: '튀김 공정',
+    location: '튀김 공정 / 순환 펌프',
+    message: '유온 순환 펌프 진동값 기준치 근접',
+    description: '튀김기 FR-01의 순환 펌프 진동값이 관리 기준치에 근접했습니다. 베어링 상태와 펌프 체결부 확인이 필요합니다.',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-09 18:21:48',
+    clearedAt: '미해제',
+    handler: '정유진',
+    status: '점검 예약',
+    action: '다음 정지 시간에 펌프 진동 재측정과 체결부 점검을 진행합니다.',
+  },
+  'ALM-260709-015': {
+    ...alarmDetail,
+    id: 'ALM-260709-015',
+    equipment: '검사기 IN-01',
+    process: '검사 공정',
+    location: '검사 공정 / 중량 검사 센서',
+    message: '제품 중량 검사값 일시 변동 감지',
+    description: '검사기 IN-01에서 제품 중량 검사값이 일시적으로 흔들렸습니다. 생산 영향은 낮지만 추세 확인이 필요합니다.',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 18:08:22',
+    clearedAt: '2026-07-09 18:10:12',
+    handler: '라인 A',
+    status: '모니터링',
+    action: '중량 검사 추세를 모니터링하고 반복 발생 시 보정 작업을 진행합니다.',
+  },
+  'ALM-260709-014': {
+    ...alarmDetail,
+    id: 'ALM-260709-014',
+    equipment: '포장기 PK-01',
+    process: '포장 공정',
+    location: '포장 공정 / 필름 텐션부',
+    message: '포장 텐션 온도 경고',
+    description: '포장기 PK-01의 텐션 제어부 온도가 경고 기준에 도달했습니다. 냉각 팬과 제어부 상태를 확인합니다.',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-09 17:58:44',
+    clearedAt: '2026-07-09 18:06:12',
+    handler: '김민재',
+    status: '처리 완료',
+    action: '팬 동작과 제어부 상태를 확인했고 온도가 정상 범위로 복귀했습니다.',
+  },
+  'ALM-260709-013': {
+    ...alarmDetail,
+    id: 'ALM-260709-013',
+    equipment: '튀김기 FR-01',
+    process: '튀김 공정',
+    location: '튀김 공정 / 유온 제어부',
+    message: '튀김 온도 측정값 허용 범위 초과',
+    description: '튀김기 FR-01의 유온 측정값이 허용 범위를 초과했습니다. 제품 품질 영향 가능성이 있어 즉시 조치가 필요했습니다.',
+    severity: 'critical',
+    severityLabel: '심각',
+    occurredAt: '2026-07-09 17:41:19',
+    clearedAt: '2026-07-09 17:48:50',
+    handler: '정유진',
+    status: '처리 완료',
+    action: '유온 제어값 조정 후 샘플 품질 확인을 완료했습니다.',
+  },
+  'ALM-260709-012': {
+    ...alarmDetail,
+    id: 'ALM-260709-012',
+    equipment: '제면기 NM-01',
+    process: '제면 공정',
+    location: '제면 공정 / 면대 공급 롤러',
+    message: '면대 공급 시간 지연',
+    description: '제면기 NM-01의 면대 공급 시간이 기준보다 길어졌습니다. 롤러 간격과 공급 모터 상태 확인이 필요했습니다.',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-09 16:52:05',
+    clearedAt: '2026-07-09 16:59:28',
+    handler: '라인 A',
+    status: '처리 완료',
+    action: '공급 롤러 간격 확인 후 정상 범위로 복귀했습니다.',
+  },
+  'ALM-260709-011': {
+    ...alarmDetail,
+    id: 'ALM-260709-011',
+    equipment: '검사기 IN-01',
+    process: '검사 공정',
+    location: '검사 공정 / 조명 모듈',
+    message: '비전 검사 조명 보정',
+    description: '비전 검사 조명값이 자동 보정되었습니다. 생산 영향은 없으며 자동 처리 이력으로 관리됩니다.',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 15:33:27',
+    clearedAt: '2026-07-09 15:33:58',
+    handler: '자동 처리',
+    status: '처리 완료',
+    action: '조명 보정값이 자동 적용되었고 검사 상태가 정상으로 복귀했습니다.',
+  },
+  'ALM-260709-010': {
+    ...alarmDetail,
+    id: 'ALM-260709-010',
+    equipment: '검사기 IN-01',
+    process: '검사 공정',
+    location: '검사 공정 / 비전 조명',
+    message: '비전 검사 조명 모듈 점검 예정',
+    description: '검사기 IN-01의 조명 모듈 상태가 점검 대상으로 등록되었습니다. 즉시 생산 중단은 필요하지 않습니다.',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 14:21:39',
+    clearedAt: '-',
+    handler: '미배정',
+    status: '미처리',
+    action: '조명 모듈 점검 작업을 다음 정비 시간에 배정합니다.',
+  },
+  'ALM-260709-008': {
+    ...alarmDetail,
+    id: 'ALM-260709-008',
+    equipment: '배합기 MX-01',
+    process: '배합 공정',
+    location: '배합 공정 / 원료 투입부',
+    message: '배합 원료 투입 시간 지연',
+    description: '배합기 MX-01에서 원료 투입 시간이 기준보다 길어졌습니다. 투입 밸브와 공급 라인 상태를 확인합니다.',
+    severity: 'info',
+    severityLabel: '정보',
+    occurredAt: '2026-07-09 12:17:09',
+    clearedAt: '2026-07-09 12:22:41',
+    handler: '자동 처리',
+    status: '처리 완료',
+    action: '원료 공급 라인 상태 확인 후 정상 흐름을 확인했습니다.',
+  },
+  'ALM-260708-044': {
+    ...alarmDetail,
+    id: 'ALM-260708-044',
+    equipment: '배합기 MX-01',
+    process: '배합 공정',
+    location: '배합 공정 / 구동 모터',
+    message: '배합 모터 부하율 기준치 근접',
+    description: '배합기 MX-01 구동 모터 부하율이 관리 기준치에 근접했습니다. 반복 발생 여부를 추적합니다.',
+    severity: 'warning',
+    severityLabel: '경고',
+    occurredAt: '2026-07-08 21:04:36',
+    clearedAt: '2026-07-08 21:18:09',
+    handler: '라인 A',
+    status: '처리 완료',
+    action: '구동 모터 부하 추세 확인 후 추가 이상이 없어 완료 처리했습니다.',
+  },
 };
 
 const relatedRows = [
@@ -54,8 +219,11 @@ const relatedRows = [
 
 
 function AlarmDetailPage() {
+  const { alarmId } = useParams();
   const [showEmpty, setShowEmpty] = useState(false);
-  const detail = showEmpty ? null : alarmDetail;
+  const navigate = useNavigate();
+  const detail = showEmpty ? null : alarmDetails[alarmId] || null;
+  const openDetail = (nextAlarmId) => navigate(`/alarm/detail/${nextAlarmId}`);
 
   return (
     <PageShell>
@@ -77,7 +245,7 @@ function AlarmDetailPage() {
       </StateSwitch>
 
       {detail ? (
-        <DetailLayout>
+        <DetailLayout key={detail.id}>
           <HeroPanel $severity={detail.severity}>
             <HeroHeader>
               <div>
@@ -220,11 +388,22 @@ function AlarmDetailPage() {
                 </thead>
                 <tbody>
                   {relatedRows.map((row) => (
-                    <tr key={row.id}>
+                    <tr
+                      key={row.id}
+                      className="alarm-clickable-row"
+                      tabIndex={0}
+                      onClick={() => openDetail(row.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          openDetail(row.id);
+                        }
+                      }}
+                    >
                       <td>
                         <TimeCell>
                           <MonoText>{row.occurredAt}</MonoText>
-                          <span>{row.id}</span>
+                          <MonoText>{row.id}</MonoText>
                         </TimeCell>
                       </td>
                       <td>{row.equipment}</td>

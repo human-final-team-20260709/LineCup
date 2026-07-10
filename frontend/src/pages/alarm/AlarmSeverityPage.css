@@ -217,7 +217,7 @@
 
 .alarm-severity-page .alarm-severity-main-grid {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -307,13 +307,39 @@
 }
 
 .alarm-severity-page .alarm-table-frame {
-  overflow-x: auto;
+  overflow-x: visible;
 }
 
 .alarm-severity-page .alarm-table {
   width: 100%;
-  min-width: 860px;
+  min-width: 0;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.alarm-severity-page .alarm-table th:nth-child(1),
+.alarm-severity-page .alarm-table td:nth-child(1) {
+  width: 172px;
+}
+
+.alarm-severity-page .alarm-table th:nth-child(2),
+.alarm-severity-page .alarm-table td:nth-child(2) {
+  width: 180px;
+}
+
+.alarm-severity-page .alarm-table th:nth-child(3),
+.alarm-severity-page .alarm-table td:nth-child(3) {
+  width: 140px;
+}
+
+.alarm-severity-page .alarm-table th:nth-child(5),
+.alarm-severity-page .alarm-table td:nth-child(5) {
+  width: 120px;
+}
+
+.alarm-severity-page .alarm-table th:nth-child(6),
+.alarm-severity-page .alarm-table td:nth-child(6) {
+  width: 108px;
 }
 
 .alarm-severity-page .alarm-table th,
@@ -337,10 +363,25 @@
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
+  overflow-wrap: anywhere;
 }
 
 .alarm-severity-page .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
+}
+
+.alarm-severity-page .alarm-clickable-row {
+  cursor: pointer;
+}
+
+.alarm-severity-page .alarm-clickable-row:hover {
+  background: rgba(75, 226, 119, 0.06);
+}
+
+.alarm-severity-page .alarm-clickable-row:focus {
+  outline: 2px solid #4be277;
+  outline-offset: -2px;
+  background: rgba(75, 226, 119, 0.08);
 }
 
 .alarm-severity-page .alarm-time-cell {

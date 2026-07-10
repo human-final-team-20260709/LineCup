@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AlarmSeverityPage.css';
 import { FiAlertTriangle, FiCheckCircle, FiInfo, FiSearch, FiZap } from 'react-icons/fi';
 
@@ -96,12 +97,14 @@ const severityAlarmRows = [
 function AlarmSeverityPage() {
   const [selectedSeverity, setSelectedSeverity] = useState('warning');
   const [showEmpty, setShowEmpty] = useState(false);
+  const navigate = useNavigate();
 
   const selectedDefinition = severityDefinitions.find((item) => item.key === selectedSeverity);
   const alarms = useMemo(
     () => (showEmpty ? [] : severityAlarmRows.filter((alarm) => alarm.severity === selectedSeverity)),
     [selectedSeverity, showEmpty],
   );
+  const openDetail = (alarmId) => navigate(`/alarm/detail/${alarmId}`);
 
   return (
     <PageShell>
@@ -165,20 +168,6 @@ function AlarmSeverityPage() {
       </SeverityGrid>
 
       <MainGrid>
-        <DefinitionPanel $severity={selectedDefinition.key}>
-          <PanelLabel>Selected Rule</PanelLabel>
-          <h2>{selectedDefinition.label} 알람 기준</h2>
-          <p>{selectedDefinition.description}</p>
-          <RuleBox>
-            {selectedDefinition.bullets.map((bullet) => (
-              <RuleItem key={bullet}>
-                <span />
-                {bullet}
-              </RuleItem>
-            ))}
-          </RuleBox>
-        </DefinitionPanel>
-
         <Panel>
           <PanelHeader>
             <div>
@@ -203,11 +192,22 @@ function AlarmSeverityPage() {
                 </thead>
                 <tbody>
                   {alarms.map((alarm) => (
-                    <tr key={alarm.id}>
+                    <tr
+                      key={alarm.id}
+                      className="alarm-clickable-row"
+                      tabIndex={0}
+                      onClick={() => openDetail(alarm.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          openDetail(alarm.id);
+                        }
+                      }}
+                    >
                       <td>
                         <TimeCell>
                           <MonoText>{alarm.occurredAt}</MonoText>
-                          <span>{alarm.id}</span>
+                          <MonoText>{alarm.id}</MonoText>
                         </TimeCell>
                       </td>
                       <td>{alarm.equipment}</td>
@@ -258,8 +258,6 @@ const DefinitionList = withClass('ul', 'alarm-definition-list');
 const CardMetric = withClass('div', 'alarm-card-metric');
 const MainGrid = withClass('section', 'alarm-severity-main-grid');
 const PanelLabel = withClass('span', 'alarm-panel-label');
-const RuleBox = withClass('div', 'alarm-rule-box');
-const RuleItem = withClass('div', 'alarm-rule-item');
 const Panel = withClass('article', 'alarm-panel');
 const PanelHeader = withClass('div', 'alarm-panel-header');
 const PanelMeta = withClass('span', 'alarm-panel-meta');
@@ -276,10 +274,6 @@ const SwitchButton = ({ $active, className, ...props }) => (
 
 const SeverityCard = ({ $severity, $active, className, ...props }) => (
   <button className={cx('alarm-severity-card', $severity && `alarm-severity-card--${$severity}`, $active && 'is-active', className)} {...props} />
-);
-
-const DefinitionPanel = ({ $severity, className, ...props }) => (
-  <aside className={cx('alarm-definition-panel', $severity && `alarm-definition-panel--${$severity}`, className)} {...props} />
 );
 
 const SeverityChip = ({ $severity, className, ...props }) => (

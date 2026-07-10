@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './EquipmentAlarmPage.css';
 import {
   FiCheckCircle,
@@ -153,10 +154,12 @@ const selectedEquipmentAlarms = [
 function EquipmentAlarmPage() {
   const [showEmpty, setShowEmpty] = useState(false);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState('EQ-MX-01');
+  const navigate = useNavigate();
 
   const equipments = useMemo(() => (showEmpty ? [] : equipmentRows), [showEmpty]);
   const selectedEquipment = equipments.find((equipment) => equipment.id === selectedEquipmentId) || equipments[0];
   const alarms = showEmpty ? [] : selectedEquipmentAlarms;
+  const openDetail = (alarmId) => navigate(`/alarm/detail/${alarmId}`);
 
   return (
     <PageShell>
@@ -325,11 +328,22 @@ function EquipmentAlarmPage() {
                   </thead>
                   <tbody>
                     {alarms.map((alarm) => (
-                      <tr key={alarm.id}>
+                      <tr
+                        key={alarm.id}
+                        className="alarm-clickable-row"
+                        tabIndex={0}
+                        onClick={() => openDetail(alarm.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openDetail(alarm.id);
+                          }
+                        }}
+                      >
                         <td>
                           <TimeStack>
                             <MonoText>{alarm.occurredAt}</MonoText>
-                            <span>{alarm.id}</span>
+                            <MonoText>{alarm.id}</MonoText>
                           </TimeStack>
                         </td>
                         <td>{alarm.type}</td>

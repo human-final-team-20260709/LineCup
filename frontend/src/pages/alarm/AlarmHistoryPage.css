@@ -181,6 +181,10 @@
   font-size: 14px;
 }
 
+.alarm-history-page .alarm-field input[type="date"] {
+  color-scheme: dark;
+}
+
 .alarm-history-page .alarm-field:focus-within {
   border-color: #4be277;
 }
@@ -237,6 +241,20 @@
 
 .alarm-history-page .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
+}
+
+.alarm-history-page .alarm-clickable-row {
+  cursor: pointer;
+}
+
+.alarm-history-page .alarm-clickable-row:hover {
+  background: rgba(75, 226, 119, 0.06);
+}
+
+.alarm-history-page .alarm-clickable-row:focus {
+  outline: 2px solid #4be277;
+  outline-offset: -2px;
+  background: rgba(75, 226, 119, 0.08);
 }
 
 .alarm-history-page .alarm-time-cell {
