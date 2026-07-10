@@ -487,6 +487,27 @@ export const ChartLegendSwatch = styled.span`
 export const ChartFrame = styled.div`
   width: 100%;
   height: 320px;
+
+  /* recharts가 막대/서페이스에 붙이는 브라우저 기본 포커스 링을 제거합니다.
+     막대는 클릭 동작이 없는 순수 데이터 시각화라 포커스 표시가 필요 없습니다.
+     recharts 버전에 따라 포커스를 받는 실제 태그(svg/g/path/rect)가 달라질 수 있어
+     범위를 넓게 잡고 !important로 확실히 덮습니다. */
+  & svg,
+  & svg *,
+  & .recharts-wrapper,
+  & .recharts-wrapper *,
+  & .recharts-surface,
+  & .recharts-rectangle,
+  & .recharts-bar-rectangle,
+  & .recharts-bar-rectangle * {
+    outline: none !important;
+  }
+
+  & svg:focus,
+  & svg *:focus,
+  & .recharts-wrapper *:focus {
+    outline: none !important;
+  }
 `;
 
 /* =========================================================

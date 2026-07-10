@@ -69,15 +69,15 @@ const dummyWorkers = [
 const dummyEquipments = [
   { id: 'EQ-001', name: '혼합기 1호', process: '원료 혼합', status: 'RUNNING' },
   { id: 'EQ-002', name: '혼합기 2호', process: '원료 혼합', status: 'STOPPED' },
-  { id: 'EQ-003', name: '성형기 1호', process: '면 성형', status: 'RUNNING' },
-  { id: 'EQ-004', name: '성형기 2호', process: '면 성형', status: 'STOPPED' },
+  { id: 'EQ-003', name: '증숙기 1호', process: '증숙', status: 'RUNNING' },
+  { id: 'EQ-004', name: '증숙기 2호', process: '증숙', status: 'STOPPED' },
   { id: 'EQ-005', name: '건조기 1호', process: '건조', status: 'RUNNING' },
   { id: 'EQ-006', name: '건조기 2호', process: '건조', status: 'ERROR' },
   { id: 'EQ-007', name: '포장기 1호', process: '포장', status: 'RUNNING' },
   { id: 'EQ-008', name: '포장기 2호', process: '포장', status: 'STOPPED' },
 ];
 
-const PROCESS_TEMPLATE = ['원료 혼합', '면 성형', '건조', '포장'];
+const PROCESS_TEMPLATE = ['원료 혼합', '증숙', '건조', '포장'];
 
 const findEquipment = (processName) => dummyEquipments.find((eq) => eq.process === processName);
 

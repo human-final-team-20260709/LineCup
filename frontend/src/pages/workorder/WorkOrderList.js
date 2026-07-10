@@ -143,15 +143,15 @@ const dummyWorkers = [
 const dummyEquipments = [
   { id: 'EQ-001', name: '혼합기 1호', process: '원료 혼합', status: 'RUNNING' },
   { id: 'EQ-002', name: '혼합기 2호', process: '원료 혼합', status: 'STOPPED' },
-  { id: 'EQ-003', name: '성형기 1호', process: '면 성형', status: 'RUNNING' },
-  { id: 'EQ-004', name: '성형기 2호', process: '면 성형', status: 'STOPPED' },
+  { id: 'EQ-003', name: '증숙기 1호', process: '증숙', status: 'RUNNING' },
+  { id: 'EQ-004', name: '증숙기 2호', process: '증숙', status: 'STOPPED' },
   { id: 'EQ-005', name: '건조기 1호', process: '건조', status: 'RUNNING' },
   { id: 'EQ-006', name: '건조기 2호', process: '건조', status: 'ERROR' },
   { id: 'EQ-007', name: '포장기 1호', process: '포장', status: 'RUNNING' },
   { id: 'EQ-008', name: '포장기 2호', process: '포장', status: 'STOPPED' },
 ];
 
-const PROCESS_TEMPLATE = ['원료 혼합', '면 성형', '건조', '포장'];
+const PROCESS_TEMPLATE = ['원료 혼합', '증숙', '건조', '포장'];
 
 const EQUIPMENT_STATUS_META = {
   RUNNING: { label: '가동중', color: '#4be277' },
@@ -588,7 +588,9 @@ const WorkOrderList = () => {
   const chartData = useMemo(
     () =>
       filtered.map((wo) => ({
-        name: wo.productName,
+        // 같은 제품명의 작업지시가 여러 건 있을 수 있어(예: "얼큰 컵누들" 재생산),
+        // 막대를 서로 구분할 수 있도록 작업지시 번호를 라벨에 함께 표기합니다.
+        name: `${wo.productName} (${wo.id})`,
         code: wo.code,
         목표: wo.targetQty,
         실적: wo.currentQty,
@@ -886,8 +888,8 @@ const WorkOrderList = () => {
                     width={56}
                   />
                   <Tooltip cursor={{ fill: tokens.colors.surfaceContainerHigh }} content={<ChartTooltip />} />
-                  <Bar dataKey="목표" fill={tokens.colors.surfaceContainerHigh} stroke={tokens.colors.outline} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="실적" fill={tokens.colors.primary} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="목표" fill={tokens.colors.surfaceContainerHigh} stroke={tokens.colors.outline} radius={[3, 3, 0, 0]} minPointSize={2} />
+                  <Bar dataKey="실적" fill={tokens.colors.primary} radius={[3, 3, 0, 0]} minPointSize={2} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartFrame>
