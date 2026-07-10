@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 const colors = {
   background: '#0b1326',
+  surfaceLowest: '#060e20',
   surfaceLow: '#131b2e',
   surface: '#171f33',
   surfaceHigh: '#222a3d',
@@ -11,17 +12,16 @@ const colors = {
   text: '#dae2fd',
   textMuted: '#bccbb9',
   primary: '#4be277',
-  primaryText: '#003915',
 };
 
 export const PageShell = styled.main`
   min-height: 100vh;
+  box-sizing: border-box;
   background: ${colors.background};
   color: ${colors.text};
-  padding: 40px 32px;
+  padding: 32px;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -33,7 +33,7 @@ export const PageShell = styled.main`
 
 export const PageHeader = styled.header`
   width: 100%;
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto 18px;
   border: 1px solid ${colors.border};
   border-radius: 4px;
@@ -46,10 +46,10 @@ export const PageHeader = styled.header`
 
   h1 {
     margin: 8px 0;
-    font-size: clamp(28px, 3vw, 40px);
+    font-size: clamp(30px, 4vw, 42px);
     font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: 0;
+    line-height: 48px;
+    letter-spacing: -0.02em;
   }
 
   p {
@@ -95,82 +95,63 @@ export const TopLink = styled(Link)`
   }
 `;
 
-export const FindLayout = styled.section`
+export const Card = styled.section`
   width: 100%;
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
-`;
-
-export const FindCard = styled.section`
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surface};
   padding: 32px;
   box-sizing: border-box;
-  min-height: 420px;
-  display: grid;
-  align-content: center;
-  gap: 28px;
 
   @media (max-width: 768px) {
     padding: 24px;
-    min-height: auto;
   }
 `;
 
-export const ModeSwitch = styled.div`
-  display: inline-grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(180px, 1fr);
-  border: 1px solid ${colors.border};
-  border-radius: 4px;
-  overflow: hidden;
-  width: 100%;
+export const CardHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
 
-  @media (max-width: 520px) {
-    width: 100%;
-    display: grid;
-    grid-auto-flow: row;
+  h2 {
+    margin: 4px 0 0;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 36px;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
   }
 `;
 
-export const ModeButton = styled.button`
-  min-height: 54px;
-  border: 0;
-  border-left: 1px solid ${colors.border};
-  background: ${({ $active }) => ($active ? colors.surfaceHighest : colors.surfaceLow)};
-  color: ${({ $active }) => ($active ? colors.primary : colors.textMuted)};
-  padding: 0 22px;
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 18px;
-  cursor: pointer;
+export const Badge = styled.span`
+  width: fit-content;
+  border-radius: 9999px;
+  background: rgba(75, 226, 119, 0.16);
+  color: ${colors.primary};
+  padding: 4px 10px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  &:first-child {
-    border-left: 0;
-  }
+  gap: 6px;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
 `;
 
 export const Form = styled.form`
   display: grid;
-  gap: 22px;
-`;
-
-export const FieldGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 18px;
+  gap: 20px;
 `;
 
 export const Field = styled.div`
   display: grid;
-  gap: 10px;
+  gap: 8px;
 `;
 
 export const Label = styled.label`
@@ -186,7 +167,7 @@ export const Input = styled.input`
   box-sizing: border-box;
   border: 1px solid ${colors.border};
   border-radius: 4px;
-  background: #060e20;
+  background: ${colors.surfaceLowest};
   color: ${colors.text};
   padding: 12px 16px;
   font: inherit;
@@ -202,19 +183,25 @@ export const Input = styled.input`
   }
 `;
 
+export const HelperText = styled.span`
+  color: ${colors.textMuted};
+  font-size: 14px;
+  line-height: 20px;
+`;
+
 export const ActionBar = styled.div`
   display: flex;
-  justify-content: stretch;
+  justify-content: flex-end;
 `;
 
 export const Button = styled.button`
   width: 100%;
   min-height: 60px;
-  border: 1px solid ${colors.primary};
+  border: 1px solid ${colors.border};
   border-radius: 4px;
-  background: ${colors.primary};
-  color: ${colors.primaryText};
-  padding: 0 28px;
+  background: ${colors.surfaceHigh};
+  color: ${colors.text};
+  padding: 0 18px;
   font-size: 19px;
   font-weight: 700;
   line-height: 24px;
@@ -225,39 +212,7 @@ export const Button = styled.button`
   gap: 8px;
 
   &:hover {
-    background: #6bff8f;
+    border-color: ${colors.primary};
+    background: ${colors.surfaceHighest};
   }
-`;
-
-export const ResultArea = styled.div`
-  border: 1px solid ${colors.border};
-  border-radius: 4px;
-  background: #060e20;
-  box-sizing: border-box;
-  padding: 18px;
-  display: grid;
-  gap: 12px;
-`;
-
-export const ResultValue = styled.div`
-  width: 100%;
-  min-height: 56px;
-  box-sizing: border-box;
-  border: 1px solid ${colors.border};
-  border-radius: 4px;
-  background: ${colors.surfaceLow};
-  color: ${colors.text};
-  padding: 12px 16px;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 28px;
-  display: flex;
-  align-items: center;
-`;
-
-export const ResultText = styled.span`
-  color: ${colors.textMuted};
-  font-size: 15px;
-  line-height: 22px;
 `;

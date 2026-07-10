@@ -8,17 +8,15 @@ const colors = {
   surfaceHigh: '#222a3d',
   surfaceHighest: '#2d3449',
   border: '#334155',
-  borderSoft: '#3d4a3d',
   text: '#dae2fd',
   textMuted: '#bccbb9',
   primary: '#4be277',
   primaryText: '#003915',
-  secondary: '#ffb95f',
   error: '#ffb4ab',
 };
 
 export const PageShell = styled.main`
-  min-height: 100%;
+  min-height: 100vh;
   background: ${colors.background};
   color: ${colors.text};
   padding: 32px;
@@ -31,7 +29,7 @@ export const PageShell = styled.main`
 `;
 
 export const PageHeader = styled.header`
-  max-width: 1180px;
+  max-width: 960px;
   margin: 0 auto 16px;
   border: 1px solid ${colors.border};
   border-radius: 4px;
@@ -94,34 +92,29 @@ export const TopLink = styled(Link)`
 `;
 
 export const FormLayout = styled.section`
-  max-width: 1180px;
+  max-width: 960px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
-  gap: 16px;
-
-  @media (max-width: 960px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: 1fr;
 `;
 
 export const FormCard = styled.section`
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surface};
-  padding: 24px;
+  padding: 28px;
 `;
 
 export const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
 `;
 
 export const FieldGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 16px 20px;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
@@ -129,8 +122,10 @@ export const FieldGrid = styled.div`
 `;
 
 export const Field = styled.div`
+  min-width: 0;
   display: grid;
   gap: 8px;
+  align-content: start;
 `;
 
 export const Label = styled.label`
@@ -163,23 +158,33 @@ const controlStyle = `
 export const Input = styled.input`
   min-height: 44px;
   ${controlStyle}
+  border-color: ${({ $invalid }) => ($invalid ? colors.error : colors.border)};
+
+  &:focus {
+    border-color: ${({ $invalid }) => ($invalid ? colors.error : colors.primary)};
+  }
 `;
 
 export const Select = styled.select`
   min-height: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   ${controlStyle}
 `;
 
-export const TextArea = styled.textarea`
-  min-height: 92px;
-  resize: vertical;
-  ${controlStyle}
+export const ErrorText = styled.span`
+  min-height: 18px;
+  color: ${colors.error};
+  font-size: 12px;
+  line-height: 18px;
+  visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `;
 
 export const RadioGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 12px;
 
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
@@ -187,11 +192,11 @@ export const RadioGrid = styled.div`
 `;
 
 export const RadioCard = styled.label`
-  min-height: 128px;
+  min-height: 116px;
   border: 1px solid ${({ $active }) => ($active ? colors.primary : colors.border)};
   border-radius: 4px;
   background: ${({ $active }) => ($active ? colors.surfaceHighest : colors.surfaceHigh)};
-  padding: 12px;
+  padding: 14px;
   cursor: pointer;
   display: grid;
   gap: 8px;
@@ -199,6 +204,9 @@ export const RadioCard = styled.label`
 
   input {
     accent-color: ${colors.primary};
+    width: 16px;
+    height: 16px;
+    margin: 0;
   }
 
   strong {
@@ -212,6 +220,12 @@ export const RadioCard = styled.label`
     font-size: 13px;
     line-height: 18px;
   }
+`;
+
+export const RadioHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 export const CheckboxGrid = styled.div`
@@ -233,7 +247,7 @@ export const CheckboxGrid = styled.div`
 `;
 
 export const Button = styled.button`
-  min-height: 46px;
+  min-height: 50px;
   border: 1px solid ${colors.primary};
   border-radius: 4px;
   background: ${colors.primary};
@@ -265,123 +279,6 @@ export const OutlineButton = styled.button`
 
   &:hover {
     border-color: ${colors.primary};
-  }
-`;
-
-export const SideStack = styled.aside`
-  display: grid;
-  gap: 16px;
-  align-content: start;
-`;
-
-export const Panel = styled.section`
-  border: 1px solid ${colors.border};
-  border-radius: 4px;
-  background: ${colors.surface};
-  padding: 16px;
-
-  h2 {
-    margin: 4px 0 14px;
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 24px;
-  }
-`;
-
-export const PreviewGrid = styled.div`
-  display: grid;
-  gap: 8px;
-`;
-
-export const SummaryItem = styled.div`
-  border: 1px solid ${colors.borderSoft};
-  border-radius: 4px;
-  background: #060e20;
-  padding: 12px;
-
-  span {
-    display: block;
-    color: ${colors.textMuted};
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 16px;
-    letter-spacing: 0.1em;
-  }
-
-  strong {
-    display: block;
-    margin-top: 4px;
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 20px;
-    font-weight: 500;
-    line-height: 28px;
-  }
-`;
-
-export const StatusTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  line-height: 20px;
-
-  th,
-  td {
-    padding: 8px;
-    border-bottom: 1px solid ${colors.borderSoft};
-    text-align: left;
-  }
-
-  th {
-    color: ${colors.textMuted};
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 16px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  tbody tr:nth-child(odd) {
-    background: rgba(45, 52, 73, 0.35);
-  }
-
-  td:first-child {
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-`;
-
-export const Badge = styled.span`
-  border-radius: 9999px;
-  background: ${({ $tone }) =>
-    $tone === 'secondary' ? 'rgba(255, 185, 95, 0.16)' : 'rgba(75, 226, 119, 0.16)'};
-  color: ${({ $tone }) => ($tone === 'secondary' ? colors.secondary : colors.primary)};
-  padding: 3px 8px;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-`;
-
-export const EmptyState = styled.section`
-  min-height: 132px;
-  border: 1px dashed ${colors.border};
-  border-radius: 4px;
-  background: #060e20;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-
-  strong {
-    color: ${colors.text};
-    font-size: 16px;
-    line-height: 24px;
-  }
-
-  span {
-    color: ${colors.textMuted};
-    font-size: 14px;
-    line-height: 20px;
   }
 `;
 
