@@ -34,35 +34,66 @@ import {
   ToggleButton,
 } from './SideNavigationCss';
 
+const ALL_ROLES = ['admin', 'supervisor', 'operator'];
+const MANAGEMENT_ROLES = ['admin', 'supervisor'];
+const ROLE_ALIASES = {
+  관리자: 'admin',
+  지시자: 'supervisor',
+  작업자: 'operator',
+};
+
 const MENU_ITEMS = [
-  { number: '01', label: '대시보드 화면', path: '/dashboard', icon: FiGrid },
-  { number: '02', label: '사용자 계정 화면', path: '/account', icon: FiUser },
-  { number: '03', label: '작업 지시', path: '/work-orders', icon: FiClipboard },
-  { number: '04', label: '자재 / LOT', path: '/materials', icon: FiBox },
-  { number: '4.1', label: 'BOM 관리', path: '/materials/bom', icon: FiLayers },
-  { number: '4.2', label: 'LOT 관리', path: '/materials/lots', icon: FiPackage },
-  { number: '4.3', label: '재고 관리', path: '/materials/inventory', icon: FiArchive },
-  { number: '05', label: '알람 이력', path: '/alarms', icon: FiActivity },
-  { number: '06', label: '통신 상태', path: '/communications', icon: FiWifi },
-  { number: '07', label: '설정', path: '/settings', icon: FiSettings },
+  { number: '01', label: '대시보드 화면', path: '/dashboard', icon: FiGrid, roles: ALL_ROLES },
+  { number: '02', label: '사용자 계정 화면', path: '/account', icon: FiUser, roles: ALL_ROLES },
+  { number: '03', label: '작업 지시', path: '/work-orders', icon: FiClipboard, roles: MANAGEMENT_ROLES },
+  { number: '04', label: '자재 / LOT', path: '/materials', icon: FiBox, roles: ALL_ROLES },
+  { number: '4.1', label: 'BOM 관리', path: '/materials/bom', icon: FiLayers, roles: ALL_ROLES },
+  { number: '4.2', label: 'LOT 관리', path: '/materials/lots', icon: FiPackage, roles: ALL_ROLES },
+  { number: '4.3', label: '재고 관리', path: '/materials/inventory', icon: FiArchive, roles: ALL_ROLES },
+  { number: '05', label: '알람 이력', path: '/alarms', icon: FiActivity, roles: ALL_ROLES },
+  { number: '06', label: '통신 상태', path: '/communications', icon: FiWifi, roles: ALL_ROLES },
+  { number: '07', label: '설정', path: '/settings', icon: FiSettings, roles: ['admin'] },
 ];
 
-function SideNavigation({ onLogout }) {
+const normalizeRole = (role) => ROLE_ALIASES[role] || role;
+
+const getStoredRole = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return (
+      window.sessionStorage.getItem('userRole') ||
+      window.localStorage.getItem('userRole')
+    );
+  } catch {
+    return null;
+  }
+};
+
+function SideNavigation({ onLogout, userRole }) {
   const navigate = useNavigate();
   const location = useLocation();
   const navigationId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
+  const currentUserRole = normalizeRole(userRole || getStoredRole()) || 'admin';
+
+  const visibleMenuItems = useMemo(
+    () => MENU_ITEMS.filter(({ roles }) => roles.includes(currentUserRole)),
+    [currentUserRole],
+  );
 
   const activePath = useMemo(() => {
-    const matchingItem = MENU_ITEMS.filter(
+    const matchingItem = visibleMenuItems.filter(
       ({ path }) =>
         location.pathname === path || location.pathname.startsWith(`${path}/`),
     ).sort((first, second) => second.path.length - first.path.length)[0];
 
     return matchingItem?.path;
-  }, [location.pathname]);
+  }, [location.pathname, visibleMenuItems]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -99,6 +130,13 @@ function SideNavigation({ onLogout }) {
       if (result === false) {
         setLogoutError('로그아웃을 완료하지 못했습니다. 다시 시도해주세요.');
         return;
+      }
+
+      try {
+        window.sessionStorage.removeItem('userRole');
+        window.localStorage.removeItem('userRole');
+      } catch {
+        // 저장소 사용이 제한된 환경에서도 로그아웃 이동은 계속 진행합니다.
       }
 
       setIsOpen(false);
@@ -149,7 +187,7 @@ function SideNavigation({ onLogout }) {
         <SectionLabel>MAIN NAVIGATION</SectionLabel>
 
         <Menu aria-label="MES 화면 메뉴">
-          {MENU_ITEMS.map(({ number, label, path, icon: Icon }) => {
+          {visibleMenuItems.map(({ number, label, path, icon: Icon }) => {
             const isActive = activePath === path;
 
             return (
