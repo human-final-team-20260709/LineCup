@@ -1,0 +1,537 @@
+.alarm-statistics-page {
+  min-height: 100vh;
+  padding: 32px;
+  background: #0b1326;
+  color: #dae2fd;
+}
+
+.alarm-statistics-page button,
+.alarm-statistics-page select {
+  font: inherit;
+}
+
+.alarm-statistics-page button {
+  border: 0;
+}
+
+.alarm-statistics-page .alarm-page-header,
+.alarm-statistics-page .alarm-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.alarm-statistics-page .alarm-page-header {
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.alarm-statistics-page .alarm-title-block {
+  max-width: 760px;
+}
+
+.alarm-statistics-page .alarm-title-block h1 {
+  margin: 4px 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: 0;
+}
+
+.alarm-statistics-page .alarm-title-block p {
+  margin: 0;
+  color: #bccbb9;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.alarm-statistics-page .alarm-eyebrow,
+.alarm-statistics-page .alarm-panel-label {
+  color: #4be277;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.alarm-statistics-page .alarm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #31394d;
+  color: #dae2fd;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.alarm-statistics-page .alarm-button:hover {
+  border-color: #4be277;
+}
+
+.alarm-statistics-page .alarm-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.alarm-statistics-page .alarm-state-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #060e20;
+}
+
+.alarm-statistics-page .alarm-state-switch__button {
+  min-width: 92px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 3px;
+  background: transparent;
+  color: #bccbb9;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.alarm-statistics-page .alarm-state-switch__button.is-active {
+  background: #22c55e;
+  color: #003915;
+}
+
+.alarm-statistics-page .alarm-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #060e20;
+  color: #869585;
+}
+
+.alarm-statistics-page .alarm-field select {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #dae2fd;
+  font-size: 14px;
+}
+
+.alarm-statistics-page .alarm-field:focus-within {
+  border-color: #4be277;
+}
+
+.alarm-statistics-page .alarm-stat-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.alarm-statistics-page .alarm-stat-metric-card,
+.alarm-statistics-page .alarm-panel {
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #171f33;
+}
+
+.alarm-statistics-page .alarm-stat-metric-card {
+  padding: 16px;
+}
+
+.alarm-statistics-page .alarm-stat-metric-card strong {
+  display: block;
+  margin-top: 14px;
+  color: #4be277;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+.alarm-statistics-page .alarm-stat-metric-card span {
+  display: block;
+  margin-top: 4px;
+  color: #bccbb9;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.alarm-statistics-page .alarm-stat-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #bccbb9;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.alarm-statistics-page .alarm-stat-metric-label svg {
+  color: #4be277;
+}
+
+.alarm-statistics-page .alarm-stat-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 16px;
+}
+
+.alarm-statistics-page .alarm-panel-header {
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #334155;
+}
+
+.alarm-statistics-page .alarm-panel-header h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.alarm-statistics-page .alarm-panel-meta,
+.alarm-statistics-page .alarm-mono {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.alarm-statistics-page .alarm-panel-meta {
+  color: #bccbb9;
+}
+
+.alarm-statistics-page .alarm-bar-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  height: 300px;
+  padding: 20px 16px 16px;
+}
+
+.alarm-statistics-page .alarm-bar-column {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 6px;
+  height: 100%;
+  text-align: center;
+}
+
+.alarm-statistics-page .alarm-bar-column strong,
+.alarm-statistics-page .alarm-bar-column span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.alarm-statistics-page .alarm-bar-column span {
+  color: #869585;
+}
+
+.alarm-statistics-page .alarm-bar-track {
+  display: flex;
+  align-items: end;
+  min-height: 180px;
+  border: 1px solid #2d3449;
+  border-radius: 4px;
+  background: #060e20;
+  overflow: hidden;
+}
+
+.alarm-statistics-page .alarm-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #6bff8f 0%, #22c55e 100%);
+}
+
+.alarm-statistics-page .alarm-bar-fill--42 {
+  height: 42%;
+}
+
+.alarm-statistics-page .alarm-bar-fill--52 {
+  height: 52%;
+}
+
+.alarm-statistics-page .alarm-bar-fill--58 {
+  height: 58%;
+}
+
+.alarm-statistics-page .alarm-bar-fill--61 {
+  height: 61%;
+}
+
+.alarm-statistics-page .alarm-bar-fill--68 {
+  height: 68%;
+}
+
+.alarm-statistics-page .alarm-bar-fill--81 {
+  height: 81%;
+}
+
+.alarm-statistics-page .alarm-bar-fill--100 {
+  height: 100%;
+}
+
+.alarm-statistics-page .alarm-ratio-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 24px 16px 20px;
+}
+
+.alarm-statistics-page .alarm-donut-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at center, #171f33 0 58%, transparent 59%),
+    conic-gradient(#ff8a83 0 24%, #ffb95f 24% 70%, #38bdf8 70% 100%);
+}
+
+.alarm-statistics-page .alarm-donut-chart strong {
+  color: #ffb4ab;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 28px;
+  line-height: 32px;
+}
+
+.alarm-statistics-page .alarm-donut-chart span {
+  color: #bccbb9;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.alarm-statistics-page .alarm-legend-list,
+.alarm-statistics-page .alarm-horizontal-list {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.alarm-statistics-page .alarm-horizontal-list {
+  gap: 14px;
+  padding: 18px 16px;
+}
+
+.alarm-statistics-page .alarm-legend-item {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #2d3449;
+  border-radius: 4px;
+  background: #060e20;
+}
+
+.alarm-statistics-page .alarm-legend-item span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #4be277;
+}
+
+.alarm-statistics-page .alarm-legend-item--critical span {
+  background: #ffb4ab;
+}
+
+.alarm-statistics-page .alarm-legend-item--warning span {
+  background: #ffb95f;
+}
+
+.alarm-statistics-page .alarm-legend-item--info span {
+  background: #8bd5ff;
+}
+
+.alarm-statistics-page .alarm-legend-item strong,
+.alarm-statistics-page .alarm-horizontal-item strong {
+  color: #dae2fd;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.alarm-statistics-page .alarm-horizontal-item {
+  display: grid;
+  gap: 8px;
+}
+
+.alarm-statistics-page .alarm-horizontal-item div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.alarm-statistics-page .alarm-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #060e20;
+  overflow: hidden;
+}
+
+.alarm-statistics-page .alarm-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #4be277;
+}
+
+.alarm-statistics-page .alarm-progress-fill--29 {
+  width: 29%;
+}
+
+.alarm-statistics-page .alarm-progress-fill--38 {
+  width: 38%;
+}
+
+.alarm-statistics-page .alarm-progress-fill--63 {
+  width: 63%;
+}
+
+.alarm-statistics-page .alarm-progress-fill--75 {
+  width: 75%;
+}
+
+.alarm-statistics-page .alarm-progress-fill--100 {
+  width: 100%;
+}
+
+.alarm-statistics-page .alarm-table-frame {
+  overflow-x: auto;
+}
+
+.alarm-statistics-page .alarm-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.alarm-statistics-page .alarm-table th,
+.alarm-statistics-page .alarm-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #2d3449;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.alarm-statistics-page .alarm-table th {
+  color: #bccbb9;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.alarm-statistics-page .alarm-table td {
+  color: #dae2fd;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.alarm-statistics-page .alarm-table tbody tr:nth-child(even) {
+  background: rgba(6, 14, 32, 0.46);
+}
+
+.alarm-statistics-page .alarm-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #060e20;
+  color: #4be277;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.alarm-statistics-page .alarm-severity-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  background: #222a3d;
+  color: #dae2fd;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.alarm-statistics-page .alarm-severity-chip--info {
+  border-color: rgba(56, 189, 248, 0.32);
+  background: rgba(56, 189, 248, 0.14);
+  color: #8bd5ff;
+}
+
+.alarm-statistics-page .alarm-severity-chip--warning {
+  border-color: rgba(255, 185, 95, 0.34);
+  background: rgba(255, 185, 95, 0.14);
+  color: #ffb95f;
+}
+
+.alarm-statistics-page .alarm-severity-chip--critical {
+  border-color: rgba(255, 138, 131, 0.42);
+  background: rgba(255, 138, 131, 0.16);
+  color: #ffb4ab;
+}
+
+.alarm-statistics-page .alarm-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 420px;
+  padding: 64px 24px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #171f33;
+  color: #bccbb9;
+  text-align: center;
+}
+
+.alarm-statistics-page .alarm-empty-state svg {
+  width: 36px;
+  height: 36px;
+  color: #4be277;
+}
+
+.alarm-statistics-page .alarm-empty-state strong {
+  color: #dae2fd;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.alarm-statistics-page .alarm-empty-state span {
+  max-width: 420px;
+  font-size: 14px;
+  line-height: 20px;
+}
