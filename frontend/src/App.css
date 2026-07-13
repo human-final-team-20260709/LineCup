@@ -13,12 +13,7 @@ body,
 body {
   background: #0b1326;
   color: #dae2fd;
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
 }
 
@@ -27,49 +22,6 @@ body {
   min-height: 100vh;
   background: #0b1326;
   color: #dae2fd;
-}
-
-.App > nav {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  min-height: 56px;
-  padding: 10px 32px;
-  border-bottom: 1px solid #334155;
-  background: rgba(11, 19, 38, 0.96);
-  backdrop-filter: blur(10px);
-  overflow-x: auto;
-}
-
-.App > nav a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: max-content;
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #131b2e;
-  color: #bccbb9;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 18px;
-  text-decoration: none;
-}
-
-.App > nav a:hover {
-  border-color: #869585;
-  color: #dae2fd;
-}
-
-.App > nav a.active {
-  border-color: #4be277;
-  background: rgba(75, 226, 119, 0.14);
-  color: #4be277;
 }
 
 a {
@@ -81,15 +33,6 @@ input,
 select,
 textarea {
   font-family: inherit;
-}
-
-select {
-  color: #dae2fd;
-}
-
-select option {
-  background: #131b2e;
-  color: #dae2fd;
 }
 
 button {
