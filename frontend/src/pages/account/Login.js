@@ -38,7 +38,7 @@ function Login() {
 
     setModal({
       title: '로그인 실패',
-      message: '아이디 또는 비밀번호가 일치하지 않습니다.',
+      message: '사원 번호 또는 비밀번호가 일치하지 않습니다.',
       tone: 'error',
     });
     // TODO: 임시 로그인 성공/실패 50% 처리 끝
@@ -132,12 +132,12 @@ function Login() {
             <FieldGrid style={{ gap: '22px' }}>
               <Field>
                 <Label htmlFor="login-user-id" style={{ fontSize: '17px' }}>
-                  아이디
+                  사원 번호
                 </Label>
                 <Input
                   id="login-user-id"
                   name="userId"
-                  placeholder="아이디를 입력하세요"
+                  placeholder="사원 번호를 입력하세요"
                   autoComplete="username"
                   style={{ minHeight: '56px', fontSize: '18px' }}
                 />
@@ -164,14 +164,14 @@ function Login() {
 
             <HelperLinkGroup aria-label="계정 도움말" style={{ gap: '10px' }}>
               <ActionLink
-                to="/account/find?type=id"
+                to="/account/find/employee-number"
                 style={{ minHeight: '50px', fontSize: '16px' }}
               >
                 <FiSearch aria-hidden="true" />
-                아이디 찾기
+                사원 번호 찾기
               </ActionLink>
               <ActionLink
-                to="/account/find?type=password"
+                to="/account/find/password"
                 style={{ minHeight: '50px', fontSize: '16px' }}
               >
                 <FiLock aria-hidden="true" />

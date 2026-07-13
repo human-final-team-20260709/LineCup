@@ -12,6 +12,7 @@ import {
   FiUsers,
   FiX,
 } from 'react-icons/fi';
+import WorkerManagement from './WorkerManagement';
 import {
   ActionButton,
   ActionGroup,
@@ -49,8 +50,6 @@ import {
   SummaryLabel,
   SummaryValue,
   SystemBadge,
-  Tab,
-  Tabs,
   Table,
   TableScroll,
   UserIdentity,
@@ -122,10 +121,9 @@ const INITIAL_APPROVALS = [
   },
 ];
 
-function Setting() {
+function Setting({ activeTab = 'users' }) {
   const [users, setUsers] = useState(INITIAL_USERS);
   const [approvals, setApprovals] = useState(INITIAL_APPROVALS);
-  const [activeTab, setActiveTab] = useState('users');
   const [viewState, setViewState] = useState('filled');
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -200,7 +198,10 @@ function Setting() {
   };
 
   return (
-    <PageShell>
+    activeTab === 'workers' ? (
+      <WorkerManagement />
+    ) : (
+      <PageShell>
       <PageHeader>
         <div>
           <SectionLabel>SYSTEM CONFIGURATION</SectionLabel>
@@ -260,21 +261,12 @@ function Setting() {
           </SegmentedControl>
         </SectionHeading>
 
-        <Tabs role="tablist" aria-label="설정 메뉴">
-          <Tab type="button" role="tab" $active={activeTab === 'users'} aria-selected={activeTab === 'users'} onClick={() => setActiveTab('users')}>
-            사용자 목록 <Badge>{summaryUsers.length}</Badge>
-          </Tab>
-          <Tab type="button" role="tab" $active={activeTab === 'approvals'} aria-selected={activeTab === 'approvals'} onClick={() => setActiveTab('approvals')}>
-            가입 승인 대기 <Badge $warning>{visibleApprovals.length}</Badge>
-          </Tab>
-        </Tabs>
-
         {activeTab === 'users' ? (
           <>
             <ControlBar>
               <SearchField>
                 <FiSearch aria-hidden="true" />
-                <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="이름, 아이디 또는 이메일 검색" aria-label="사용자 검색" />
+                <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="이름, 사원 번호 또는 이메일 검색" aria-label="사용자 검색" />
               </SearchField>
               <FilterGroup>
                 <SelectField value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} aria-label="역할 필터">
@@ -357,7 +349,8 @@ function Setting() {
           </ModalCard>
         </ModalBackdrop>
       )}
-    </PageShell>
+      </PageShell>
+    )
   );
 }
 

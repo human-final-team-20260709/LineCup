@@ -209,7 +209,7 @@ export const HeaderActions = styled.div`
  * ========================================================= */
 export const KpiGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: ${spacing.md};
 
   @media (max-width: 1000px) {
@@ -403,37 +403,6 @@ export const TableCard = styled.div`
   overflow: hidden;
   animation: ${fadeSlideUp} 0.45s ease both;
   animation-delay: 120ms;
-`;
-
-/* =========================================================
- * 목록 / 차트 보기 전환 (DESIGN.md Data Card 톤에 맞춘 세그먼트 버튼)
- * ========================================================= */
-export const ViewToggleGroup = styled.div`
-  display: inline-flex;
-  padding: 3px;
-  gap: 2px;
-  background: ${colors.surfaceContainerLow};
-  border: 1px solid ${colors.outlineVariant};
-  border-radius: ${radius.DEFAULT};
-`;
-
-export const ViewToggleButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  ${typography.bodySm};
-  font-weight: 600;
-  padding: 6px 12px;
-  border: none;
-  border-radius: ${radius.DEFAULT};
-  cursor: pointer;
-  background: ${({ $active }) => ($active ? colors.primary : 'transparent')};
-  color: ${({ $active }) => ($active ? colors.onPrimary : colors.onSurfaceVariant)};
-  transition: background 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    color: ${({ $active }) => ($active ? colors.onPrimary : colors.onSurface)};
-  }
 `;
 
 export const ChartCard = styled.div`
@@ -1007,6 +976,16 @@ export const Select = styled.select`
 export const Input = styled.input`
   ${baseControl};
   ${typography.bodySm};
+
+  &[type='date'] {
+    color-scheme: dark;
+  }
+
+  &[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: brightness(0) invert(1);
+    opacity: 1;
+  }
 
   &:focus {
     border-color: ${colors.primary};

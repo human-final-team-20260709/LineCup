@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiKey, FiSearch, FiSend } from 'react-icons/fi';
+import { FiArrowLeft, FiSend } from 'react-icons/fi';
 import AccountModal from './AccountModal';
 import {
   ActionBar,
@@ -12,8 +12,6 @@ import {
   Form,
   Input,
   Label,
-  ModeButton,
-  ModeSwitch,
   PageHeader,
   PageShell,
   ResultArea,
@@ -34,9 +32,8 @@ const initialFormValues = {
   email: '',
 };
 
-function FindAccount() {
+function FindAccount({ mode = 'id' }) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState('id');
   const [formValues, setFormValues] = useState(initialFormValues);
   const [foundAccounts, setFoundAccounts] = useState([]);
   const [modal, setModal] = useState(null);
@@ -71,12 +68,6 @@ function FindAccount() {
     // TODO: 임시 계정 찾기 성공/실패 50% 처리 끝
   };
 
-  const handleModeChange = (nextMode) => {
-    setMode(nextMode);
-    setFoundAccounts([]);
-    setModal(null);
-  };
-
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFoundAccounts([]);
@@ -94,7 +85,7 @@ function FindAccount() {
       <PageHeader>
         <div>
           <SectionLabel>ACCOUNT RECOVERY</SectionLabel>
-          <h1>아이디 / 비밀번호 찾기</h1>
+          <h1>사원 번호 / 비밀번호 찾기</h1>
           <p>
             가입 정보와 인증 요청 상태를 확인하는 계정 복구 화면입니다.
           </p>
@@ -107,37 +98,18 @@ function FindAccount() {
 
       <FindLayout>
         <FindCard>
-          <ModeSwitch aria-label="계정 찾기 유형">
-            <ModeButton
-              type="button"
-              $active={mode === 'id'}
-              onClick={() => handleModeChange('id')}
-            >
-              <FiSearch aria-hidden="true" />
-              아이디 찾기
-            </ModeButton>
-            <ModeButton
-              type="button"
-              $active={mode === 'password'}
-              onClick={() => handleModeChange('password')}
-            >
-              <FiKey aria-hidden="true" />
-              비밀번호 찾기
-            </ModeButton>
-          </ModeSwitch>
-
           <Form onSubmit={handleSubmit}>
-            <SectionLabel>{isPasswordMode ? 'PASSWORD RESET' : 'USER ID LOOKUP'}</SectionLabel>
+            <SectionLabel>{isPasswordMode ? 'PASSWORD RESET' : 'EMPLOYEE NUMBER LOOKUP'}</SectionLabel>
             <FieldGrid>
               {isPasswordMode && (
                 <Field>
-                  <Label htmlFor="find-user-id">아이디</Label>
+                  <Label htmlFor="find-user-id">사원 번호</Label>
                   <Input
                     id="find-user-id"
                     name="userId"
                     value={formValues.userId}
                     onChange={handleChange}
-                    placeholder="아이디를 입력하세요"
+                    placeholder="사원 번호를 입력하세요"
                   />
                 </Field>
               )}
@@ -166,18 +138,18 @@ function FindAccount() {
 
             <ActionBar>
               <Button type="submit">
-                {isPasswordMode ? '비밀번호 재설정' : '아이디 찾기'}
+                {isPasswordMode ? '비밀번호 재설정' : '사원 번호 찾기'}
                 <FiSend aria-hidden="true" />
               </Button>
             </ActionBar>
 
             {!isPasswordMode && foundAccounts.length > 0 && (
               <ResultArea>
-                <Label htmlFor="found-user-id">조회된 아이디</Label>
+                <Label htmlFor="found-user-id">조회된 사원 번호</Label>
                 <ResultValue id="found-user-id">
                   {foundAccounts[0].maskedUserId}
                 </ResultValue>
-                <ResultText>가입 정보와 일치하는 아이디입니다.</ResultText>
+                <ResultText>가입 정보와 일치하는 사원 번호입니다.</ResultText>
               </ResultArea>
             )}
           </Form>

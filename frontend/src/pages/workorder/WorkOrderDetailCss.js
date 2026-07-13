@@ -113,11 +113,6 @@ const pulseDot = keyframes`
   50% { opacity: 0.45; }
 `;
 
-const pulseScale = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
-`;
-
 const dashOffset = keyframes`
   from { stroke-dashoffset: 220; }
   to { stroke-dashoffset: 0; }
@@ -306,89 +301,28 @@ export const ProgressRate = styled.span`
 `;
 
 /* =========================================================
- * 작업 순서 확인 (3.5)
- * ========================================================= */
-export const StepperWrap = styled.div`
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
-  overflow-x: auto;
-  padding-bottom: 4px;
-`;
-
-export const Step = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 120px;
-  text-align: center;
-`;
-
-export const StepCircle = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: ${radius.full};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  ${typography.dataSm};
-  text-transform: none;
-  color: ${({ $waiting }) => ($waiting ? colors.onSurfaceVariant : colors.surfaceContainerLowest)};
-  background: ${({ $waiting, $color }) => ($waiting ? colors.surfaceContainerHigh : $color)};
-  border: ${({ $emphasis, $color }) => ($emphasis ? `2px solid ${$color}` : '2px solid transparent')};
-  box-shadow: ${({ $emphasis, $color }) => ($emphasis ? `0 0 0 3px ${hexToRgba($color, 0.2)}` : 'none')};
-  z-index: 1;
-
-  ${({ $emphasis }) =>
-    $emphasis &&
-    css`
-      animation: ${pulseScale} 1.8s ease-in-out infinite;
-    `}
-`;
-
-export const StepLabel = styled.span`
-  ${typography.bodySm};
-  font-weight: ${({ $emphasis }) => ($emphasis ? 700 : 500)};
-  color: ${colors.onSurface};
-  margin-top: 8px;
-`;
-
-export const StepSub = styled.span`
-  ${typography.dataSm};
-  text-transform: none;
-  color: ${({ $color }) => $color};
-  margin-top: 2px;
-`;
-
-export const StepConnector = styled.div`
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  width: 100%;
-  height: 2px;
-  background: ${({ $done }) => ($done ? colors.primary : colors.outlineVariant)};
-  z-index: 0;
-`;
-
-/* =========================================================
- * 공정 진행 현황 (3.6)
+ * 독립 설비별 공정 진행 현황 (3.5~3.6)
  * ========================================================= */
 export const ProcessGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: ${spacing.md};
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: ${spacing.lg};
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const ProcessCard = styled.div`
+  min-height: 224px;
   background: ${colors.surfaceContainerLow};
   border: 1px solid ${colors.outlineVariant};
   border-radius: ${radius.md};
-  padding: ${spacing.md};
+  padding: ${spacing.lg};
   display: flex;
   flex-direction: column;
-  gap: ${spacing.sm};
+  justify-content: space-between;
+  gap: ${spacing.md};
   opacity: 0;
   animation: ${fadeSlideUp} 0.4s ease both;
   animation-delay: ${({ $delay }) => $delay || 0}ms;
@@ -402,26 +336,42 @@ export const ProcessCard = styled.div`
 
 export const ProcessCardHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: ${spacing.md};
+`;
+
+export const ProcessIdentity = styled.div`
+  display: grid;
+  gap: 3px;
+`;
+
+export const ProcessMode = styled.span`
+  ${typography.labelCaps};
+  color: ${colors.primary};
 `;
 
 export const ProcessName = styled.span`
-  ${typography.bodySm};
+  ${typography.headlineSm};
   font-weight: 600;
   color: ${colors.onSurface};
 `;
 
 export const ProcessQtyRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${spacing.md} ${spacing.sm};
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: ${spacing.sm};
 `;
 
 export const ProcessQtyBlock = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.DEFAULT};
+  background: ${colors.surfaceContainerLowest};
 `;
 
 export const ProcessQtyLabel = styled.span`
@@ -430,7 +380,10 @@ export const ProcessQtyLabel = styled.span`
 `;
 
 export const ProcessQtyValue = styled.span`
-  ${typography.dataLg};
+  font-family: ${font.mono};
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
   text-transform: none;
   color: ${({ $alert }) => ($alert ? colors.tertiary : colors.onSurface)};
 `;
@@ -439,14 +392,34 @@ export const ProcessEquipRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  ${typography.bodySm};
-  color: ${colors.onSurfaceVariant};
-  padding-top: ${spacing.sm};
+  gap: ${spacing.md};
+  padding: 14px 16px;
   border-top: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.DEFAULT};
+  background: ${colors.surfaceContainerHigh};
+
+  > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  strong {
+    ${typography.bodySm};
+    overflow: hidden;
+    color: ${colors.onSurface};
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+export const ProcessEquipLabel = styled.span`
+  ${typography.labelCaps};
+  color: ${colors.onSurfaceVariant};
 `;
 
 /* =========================================================
- * 기본 정보 / 작업자 / 설비 카드
+ * 기본 정보 / 지시자 / 설비 카드
  * ========================================================= */
 export const ContentGrid = styled.div`
   display: grid;
@@ -486,6 +459,13 @@ export const CardHeaderRow = styled.div`
 export const CardTitle = styled.h2`
   ${typography.headlineSm};
   margin: 0;
+`;
+
+export const CardDescription = styled.p`
+  ${typography.bodySm};
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: ${colors.onSurfaceVariant};
 `;
 
 export const LinkButton = styled.button`
@@ -926,7 +906,7 @@ export const HistoryNote = styled.p`
 `;
 
 /* =========================================================
- * 작업자 배정 모달 (3.7)
+ * 지시자 배정 모달 (3.7)
  * ========================================================= */
 export const PickerSearchBox = styled.div`
   display: flex;

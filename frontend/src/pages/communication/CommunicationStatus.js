@@ -15,8 +15,6 @@ import {
   PageSubtitle,
   EmptyStateToggle,
   ToggleSwitch,
-  TabRow,
-  TabButton,
   CardGrid,
   DataCard,
   CardLabel,
@@ -169,12 +167,6 @@ const COMM_LOGS = [
     failReason: "-",
     timestamp: "14:32:01",
   },
-];
-
-const TABS = [
-  { key: "l1", label: "L1 장비 연결 상태" },
-  { key: "l2", label: "L2 수집기 상태" },
-  { key: "log", label: "통신 로그" },
 ];
 
 function L1DeviceTable({ devices }) {
@@ -339,8 +331,7 @@ function CommLogTable({ logs }) {
   );
 }
 
-export default function CommunicationStatus() {
-  const [activeTab, setActiveTab] = useState("l1");
+export default function CommunicationStatus({ activeTab = "l1" }) {
   const [showEmpty, setShowEmpty] = useState(false);
 
   const devices = useMemo(() => (showEmpty ? [] : L1_DEVICES), [showEmpty]);
@@ -368,19 +359,6 @@ export default function CommunicationStatus() {
           />
         </EmptyStateToggle>
       </PageHeader>
-
-      <TabRow>
-        {TABS.map((tab) => (
-          <TabButton
-            key={tab.key}
-            type="button"
-            $active={activeTab === tab.key}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </TabButton>
-        ))}
-      </TabRow>
 
       {activeTab === "l1" && (
         <Panel>

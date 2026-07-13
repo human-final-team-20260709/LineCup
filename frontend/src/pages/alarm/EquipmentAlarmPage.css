@@ -108,6 +108,15 @@
   font-size: 14px;
 }
 
+.equipment-alarm-page .alarm-field select {
+  color-scheme: dark;
+}
+
+.equipment-alarm-page .alarm-field select option {
+  background: #131b2e;
+  color: #dae2fd;
+}
+
 .equipment-alarm-page .alarm-field:focus-within {
   border-color: #4be277;
 }

@@ -260,6 +260,98 @@ export const Footer = styled.footer`
   background: #171f33;
 `;
 
+export const WorkerInfo = styled.section`
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #3d4a3d;
+  border-radius: 4px;
+  background: #131b2e;
+`;
+
+export const WorkerIdentity = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #222a3d;
+`;
+
+export const WorkerAvatar = styled.span`
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid rgba(75, 226, 119, 0.5);
+  border-radius: 4px;
+  background: rgba(75, 226, 119, 0.1);
+  color: #4be277;
+  font-size: 14px;
+  font-weight: 700;
+`;
+
+export const WorkerName = styled.div`
+  min-width: 0;
+
+  span,
+  strong {
+    display: block;
+  }
+
+  span {
+    color: #869585;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 13px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    margin-top: 2px;
+    overflow: hidden;
+    color: #dae2fd;
+    font-size: 14px;
+    line-height: 19px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+export const WorkerDetails = styled.dl`
+  display: grid;
+  gap: 5px;
+  margin: 10px 0 0;
+`;
+
+export const WorkerDetail = styled.div`
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+`;
+
+export const WorkerDetailLabel = styled.dt`
+  color: #869585;
+  font-size: 10px;
+  line-height: 14px;
+`;
+
+export const WorkerDetailValue = styled.dd`
+  margin: 0;
+  overflow: hidden;
+  color: #bccbb9;
+  font-family: ${({ $mono }) =>
+    $mono ? "'JetBrains Mono', monospace" : 'inherit'};
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 export const ErrorMessage = styled.p`
   margin: 0 0 10px;
   padding: 8px 10px;

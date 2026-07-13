@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import './AlarmHistoryPage.css';
 import {
   FiCalendar,
-  FiDownload,
   FiFileText,
   FiFilter,
   FiSearch,
@@ -92,10 +91,6 @@ function AlarmHistoryPage() {
           <h1>알람 이력 목록</h1>
           <p>전체 알람 발생 이력, 해제 시간, 처리 여부를 기준으로 설비 이상 흐름을 추적합니다.</p>
         </TitleBlock>
-        <PrimaryButton type="button">
-          <FiDownload />
-          CSV 내보내기
-        </PrimaryButton>
       </PageHeader>
 
       <StateSwitch aria-label="데이터 상태 미리보기">
@@ -284,7 +279,6 @@ const PageShell = withClass('main', 'alarm-history-page');
 const PageHeader = withClass('section', 'alarm-page-header');
 const TitleBlock = withClass('div', 'alarm-title-block');
 const Eyebrow = withClass('span', 'alarm-eyebrow');
-const PrimaryButton = withClass('button', 'alarm-button alarm-button--primary');
 const StateSwitch = withClass('div', 'alarm-state-switch');
 const SummaryGrid = withClass('section', 'alarm-summary-grid');
 const SummaryCard = withClass('article', 'alarm-summary-card');

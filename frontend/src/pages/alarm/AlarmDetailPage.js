@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import './AlarmDetailPage.css';
 import {
-  FiAlertTriangle,
   FiCheckCircle,
   FiClock,
   FiEdit3,
@@ -356,10 +355,6 @@ function AlarmDetailPage() {
               </TextAreaField>
             </FormGrid>
             <ButtonRow>
-              <GhostButton type="button">
-                <FiAlertTriangle />
-                작업지시 연결
-              </GhostButton>
               <PrimaryButton type="button">
                 <FiEdit3 />
                 처리 내용 저장
@@ -467,7 +462,6 @@ const Field = withClass('label', 'alarm-form-field');
 const TextAreaField = withClass('label', 'alarm-form-field alarm-textarea-field');
 const ButtonRow = withClass('div', 'alarm-button-row');
 const PrimaryButton = withClass('button', 'alarm-button alarm-button--primary');
-const GhostButton = withClass('button', 'alarm-button alarm-button--ghost');
 const TableFrame = withClass('div', 'alarm-table-frame');
 const RelatedTable = withClass('table', 'alarm-table');
 const TimeCell = withClass('div', 'alarm-time-cell');

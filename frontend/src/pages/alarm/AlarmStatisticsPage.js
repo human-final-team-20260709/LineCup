@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import './AlarmStatisticsPage.css';
-import { FiBarChart2, FiCalendar, FiCheckCircle, FiDownload, FiTrendingUp } from 'react-icons/fi';
+import { FiBarChart2, FiCalendar, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
 
 const dailyCounts = [
   { day: '07-03', count: 16 },
@@ -66,10 +66,6 @@ function AlarmStatisticsPage() {
           <h1>알람 통계</h1>
           <p>일별 발생 수, 설비별 발생 수, 심각도 비율, 반복 알람 순위를 운영 지표로 확인합니다.</p>
         </TitleBlock>
-        <PrimaryButton type="button">
-          <FiDownload />
-          리포트 다운로드
-        </PrimaryButton>
       </PageHeader>
 
       <ControlRow>
@@ -258,7 +254,6 @@ const PageShell = withClass('main', 'alarm-statistics-page');
 const PageHeader = withClass('section', 'alarm-page-header');
 const TitleBlock = withClass('div', 'alarm-title-block');
 const Eyebrow = withClass('span', 'alarm-eyebrow');
-const PrimaryButton = withClass('button', 'alarm-button alarm-button--primary');
 const ControlRow = withClass('section', 'alarm-control-row');
 const StateSwitch = withClass('div', 'alarm-state-switch');
 const FilterField = withClass('label', 'alarm-field alarm-stat-filter-field');

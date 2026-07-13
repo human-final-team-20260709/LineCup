@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiCheckCircle, FiChevronLeft, FiChevronRight, FiFilter, FiPlus, FiSearch } from 'react-icons/fi';
+import { FiCheckCircle, FiFilter, FiPlus, FiSearch } from 'react-icons/fi';
+import CommonPagination from '../../components/CommonPagination';
 import {
   Page, PageHeader, TitleGroup, Eyebrow, Button, StateSwitch, StateButton, Toolbar, SearchField,
   SelectField, TableCard, CardHeader, PanelLabel, Count, TableWrap, Table, Mono, StatusChip,
-  Pagination, PageButton, EmptyState,
+  EmptyState,
 } from './DefectListPageCss';
 
 const defects = [
@@ -79,14 +80,14 @@ function DefectListPage() {
                 ))}</tbody>
               </Table>
             </TableWrap>
-            <Pagination>
-              <span>{(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, filtered.length)} / {filtered.length}</span>
-              <div>
-                <PageButton type="button" disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="이전 페이지"><FiChevronLeft /></PageButton>
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => <PageButton key={number} type="button" $active={number === safePage} onClick={() => setPage(number)}>{number}</PageButton>)}
-                <PageButton type="button" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)} aria-label="다음 페이지"><FiChevronRight /></PageButton>
-              </div>
-            </Pagination>
+            <CommonPagination
+              ariaLabel="불량 목록 페이지 이동"
+              currentPage={safePage}
+              onPageChange={setPage}
+              pageSize={PAGE_SIZE}
+              totalItems={filtered.length}
+              totalPages={totalPages}
+            />
           </>
         ) : (
           <EmptyState><FiCheckCircle /><strong>조건에 맞는 불량 이력이 없습니다.</strong><span>검색어나 필터를 변경하거나 새 불량을 등록해 주세요.</span><Button type="button" onClick={() => { setQuery(''); setStatus('all'); setProcess('all'); setShowEmpty(false); }}>필터 초기화</Button></EmptyState>

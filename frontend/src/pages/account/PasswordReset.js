@@ -40,7 +40,7 @@ function PasswordReset() {
           <h1>비밀번호 재설정</h1>
           <p>인증된 계정의 비밀번호를 새 값으로 변경하는 화면입니다.</p>
         </div>
-        <TopLink to="/account/find">
+        <TopLink to="/account/find/password">
           <FiArrowLeft aria-hidden="true" />
           계정 찾기로 이동
         </TopLink>
