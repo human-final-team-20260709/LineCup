@@ -1,0 +1,13 @@
+/.agents
+/.codex
+
+# C build outputs and runtime spool
+/c/mes_l1
+/c/mes_l2
+/c/mes_l1.exe
+/c/mes_l2.exe
+/c/test_protocol
+/c/test_aggregator
+/c/test_spool
+/c/runtime/
+/c/tests/__pycache__/
