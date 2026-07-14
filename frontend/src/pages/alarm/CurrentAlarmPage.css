@@ -52,38 +52,6 @@
   text-transform: uppercase;
 }
 
-.current-alarm-page .alarm-header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.current-alarm-page .alarm-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  color: #dae2fd;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.current-alarm-page .alarm-button--primary {
-  background: #31394d;
-}
-
-.current-alarm-page .alarm-button--ghost {
-  background: #131b2e;
-}
-
-.current-alarm-page .alarm-button:hover {
-  border-color: #4be277;
-}
-
 .current-alarm-page .alarm-state-switch {
   display: inline-flex;
   padding: 3px;
@@ -222,6 +190,15 @@
 
 .current-alarm-page .alarm-field input::placeholder {
   color: #869585;
+}
+
+.current-alarm-page .alarm-field select {
+  color-scheme: dark;
+}
+
+.current-alarm-page .alarm-field select option {
+  background: #131b2e;
+  color: #dae2fd;
 }
 
 .current-alarm-page .alarm-field:focus-within {
@@ -392,54 +369,6 @@
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
-}
-
-.current-alarm-page .alarm-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: auto;
-  padding: 14px 16px;
-  border-top: 1px solid #334155;
-}
-
-.current-alarm-page .alarm-pagination-meta {
-  color: #bccbb9;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.current-alarm-page .alarm-pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.current-alarm-page .alarm-pagination-button {
-  min-width: 34px;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #131b2e;
-  color: #dae2fd;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.current-alarm-page .alarm-pagination-button:hover:not(:disabled),
-.current-alarm-page .alarm-pagination-button.is-active {
-  border-color: #4be277;
-  background: rgba(75, 226, 119, 0.14);
-  color: #4be277;
-}
-
-.current-alarm-page .alarm-pagination-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
 }
 
 .current-alarm-page .alarm-equipment-cell,

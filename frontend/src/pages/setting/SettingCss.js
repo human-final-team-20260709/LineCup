@@ -28,8 +28,8 @@ export const PageShell = styled.main`
 `;
 
 export const PageHeader = styled.header`
-  width: min(1440px, 100%);
-  margin: 0 auto 20px;
+  width: 100%;
+  margin: 0 0 20px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -80,8 +80,8 @@ export const SystemBadge = styled.span`
 `;
 
 export const SummaryGrid = styled.section`
-  width: min(1440px, 100%);
-  margin: 0 auto 20px;
+  width: 100%;
+  margin: 0 0 20px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
@@ -130,9 +130,9 @@ export const SummaryValue = styled.strong`
 `;
 
 export const ActionNotice = styled.div`
-  width: min(1440px, 100%);
+  width: 100%;
   min-height: 44px;
-  margin: 0 auto 12px;
+  margin: 0 0 12px;
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -149,8 +149,8 @@ export const ActionNotice = styled.div`
 `;
 
 export const SectionCard = styled.section`
-  width: min(1440px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   overflow: hidden;
   border: 1px solid ${colors.border};
   border-radius: 4px;
@@ -187,28 +187,6 @@ export const StateButton = styled.button`
   font-weight: 700;
   cursor: pointer;
   ${({ $active }) => $active && css`box-shadow: inset 0 -2px ${colors.primary};`}
-`;
-
-export const Tabs = styled.div`
-  display: flex;
-  padding: 0 20px;
-  gap: 22px;
-  border-bottom: 1px solid ${colors.border};
-`;
-
-export const Tab = styled.button`
-  min-height: 52px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-bottom: 2px solid ${({ $active }) => $active ? colors.primary : 'transparent'};
-  background: transparent;
-  color: ${({ $active }) => $active ? colors.text : colors.textMuted};
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
 `;
 
 export const Badge = styled.span`

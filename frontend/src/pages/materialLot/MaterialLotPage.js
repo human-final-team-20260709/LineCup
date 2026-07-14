@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
-import { FiBox, FiLayers, FiPackage } from 'react-icons/fi';
-import BomManagement from './BomManagement';
-import InventoryManagement from './InventoryManagement';
-import LotManagement from './LotManagement';
+import { useState } from "react";
+import BomManagement from "./BomManagement";
+import InventoryManagement from "./InventoryManagement";
+import LotManagement from "./LotManagement";
+import StockMovementRegistration from "./StockMovementRegistration";
 import {
   ActionButton,
   HeaderActions,
@@ -18,45 +18,52 @@ import {
   SegmentButton,
   SegmentControl,
   StatusDot,
-  TabButton,
-  TabList,
   ViewportPanel,
-} from './MaterialLotPageCss';
-
-const tabs = [
-  { id: 'bom', label: 'BOM 관리', icon: FiLayers },
-  { id: 'lot', label: 'LOT 관리', icon: FiBox },
-  { id: 'inventory', label: '재고 관리', icon: FiPackage },
-];
+} from "./MaterialLotPageCss";
 
 const kpiItems = [
-  { label: '부족 자재', value: '4', meta: '작업지시 WO-2407 기준', tone: 'warning' },
-  { label: 'LOT 추적률', value: '98.7%', meta: '최근 24시간 생산 LOT', tone: 'success' },
-  { label: '안전 재고 미달', value: '3', meta: '면, 스프, 포장재', tone: 'danger' },
-  { label: '입출고 대기', value: '12', meta: '승인 필요 건수', tone: 'neutral' },
+  {
+    label: "부족 자재",
+    value: "4",
+    meta: "작업지시 WO-2407 기준",
+    tone: "warning",
+  },
+  {
+    label: "LOT 추적률",
+    value: "98.7%",
+    meta: "최근 24시간 생산 LOT",
+    tone: "success",
+  },
+  {
+    label: "안전 재고 미달",
+    value: "3",
+    meta: "면, 스프, 포장재",
+    tone: "danger",
+  },
+  {
+    label: "입출고 대기",
+    value: "12",
+    meta: "승인 필요 건수",
+    tone: "neutral",
+  },
 ];
 
-function MaterialLotPage() {
-  const [activeTab, setActiveTab] = useState('bom');
+function MaterialLotPage({ activeTab = "bom" }) {
   const [showEmptyState, setShowEmptyState] = useState(false);
+  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
 
-  const ActiveContent = useMemo(() => {
-    if (activeTab === 'lot') {
-      return LotManagement;
-    }
-
-    if (activeTab === 'inventory') {
-      return InventoryManagement;
-    }
-
-    return BomManagement;
-  }, [activeTab]);
+  const ActiveContent =
+    activeTab === "lot"
+      ? LotManagement
+      : activeTab === "inventory"
+        ? InventoryManagement
+        : BomManagement;
 
   return (
     <MaterialLotLayout>
       <PageHeader>
         <div>
-          <PageTitle>자재 / LOT</PageTitle>
+          <PageTitle>재고 / BOM / LOT</PageTitle>
           <PageSubtitle>
             컵라면 생산 라인의 BOM 소요량, 생산 LOT 추적, 자재 및 완제품 재고를
             통합 모니터링합니다.
@@ -79,7 +86,12 @@ function MaterialLotPage() {
               데이터 없음
             </SegmentButton>
           </SegmentControl>
-          <ActionButton type="button">입출고 등록</ActionButton>
+          <ActionButton
+            type="button"
+            onClick={() => setIsMovementModalOpen(true)}
+          >
+            입출고 등록
+          </ActionButton>
         </HeaderActions>
       </PageHeader>
 
@@ -97,26 +109,13 @@ function MaterialLotPage() {
       </KpiGrid>
 
       <ViewportPanel>
-        <TabList role="tablist" aria-label="자재 LOT 화면">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <TabButton
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                $active={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <Icon aria-hidden="true" />
-                {tab.label}
-              </TabButton>
-            );
-          })}
-        </TabList>
         <ActiveContent showEmptyState={showEmptyState} />
       </ViewportPanel>
+
+      <StockMovementRegistration
+        isOpen={isMovementModalOpen}
+        onClose={() => setIsMovementModalOpen(false)}
+      />
     </MaterialLotLayout>
   );
 }

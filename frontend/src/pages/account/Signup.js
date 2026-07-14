@@ -54,7 +54,7 @@ const validateSignupForm = (formData) => {
   const phone = String(formData.get("phone") || "").trim();
 
   if (!userId) {
-    errors.userId = "아이디를 입력해주세요.";
+    errors.userId = "사원 번호를 입력해주세요.";
   } else if (!/^[A-Za-z0-9._-]{4,20}$/.test(userId)) {
     errors.userId = "영문, 숫자, 특수문자(._-)를 사용해 4~20자로 입력해주세요.";
   }
@@ -169,7 +169,7 @@ function Signup() {
             <SectionLabel>USER PROFILE</SectionLabel>
             <FieldGrid>
               <Field>
-                <Label htmlFor="signup-user-id">아이디</Label>
+                <Label htmlFor="signup-user-id">사원 번호</Label>
                 <Input
                   id="signup-user-id"
                   name="userId"

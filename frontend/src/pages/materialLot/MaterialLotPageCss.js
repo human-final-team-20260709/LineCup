@@ -145,32 +145,3 @@ export const ViewportPanel = styled.section`
   background: #131b2e;
   overflow: hidden;
 `;
-
-export const TabList = styled.div`
-  display: flex;
-  gap: 4px;
-  padding: 8px;
-  border-bottom: 1px solid #334155;
-  background: #060e20;
-`;
-
-export const TabButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid ${({ $active }) => ($active ? '#4be277' : '#222a3d')};
-  border-radius: 4px;
-  background: ${({ $active }) => ($active ? '#172f2b' : '#171f33')};
-  color: ${({ $active }) => ($active ? '#6bff8f' : '#bccbb9')};
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`;

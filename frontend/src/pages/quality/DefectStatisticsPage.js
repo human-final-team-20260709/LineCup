@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { FiBarChart2, FiCalendar, FiCheckCircle, FiDownload, FiTarget, FiTrendingDown } from 'react-icons/fi';
+import { FiBarChart2, FiCalendar, FiCheckCircle, FiTarget, FiTrendingDown } from 'react-icons/fi';
 import {
-  Page, PageHeader, TitleGroup, Eyebrow, Button, ControlRow, StateSwitch, StateButton, SelectField,
+  Page, PageHeader, TitleGroup, Eyebrow, ControlRow, StateSwitch, StateButton, SelectField,
   MetricGrid, MetricCard, MetricLabel, MetricValue, StatsGrid, Panel, PanelHeader, PanelLabel, Mono,
   DailyChart, DailyColumn, BarTrack, BarFill, HorizontalList, HorizontalItem, ProgressTrack, ProgressFill,
   TypeGrid, TypeCard, TypeIcon, TableWrap, Table, Rank, Trend, EmptyState,
@@ -42,7 +42,6 @@ function DefectStatisticsPage() {
     <Page>
       <PageHeader>
         <TitleGroup><Eyebrow>Quality Control / Analytics</Eyebrow><h1>불량 통계</h1><p>기간별 불량률과 제품·공정·유형별 품질 추이를 비교 분석합니다.</p></TitleGroup>
-        <Button type="button"><FiDownload /> 리포트 다운로드</Button>
       </PageHeader>
 
       <ControlRow>

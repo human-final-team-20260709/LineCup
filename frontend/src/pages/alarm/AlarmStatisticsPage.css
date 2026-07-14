@@ -56,26 +56,6 @@
   text-transform: uppercase;
 }
 
-.alarm-statistics-page .alarm-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #31394d;
-  color: #dae2fd;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.alarm-statistics-page .alarm-button:hover {
-  border-color: #4be277;
-}
-
 .alarm-statistics-page .alarm-control-row {
   display: flex;
   align-items: center;
@@ -128,7 +108,13 @@
   outline: 0;
   background: transparent;
   color: #dae2fd;
+  color-scheme: dark;
   font-size: 14px;
+}
+
+.alarm-statistics-page .alarm-field select option {
+  background: #131b2e;
+  color: #dae2fd;
 }
 
 .alarm-statistics-page .alarm-field:focus-within {

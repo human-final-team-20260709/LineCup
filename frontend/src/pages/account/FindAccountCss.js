@@ -120,43 +120,6 @@ export const FindCard = styled.section`
   }
 `;
 
-export const ModeSwitch = styled.div`
-  display: inline-grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(180px, 1fr);
-  border: 1px solid ${colors.border};
-  border-radius: 4px;
-  overflow: hidden;
-  width: 100%;
-
-  @media (max-width: 520px) {
-    width: 100%;
-    display: grid;
-    grid-auto-flow: row;
-  }
-`;
-
-export const ModeButton = styled.button`
-  min-height: 54px;
-  border: 0;
-  border-left: 1px solid ${colors.border};
-  background: ${({ $active }) => ($active ? colors.surfaceHighest : colors.surfaceLow)};
-  color: ${({ $active }) => ($active ? colors.primary : colors.textMuted)};
-  padding: 0 22px;
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 18px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  &:first-child {
-    border-left: 0;
-  }
-`;
-
 export const Form = styled.form`
   display: grid;
   gap: 22px;

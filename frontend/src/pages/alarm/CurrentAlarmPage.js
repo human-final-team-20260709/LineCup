@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CurrentAlarmPage.css';
+import CommonPagination from '../../components/CommonPagination';
 import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
-  FiDownload,
   FiFilter,
-  FiRefreshCcw,
   FiSearch,
   FiTool,
 } from 'react-icons/fi';
@@ -171,7 +170,6 @@ function CurrentAlarmPage() {
   const pageStart = (currentPage - 1) * PAGE_SIZE;
   const pageAlarms = alarms.slice(pageStart, pageStart + PAGE_SIZE);
   const openDetail = (alarmId) => navigate(`/alarm/detail/${alarmId}`);
-  const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages));
 
   return (
     <PageShell>
@@ -181,16 +179,6 @@ function CurrentAlarmPage() {
           <h1>현재 알람</h1>
           <p>컵라면 생산 라인에서 현재 발생 중인 알람과 조치 상태를 실시간 운영 화면으로 확인합니다.</p>
         </TitleBlock>
-        <HeaderActions>
-          <GhostButton type="button">
-            <FiRefreshCcw />
-            실시간 갱신
-          </GhostButton>
-          <PrimaryButton type="button">
-            <FiDownload />
-            알람 내보내기
-          </PrimaryButton>
-        </HeaderActions>
       </PageHeader>
 
       <StateSwitch aria-label="데이터 상태 미리보기">
@@ -326,29 +314,14 @@ function CurrentAlarmPage() {
                   ))}
                 </tbody>
               </AlarmTable>
-              <Pagination>
-                <PaginationMeta>
-                  {pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, alarms.length)} / {alarms.length}
-                </PaginationMeta>
-                <PaginationControls>
-                  <PaginationButton type="button" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
-                    이전
-                  </PaginationButton>
-                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                    <PaginationButton
-                      key={page}
-                      type="button"
-                      className={page === currentPage ? 'is-active' : undefined}
-                      onClick={() => goToPage(page)}
-                    >
-                      {page}
-                    </PaginationButton>
-                  ))}
-                  <PaginationButton type="button" disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
-                    다음
-                  </PaginationButton>
-                </PaginationControls>
-              </Pagination>
+              <CommonPagination
+                ariaLabel="현재 알람 목록 페이지 이동"
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={alarms.length}
+                totalPages={totalPages}
+              />
             </TableFrame>
           ) : (
             <EmptyState>
@@ -406,9 +379,6 @@ const PageShell = withClass('main', 'current-alarm-page');
 const PageHeader = withClass('section', 'alarm-page-header');
 const TitleBlock = withClass('div', 'alarm-title-block');
 const Eyebrow = withClass('span', 'alarm-eyebrow');
-const HeaderActions = withClass('div', 'alarm-header-actions');
-const PrimaryButton = withClass('button', 'alarm-button alarm-button--primary');
-const GhostButton = withClass('button', 'alarm-button alarm-button--ghost');
 const StateSwitch = withClass('div', 'alarm-state-switch');
 const MetricGrid = withClass('section', 'alarm-metric-grid');
 const MetricHeader = withClass('div', 'alarm-metric-header');
@@ -422,10 +392,6 @@ const PanelLabel = withClass('span', 'alarm-panel-label');
 const PanelMeta = withClass('span', 'alarm-panel-meta');
 const TableFrame = withClass('div', 'alarm-table-frame');
 const AlarmTable = withClass('table', 'alarm-table');
-const Pagination = withClass('div', 'alarm-pagination');
-const PaginationMeta = withClass('span', 'alarm-pagination-meta');
-const PaginationControls = withClass('div', 'alarm-pagination-controls');
-const PaginationButton = withClass('button', 'alarm-pagination-button');
 const EquipmentCell = withClass('div', 'alarm-equipment-cell');
 const TimeStack = withClass('div', 'alarm-time-stack');
 const MonoText = withClass('span', 'alarm-mono');

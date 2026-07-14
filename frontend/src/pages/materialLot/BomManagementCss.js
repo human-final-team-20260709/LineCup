@@ -108,6 +108,45 @@ export const HeaderMeta = styled.span`
   font-weight: 700;
 `;
 
+export const HeaderActions = styled.div`
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const ProductEditButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #3d4a3d;
+  border-radius: 4px;
+  background: #222a3d;
+  color: #dae2fd;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #4be277;
+    color: #6bff8f;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4be277;
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
 export const ProductList = styled.div`
   display: grid;
 `;
@@ -265,21 +304,6 @@ export const BomTable = styled.table`
 
   td:nth-child(3) {
     color: #bccbb9;
-  }
-`;
-
-export const ClickableCellButton = styled.button`
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-
-  &:hover {
-    color: #6bff8f;
-    text-decoration: underline;
-    text-underline-offset: 3px;
   }
 `;
 
@@ -456,6 +480,12 @@ export const ModalInput = styled.input`
 
   &:focus {
     border-color: #4be277;
+  }
+
+  &:read-only {
+    background: #131b2e;
+    color: #869585;
+    cursor: not-allowed;
   }
 `;
 
@@ -678,268 +708,5 @@ export const ModalButton = styled.button`
 
   &:hover {
     border-color: ${({ $primary }) => ($primary ? '#6bff8f' : '#4be277')};
-  }
-`;
-
-export const MaterialEditOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 1010;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background: rgba(6, 14, 32, 0.78);
-`;
-
-export const MaterialEditModal = styled.section`
-  display: flex;
-  flex-direction: column;
-  width: min(820px, 90vw);
-  max-height: 85vh;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #171f33;
-  color: #dae2fd;
-  overflow: hidden;
-`;
-
-export const MaterialEditHeader = styled.header`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-  border-bottom: 1px solid #334155;
-  background: #131b2e;
-`;
-
-export const MaterialEditTitle = styled.h3`
-  margin: 0;
-  color: #dae2fd;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 24px;
-`;
-
-export const MaterialEditDescription = styled.p`
-  margin: 4px 0 0;
-  color: #869585;
-  font-size: 12px;
-  line-height: 16px;
-`;
-
-export const MaterialEditCloseButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #222a3d;
-  color: #bccbb9;
-  cursor: pointer;
-
-  &:hover {
-    border-color: #ff8a83;
-    color: #ffb4ae;
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-export const MaterialEditBody = styled.div`
-  overflow-y: auto;
-  padding: 18px 20px;
-`;
-
-export const MaterialEditSection = styled.section`
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #131b2e;
-
-  & + & {
-    margin-top: 16px;
-  }
-`;
-
-export const MaterialEditSectionTitle = styled.h4`
-  margin: 0;
-  padding: 14px 16px;
-  border-bottom: 1px solid #334155;
-  background: #060e20;
-  color: #dae2fd;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 20px;
-`;
-
-export const MaterialInfoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 16px;
-`;
-
-export const ReadonlyInfoBox = styled.div`
-  min-height: 72px;
-  padding: 12px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #060e20;
-
-  span {
-    display: block;
-    color: #869585;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 16px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  strong {
-    display: block;
-    margin-top: 8px;
-    color: #dae2fd;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-    line-height: 20px;
-  }
-`;
-
-export const EditFormGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 16px;
-`;
-
-export const EditFormField = styled.div`
-  display: grid;
-  grid-column: ${({ $wide }) => ($wide ? '1 / -1' : 'auto')};
-  gap: 6px;
-`;
-
-export const EditFormLabel = styled.label`
-  color: #bccbb9;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 16px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-`;
-
-export const EditTextInput = styled.input`
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #060e20;
-  color: #dae2fd;
-  font-size: 13px;
-  outline: none;
-
-  &::placeholder {
-    color: #869585;
-  }
-
-  &:focus {
-    border-color: #4be277;
-  }
-`;
-
-export const EditSelectInput = styled.select`
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #060e20;
-  color: #dae2fd;
-  font-size: 13px;
-  outline: none;
-
-  &:focus {
-    border-color: #4be277;
-  }
-`;
-
-export const EditTextArea = styled.textarea`
-  min-height: 88px;
-  resize: vertical;
-  padding: 10px 12px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #060e20;
-  color: #dae2fd;
-  font-size: 13px;
-  line-height: 20px;
-  outline: none;
-
-  &::placeholder {
-    color: #869585;
-  }
-
-  &:focus {
-    border-color: #4be277;
-  }
-`;
-
-export const MaterialEditNotice = styled.p`
-  margin: 0 16px 16px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 185, 95, 0.3);
-  border-radius: 4px;
-  background: rgba(255, 185, 95, 0.08);
-  color: #ffddb8;
-  font-size: 12px;
-  line-height: 18px;
-`;
-
-export const MaterialEditFooter = styled.footer`
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 16px 20px 20px;
-  border-top: 1px solid #222a3d;
-`;
-
-export const MaterialEditCancelButton = styled.button`
-  min-width: 88px;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #222a3d;
-  color: #dae2fd;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover {
-    border-color: #4be277;
-  }
-`;
-
-export const MaterialEditSaveButton = styled.button`
-  min-width: 104px;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid #4be277;
-  border-radius: 4px;
-  background: #4be277;
-  color: #003915;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover {
-    border-color: #6bff8f;
-    background: #6bff8f;
   }
 `;

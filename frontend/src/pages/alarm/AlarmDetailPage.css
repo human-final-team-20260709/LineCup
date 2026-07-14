@@ -307,6 +307,15 @@
   padding: 0 10px;
 }
 
+.alarm-detail-page .alarm-form-field select {
+  color-scheme: dark;
+}
+
+.alarm-detail-page .alarm-form-field select option {
+  background: #131b2e;
+  color: #dae2fd;
+}
+
 .alarm-detail-page .alarm-form-field textarea {
   min-height: 120px;
   padding: 10px;
@@ -348,10 +357,6 @@
 
 .alarm-detail-page .alarm-button--primary {
   background: #31394d;
-}
-
-.alarm-detail-page .alarm-button--ghost {
-  background: #131b2e;
 }
 
 .alarm-detail-page .alarm-button:hover {

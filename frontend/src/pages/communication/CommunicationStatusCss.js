@@ -98,34 +98,6 @@ export const ToggleSwitch = styled.button`
   }
 `;
 
-export const TabRow = styled.div`
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid ${colors.outlineVariant};
-`;
-
-export const TabButton = styled.button`
-  appearance: none;
-  border: none;
-  background: transparent;
-  padding: 10px 16px;
-  font-family: Inter, sans-serif;
-  font-size: 14px;
-  font-weight: ${({ $active }) => ($active ? 600 : 400)};
-  color: ${({ $active }) =>
-    $active ? colors.primary : colors.onSurfaceVariant};
-  border-bottom: 2px solid
-    ${({ $active }) => ($active ? colors.primary : "transparent")};
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
-
-  &:hover {
-    color: ${colors.onSurface};
-  }
-`;
-
 export const CardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
