@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   FiActivity,
+  FiBarChart2,
   FiBox,
   FiCheckSquare,
   FiChevronLeft,
@@ -76,34 +77,41 @@ const MENU_ITEMS = [
   },
   {
     number: "03",
+    label: "생산 실적",
+    path: "/production-results",
+    icon: FiBarChart2,
+    roles: ALL_ROLES,
+  },
+  {
+    number: "04",
     label: "품질관리",
     path: "/quality",
     icon: FiCheckSquare,
     roles: ALL_ROLES,
   },
   {
-    number: "04",
+    number: "05",
     label: "재고 / BOM / LOT",
     path: "/materials",
     icon: FiBox,
     roles: ALL_ROLES,
   },
   {
-    number: "05",
+    number: "06",
     label: "알람 이력",
     path: "/alarms",
     icon: FiActivity,
     roles: ALL_ROLES,
   },
   {
-    number: "06",
+    number: "07",
     label: "통신 상태",
     path: "/communications",
     icon: FiWifi,
     roles: ALL_ROLES,
   },
   {
-    number: "07",
+    number: "08",
     label: "설정",
     path: "/settings",
     icon: FiSettings,
