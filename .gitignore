@@ -11,3 +11,4 @@
 /c/test_spool
 /c/runtime/
 /c/tests/__pycache__/
+.vscode/
