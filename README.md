@@ -770,6 +770,31 @@ make sanitize
 * L2는 1시간이 경과하거나 작업지시가 완료·보류되면 집계값을 로컬 스풀에 안전하게 이동하고 다음 집계를 시작한다. 백엔드 저장 성공 응답을 받은 후에만 스풀에서 완전히 제거한다.
 * `WORK_ORDER.current_qty`, `good_qty`, `defect_qty`는 해당 작업지시의 `HOURLY_PRODUCTION` 집계 합계와 일치하도록 백엔드에서 갱신한다.
 
+#### PRODUCTION_RESULT — 생산 실적 요약
+
+| 컬럼명 | 타입 | 키 | 설명 |
+| --- | --- | --- | --- |
+| production_result_id | BIGINT | PK | 생산 실적 고유 ID |
+| result_no | VARCHAR(30) | UNIQUE | 표시용 생산 실적 번호 (예: PR-20260715-012) |
+| work_order_id | BIGINT | FK → WORK_ORDER | 실적 대상 작업지시 |
+| production_lot_id | BIGINT | FK → PRODUCTION_LOT | 실적 대상 생산 LOT |
+| target_qty | INT |  | 실적 집계 시작 시점의 목표 수량 |
+| production_qty | INT |  | 누적 생산 수량 |
+| good_qty | INT |  | 누적 정상 수량 |
+| defect_qty | INT |  | 누적 불량 수량 |
+| status | VARCHAR(20) |  | COLLECTING(집계 중) / COMPLETED(집계 완료) / CANCELED(취소) |
+| started_at | DATETIME |  | 실적 집계 시작 시각 |
+| completed_at | DATETIME | nullable | 실적 집계 완료 시각 |
+| last_aggregated_at | DATETIME | nullable | 마지막 시간별 생산 집계 반영 시각 |
+| created_at | DATETIME |  | 실적 생성 시각 |
+| updated_at | DATETIME |  | 실적 수정 시각 |
+
+* 작업지시와 생산 LOT별 실적이 중복 생성되지 않도록 `(work_order_id, production_lot_id)` 조합에 UNIQUE 제약을 적용한다.
+* `target_qty`는 작업지시 목표 수량이 이후 변경되더라도 당시 실적 기준을 보존하기 위한 스냅샷 값이다.
+* `PRODUCTION_RESULT`는 L1·L2가 직접 저장하는 테이블이 아니라, 백엔드가 `HOURLY_PRODUCTION` 저장 후 해당 작업지시의 시간별 집계 합계를 다시 계산하여 갱신하는 조회용 요약 테이블이다.
+* 수량 값은 0 이상이어야 하며, 확정된 생산 실적은 `production_qty = good_qty + defect_qty`를 만족해야 한다.
+* 한 작업지시에서는 동시에 하나의 생산 LOT만 `COLLECTING` 상태로 관리한다.
+
 #### WORK_ORDER_WORKER — README 3.7 (작업자 배정)
 
 | 컬럼명 | 타입 | 키 | 설명 |
