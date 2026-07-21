@@ -1,10 +1,10 @@
 package com.human.linecup.service;
 
-import com.human.linecup.dto.request.alarm.AlarmCreateRequest;
-import com.human.linecup.dto.request.alarm.AlarmHandlingRequest;
-import com.human.linecup.dto.request.alarm.AlarmSearchRequest;
-import com.human.linecup.dto.response.alarm.AlarmDetailResponse;
-import com.human.linecup.dto.response.alarm.AlarmSummaryResponse;
+import com.human.linecup.dto.request.AlarmCreateRequest;
+import com.human.linecup.dto.request.AlarmHandlingRequest;
+import com.human.linecup.dto.request.AlarmSearchRequest;
+import com.human.linecup.dto.response.AlarmDetailResponse;
+import com.human.linecup.dto.response.AlarmSummaryResponse;
 import com.human.linecup.entity.Alarm;
 import com.human.linecup.entity.AlarmSeverity;
 import com.human.linecup.entity.AlarmStatus;

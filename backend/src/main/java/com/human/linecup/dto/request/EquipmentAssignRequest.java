@@ -1,13 +1,7 @@
 package com.human.linecup.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Positive;
 
-@Getter
-@NoArgsConstructor
-public class EquipmentAssignRequest {
-
-    @NotNull
-    private Long userId;
+public record EquipmentAssignRequest(@NotNull @Positive Long userId) {
 }

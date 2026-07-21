@@ -1,14 +1,24 @@
 package com.human.linecup.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Objects;
 
-/** ERD: COMMUNICATION_LOG — 통신 로그 */
 @Entity
 @Table(name = "communication_log", indexes = {
         @Index(name = "idx_comm_log_device_time", columnList = "device_id, occurred_at"),
@@ -19,27 +29,22 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CommunicationLog {
 
-    public static final String SEND = "송신";
-    public static final String RECEIVE = "수신";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
     private Long logId;
 
-    // L1 <-> L2 로그인 경우 사용, nullable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id")
     private L1Device device;
 
-    // L2 <-> 백엔드 로그인 경우 사용, nullable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "collector_id")
     private L2Collector collector;
 
-    // 송신 / 수신
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private String direction;
+    private CommunicationDirection direction;
 
     @Column(nullable = false)
     private boolean success;
@@ -48,16 +53,41 @@ public class CommunicationLog {
     private String failReason;
 
     @Column(name = "occurred_at", nullable = false)
-    private LocalDateTime occurredAt;
+    private Instant occurredAt;
 
-    @Builder
-    public CommunicationLog(L1Device device, L2Collector collector, String direction,
-                             boolean success, String failReason, LocalDateTime occurredAt) {
-        this.device = device;
-        this.collector = collector;
-        this.direction = direction;
-        this.success = success;
-        this.failReason = failReason;
-        this.occurredAt = occurredAt;
+    public static CommunicationLog record(
+            L1Device device,
+            L2Collector collector,
+            CommunicationDirection direction,
+            boolean success,
+            String failReason,
+            Instant occurredAt
+    ) {
+        if ((device == null) == (collector == null)) {
+            throw new IllegalArgumentException("L1 장비 또는 L2 수집기 중 하나만 지정해야 합니다.");
+        }
+        CommunicationLog log = new CommunicationLog();
+        log.device = device;
+        log.collector = collector;
+        log.direction = Objects.requireNonNull(direction, "통신 방향은 필수입니다.");
+        log.success = success;
+        log.failReason = failReason == null || failReason.isBlank() ? null : failReason.trim();
+        log.occurredAt = Objects.requireNonNull(occurredAt, "통신 시각은 필수입니다.");
+        return log;
+    }
+
+    public enum CommunicationDirection {
+        RX("수신"),
+        TX("송신");
+
+        private final String label;
+
+        CommunicationDirection(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
     }
 }

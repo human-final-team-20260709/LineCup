@@ -1,24 +1,16 @@
 package com.human.linecup.dto.response;
 
-import com.human.linecup.entity.RawMaterial;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import com.human.linecup.entity.RawMaterial.RawMaterialStatus;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class RawMaterialResponse {
+import java.math.BigDecimal;
 
-    private final Long materialId;
-    private final String materialName;
-    private final String unit;
-
-    public static RawMaterialResponse from(RawMaterial material) {
-        return RawMaterialResponse.builder()
-                .materialId(material.getMaterialId())
-                .materialName(material.getMaterialName())
-                .unit(material.getUnit())
-                .build();
-    }
+public record RawMaterialResponse(
+        Long materialId,
+        String materialCode,
+        String materialName,
+        String unit,
+        BigDecimal safetyStockQty,
+        RawMaterialStatus status,
+        String statusLabel
+) {
 }

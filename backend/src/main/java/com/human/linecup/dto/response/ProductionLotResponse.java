@@ -1,37 +1,31 @@
 package com.human.linecup.dto.response;
 
-import com.human.linecup.entity.ProductionLot;
-import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import com.human.linecup.entity.ProductionLot.ProductionLotStatus;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class ProductionLotResponse {
+import java.time.Instant;
+import java.util.List;
 
-    private final Long productionLotId;
-    private final String lotNo;
-    private final Long workOrderId;
-    private final Integer productionQty;
-    private final Integer goodQty;
-    private final Integer defectQty;
-    private final String status;
-    private final LocalDateTime startedAt;
-    private final LocalDateTime completedAt;
-
-    public static ProductionLotResponse from(ProductionLot productionLot) {
-        return ProductionLotResponse.builder()
-                .productionLotId(productionLot.getProductionLotId())
-                .lotNo(productionLot.getLotNo())
-                .workOrderId(productionLot.getWorkOrderId())
-                .productionQty(productionLot.getProductionQty())
-                .goodQty(productionLot.getGoodQty())
-                .defectQty(productionLot.getDefectQty())
-                .status(productionLot.getStatus())
-                .startedAt(productionLot.getStartedAt())
-                .completedAt(productionLot.getCompletedAt())
-                .build();
+public record ProductionLotResponse(
+        Long productionLotId,
+        String lotNo,
+        Long workOrderId,
+        String workOrderNo,
+        Long productId,
+        String productCode,
+        String productName,
+        int productionQty,
+        int goodQty,
+        int defectQty,
+        ProductionLotStatus status,
+        String statusLabel,
+        Instant startedAt,
+        Instant completedAt,
+        String currentProcess,
+        List<ProcessProgressResponse> processes,
+        List<ProductionLotMaterialResponse> materials
+) {
+    public ProductionLotResponse {
+        processes = processes == null ? List.of() : List.copyOf(processes);
+        materials = materials == null ? List.of() : List.copyOf(materials);
     }
 }

@@ -1,33 +1,22 @@
 package com.human.linecup.dto.response;
 
 import com.human.linecup.entity.ApprovalStatus;
-import com.human.linecup.entity.User;
 import com.human.linecup.entity.UserRole;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record UserResponse(
-        Long id,
-        String userId,
+        Long userId,
+        String empNo,
         String name,
         String email,
         String phone,
         UserRole role,
+        String roleLabel,
         ApprovalStatus approvalStatus,
+        String approvalStatusLabel,
         boolean active,
-        LocalDateTime createdAt
+        Instant createdAt,
+        Instant lastAccessAt
 ) {
-    public static UserResponse from(User user) {
-        return new UserResponse(
-                user.getUserId(),
-                user.getEmpNo(),
-                user.getName(),
-                user.getEmail(),
-                user.getPhone(),
-                user.getRole(),
-                user.getApprovalStatus(),
-                user.isActive(),
-                user.getCreatedAt()
-        );
-    }
 }

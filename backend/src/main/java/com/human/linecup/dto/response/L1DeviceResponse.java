@@ -1,33 +1,18 @@
 package com.human.linecup.dto.response;
 
-import com.human.linecup.entity.L1Device;
-import lombok.Builder;
-import lombok.Getter;
+import com.human.linecup.entity.ConnectionStatus;
 
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 
-@Getter
-@Builder
-public class L1DeviceResponse {
-
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    private Long deviceId;
-    private Long equipmentId;
-    private String ipAddress;
-    private Integer port;
-    private String lastReceivedAt;
-    private String connectionStatus;
-
-    public static L1DeviceResponse from(L1Device device) {
-        return L1DeviceResponse.builder()
-                .deviceId(device.getDeviceId())
-                .equipmentId(device.getEquipmentId())
-                .ipAddress(device.getIpAddress())
-                .port(device.getPort())
-                .lastReceivedAt(device.getLastReceivedAt() == null
-                        ? null : device.getLastReceivedAt().format(TIME_FORMAT))
-                .connectionStatus(device.getConnectionStatus())
-                .build();
-    }
+public record L1DeviceResponse(
+        Long deviceId,
+        Long equipmentId,
+        String equipmentCode,
+        String equipmentName,
+        String ipAddress,
+        Integer port,
+        ConnectionStatus connectionStatus,
+        String connectionStatusLabel,
+        Instant lastReceivedAt
+) {
 }

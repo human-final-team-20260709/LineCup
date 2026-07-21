@@ -609,6 +609,13 @@ make sanitize
 
 ## 10. 데이터베이스 ERD
 
+현재 구현 기준 Entity 관계, 컬럼 정책, L2 DTO 계약은 [`backend/README.md`](backend/README.md)를 단일 기준으로 사용한다. 센서 통합, BOM 헤더/항목 분리, 불량 멱등 키, 공정 진행 및 통합 재고 이동 모델이 반영되어 있다.
+
+아래 내용은 팀 통합 이전 화면 요구를 정리한 구 ERD로, 현재 JPA 스키마의 구현 기준이 아니다.
+
+<details>
+<summary>통합 이전 ERD 참고 자료</summary>
+
 ### 10.1 사용자
 
 #### USER
@@ -956,3 +963,5 @@ make sanitize
 * 모든 PK와 해당 FK의 ID 타입은 `BIGINT`로 통일한다.
 * 수량 값은 0 이상이어야 하며, 원자재 LOT의 `current_qty`는 `received_qty`보다 클 수 없다.
 * 집계 구간은 `bucket_end > bucket_start`를 보장하고, 확정된 생산 집계와 LOT은 `production_qty = good_qty + defect_qty`를 만족해야 한다.
+
+</details>

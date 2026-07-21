@@ -1,14 +1,7 @@
 package com.human.linecup.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.human.linecup.entity.Equipment.EquipmentStatus;
+import jakarta.validation.constraints.NotNull;
 
-@Getter
-@NoArgsConstructor
-public class EquipmentStatusUpdateRequest {
-
-    // RUNNING / STOPPED / ERROR
-    @NotBlank
-    private String status;
+public record EquipmentStatusUpdateRequest(@NotNull EquipmentStatus status) {
 }
