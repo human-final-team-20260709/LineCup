@@ -1,11 +1,12 @@
 package com.human.linecup.service;
 
-import com.human.linecup.dto.request.quality.CreateDefectRequest;
-import com.human.linecup.dto.request.quality.DefectSearchCondition;
-import com.human.linecup.dto.request.quality.UpdateDefectCauseRequest;
-import com.human.linecup.dto.request.quality.UpdateDefectHandlingRequest;
-import com.human.linecup.dto.response.quality.DefectDashboardResponse;
-import com.human.linecup.dto.response.quality.DefectResponse;
+import com.human.linecup.dto.request.DefectCreateRequest;
+import com.human.linecup.dto.request.DefectSearchCondition;
+import com.human.linecup.dto.request.UpdateDefectCauseRequest;
+import com.human.linecup.dto.request.UpdateDefectHandlingRequest;
+import com.human.linecup.dto.response.DefectDashboardResponse;
+import com.human.linecup.dto.response.DefectDetailResponse;
+import com.human.linecup.dto.response.DefectSummaryResponse;
 import com.human.linecup.entity.Defect;
 import com.human.linecup.entity.DefectHandleMethod;
 import com.human.linecup.entity.DefectStatus;

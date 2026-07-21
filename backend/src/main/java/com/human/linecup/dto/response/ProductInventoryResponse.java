@@ -1,29 +1,23 @@
 package com.human.linecup.dto.response;
 
-import com.human.linecup.entity.ProductInventory;
-import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import com.human.linecup.entity.InventoryStatus;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class ProductInventoryResponse {
+import java.time.Instant;
+import java.time.LocalDate;
 
-    private final Long inventoryId;
-    private final Long productionLotId;
-    private final Integer currentQty;
-    private final String status;
-    private final LocalDateTime createdAt;
-
-    public static ProductInventoryResponse from(ProductInventory productInventory) {
-        return ProductInventoryResponse.builder()
-                .inventoryId(productInventory.getInventoryId())
-                .productionLotId(productInventory.getProductionLot().getProductionLotId())
-                .currentQty(productInventory.getCurrentQty())
-                .status(productInventory.getStatus())
-                .createdAt(productInventory.getCreatedAt())
-                .build();
-    }
+public record ProductInventoryResponse(
+        Long inventoryId,
+        Long productionLotId,
+        String lotNo,
+        Long productId,
+        String productCode,
+        String productName,
+        int currentQty,
+        int safetyStockQty,
+        String unit,
+        LocalDate expiryDate,
+        InventoryStatus status,
+        String statusLabel,
+        Instant createdAt
+) {
 }

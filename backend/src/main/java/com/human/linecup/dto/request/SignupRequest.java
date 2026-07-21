@@ -14,7 +14,7 @@ public record SignupRequest(
                 regexp = "^[A-Za-z0-9._-]{4,20}$",
                 message = "사원 번호는 영문, 숫자, 특수문자(._-)를 사용해 4~20자로 입력해주세요."
         )
-        String userId,
+        String empNo,
 
         @NotBlank(message = "비밀번호를 입력해주세요.")
         @Pattern(

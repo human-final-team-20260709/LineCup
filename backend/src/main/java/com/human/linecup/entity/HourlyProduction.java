@@ -1,12 +1,16 @@
 package com.human.linecup.entity;
 
+import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -15,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -23,7 +28,17 @@ import java.time.Instant;
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_hourly_production_order_bucket",
                 columnNames = {"work_order_id", "bucket_start"}
-        )
+        ),
+        check = {
+                @CheckConstraint(
+                        name = "ck_hourly_production_quantities_nonnegative",
+                        constraint = "target_qty >= 0 and production_qty >= 0 and good_qty >= 0 and defect_qty >= 0"
+                ),
+                @CheckConstraint(
+                        name = "ck_hourly_production_quantity_sum",
+                        constraint = "production_qty = good_qty + defect_qty"
+                )
+        }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HourlyProduction {
@@ -33,8 +48,9 @@ public class HourlyProduction {
     @Column(name = "hourly_production_id")
     private Long hourlyProductionId;
 
-    @Column(name = "work_order_id", nullable = false)
-    private Long workOrderId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "work_order_id", nullable = false)
+    private WorkOrder workOrder;
 
     @Column(name = "bucket_start", nullable = false)
     private Instant bucketStart;
@@ -65,7 +81,7 @@ public class HourlyProduction {
     private Instant receivedAt;
 
     public static HourlyProduction create(
-            Long workOrderId,
+            WorkOrder workOrder,
             Instant bucketStart,
             Instant bucketEnd,
             int targetQty,
@@ -75,18 +91,11 @@ public class HourlyProduction {
             boolean partial,
             HourlyProductionCloseReason closeReason
     ) {
-        validate(workOrderId, bucketStart, bucketEnd, targetQty, productionQty, goodQty, defectQty, closeReason);
-
+        validate(bucketStart, bucketEnd, targetQty, productionQty, goodQty, defectQty, closeReason);
         HourlyProduction production = new HourlyProduction();
-        production.workOrderId = workOrderId;
+        production.workOrder = Objects.requireNonNull(workOrder, "작업지시는 필수입니다.");
         production.bucketStart = bucketStart;
-        production.bucketEnd = bucketEnd;
-        production.targetQty = targetQty;
-        production.productionQty = productionQty;
-        production.goodQty = goodQty;
-        production.defectQty = defectQty;
-        production.partial = partial;
-        production.closeReason = closeReason;
+        production.applyAggregate(bucketEnd, targetQty, productionQty, goodQty, defectQty, partial, closeReason);
         return production;
     }
 
@@ -99,7 +108,19 @@ public class HourlyProduction {
             boolean partial,
             HourlyProductionCloseReason closeReason
     ) {
-        validate(workOrderId, bucketStart, bucketEnd, targetQty, productionQty, goodQty, defectQty, closeReason);
+        validate(bucketStart, bucketEnd, targetQty, productionQty, goodQty, defectQty, closeReason);
+        applyAggregate(bucketEnd, targetQty, productionQty, goodQty, defectQty, partial, closeReason);
+    }
+
+    private void applyAggregate(
+            Instant bucketEnd,
+            int targetQty,
+            int productionQty,
+            int goodQty,
+            int defectQty,
+            boolean partial,
+            HourlyProductionCloseReason closeReason
+    ) {
         this.bucketEnd = bucketEnd;
         this.targetQty = targetQty;
         this.productionQty = productionQty;
@@ -115,7 +136,6 @@ public class HourlyProduction {
     }
 
     private static void validate(
-            Long workOrderId,
             Instant bucketStart,
             Instant bucketEnd,
             int targetQty,
@@ -124,20 +144,11 @@ public class HourlyProduction {
             int defectQty,
             HourlyProductionCloseReason closeReason
     ) {
-        if (workOrderId == null || workOrderId <= 0) {
-            throw new IllegalArgumentException("작업지시 ID는 1 이상이어야 합니다.");
-        }
         if (bucketStart == null || bucketEnd == null || !bucketEnd.isAfter(bucketStart)) {
             throw new IllegalArgumentException("집계 종료 시각은 시작 시각보다 이후여야 합니다.");
         }
-        if (targetQty < 0 || productionQty < 0 || goodQty < 0 || defectQty < 0) {
-            throw new IllegalArgumentException("시간별 생산 수량은 0 이상이어야 합니다.");
-        }
-        if (productionQty != goodQty + defectQty) {
-            throw new IllegalArgumentException("생산 수량은 정상 수량과 불량 수량의 합이어야 합니다.");
-        }
-        if (closeReason == null) {
-            throw new IllegalArgumentException("시간별 집계 종료 사유는 필수입니다.");
-        }
+        ProductionQuantityPolicy.requireNonNegative(targetQty, "시간 목표 수량");
+        ProductionQuantityPolicy.validate(productionQty, goodQty, defectQty);
+        Objects.requireNonNull(closeReason, "시간별 집계 종료 사유는 필수입니다.");
     }
 }

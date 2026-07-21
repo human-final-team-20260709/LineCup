@@ -6,19 +6,25 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
 
 public enum UserRole {
-    ADMIN("admin"),
-    OPERATOR("operator"),
-    SUPERVISOR("supervisor");
+    ADMIN("admin", "관리자"),
+    OPERATOR("operator", "작업자"),
+    SUPERVISOR("supervisor", "지시자");
 
     private final String code;
+    private final String label;
 
-    UserRole(String code) {
+    UserRole(String code, String label) {
         this.code = code;
+        this.label = label;
     }
 
     @JsonValue
     public String getCode() {
         return code;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     @JsonCreator

@@ -2,6 +2,8 @@ package com.human.linecup.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,26 +12,22 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.math.BigDecimal;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import java.util.Objects;
 
 @Entity
 @Table(
-        name = "BOM",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_bom_product_material",
-                columnNames = {"product_id", "material_id"}
-        )
+        name = "bom",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_bom_code", columnNames = "bom_code"),
+                @UniqueConstraint(name = "uk_bom_product_version", columnNames = {"product_id", "version"})
+        }
 )
 @Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Bom {
 
     @Id
@@ -37,20 +35,68 @@ public class Bom {
     @Column(name = "bom_id")
     private Long bomId;
 
+    @Column(name = "bom_code", nullable = false, length = 30)
+    private String bomCode;
+
+    @Column(nullable = false, length = 20)
+    private String version;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "material_id", nullable = false)
-    private RawMaterial material;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private BomStatus status;
 
-    @Column(name = "spec", nullable = false, length = 50)
-    private String spec;
+    @Column(columnDefinition = "TEXT")
+    private String note;
 
-    @Column(name = "required_qty", nullable = false, precision = 10, scale = 3)
-    private BigDecimal requiredQty;
+    public static Bom create(
+            String bomCode,
+            String version,
+            Product product,
+            BomStatus status,
+            String note
+    ) {
+        Bom bom = new Bom();
+        bom.bomCode = requireText(bomCode, "BOM 코드");
+        bom.version = requireText(version, "BOM 버전");
+        bom.product = Objects.requireNonNull(product, "제품은 필수입니다.");
+        bom.status = Objects.requireNonNull(status, "BOM 상태는 필수입니다.");
+        bom.note = normalizeText(note);
+        return bom;
+    }
 
-    @Column(name = "loss_rate", nullable = false, precision = 5, scale = 2)
-    private BigDecimal lossRate;
+    public void change(BomStatus status, String note) {
+        this.status = Objects.requireNonNull(status, "BOM 상태는 필수입니다.");
+        this.note = normalizeText(note);
+    }
+
+    private static String requireText(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + "은(는) 필수입니다.");
+        }
+        return value.trim();
+    }
+
+    private static String normalizeText(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    public enum BomStatus {
+        ACTIVE("사용 중"),
+        REVIEW("검토"),
+        INACTIVE("사용 중지");
+
+        private final String label;
+
+        BomStatus(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+    }
 }

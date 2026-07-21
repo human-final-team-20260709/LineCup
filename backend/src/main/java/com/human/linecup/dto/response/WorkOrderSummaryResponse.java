@@ -1,20 +1,30 @@
 package com.human.linecup.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
+import com.human.linecup.entity.WorkOrder;
 
-/**
- * 작업지시 목록 화면 상단 요약 카드용
- * ("전체 작업지시", "진행중", "목표 대비 평균 진행률")
- */
-@Getter
-@Builder
-public class WorkOrderSummaryResponse {
+import java.time.Instant;
+import java.time.LocalDate;
 
-    private long totalCount;
-    private long pendingCount;
-    private long inProgressCount;
-    private long holdCount;
-    private long doneCount;
-    private double averageProgressRate;
+public record WorkOrderSummaryResponse(
+        Long workOrderId,
+        String workOrderNo,
+        Long productId,
+        String productCode,
+        String productName,
+        WorkOrder.Status status,
+        String statusLabel,
+        int targetQty,
+        int hourlyTargetQty,
+        int currentQty,
+        int goodQty,
+        int defectQty,
+        double progressRate,
+        LocalDate plannedStartDate,
+        Instant startedAt,
+        Instant completedAt,
+        Instant registeredAt,
+        Long supervisorId,
+        String supervisorEmpNo,
+        String supervisorName
+) {
 }

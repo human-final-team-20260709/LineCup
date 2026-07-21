@@ -1,8 +1,9 @@
 package com.human.linecup.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,13 +14,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 @Getter
 @Entity
 @Table(
-        name = "user",
+        name = "app_user",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_user_emp_no", columnNames = "emp_no"),
                 @UniqueConstraint(name = "uk_user_email", columnNames = "email")
@@ -36,23 +37,23 @@ public class User {
     @Column(name = "emp_no", nullable = false, length = 50)
     private String empNo;
 
-    @Column(name = "password", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "email", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String email;
 
-    @Column(name = "phone", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String phone;
 
-    @Convert(converter = UserRoleConverter.class)
-    @Column(name = "role", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private UserRole role;
 
-    @Convert(converter = ApprovalStatusConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false, length = 20)
     private ApprovalStatus approvalStatus;
 
@@ -60,7 +61,10 @@ public class User {
     private boolean active;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
+
+    @Column(name = "last_access_at")
+    private Instant lastAccessAt;
 
     public static User createPending(
             String empNo,
@@ -91,13 +95,13 @@ public class User {
     }
 
     public void approve() {
-        this.approvalStatus = ApprovalStatus.APPROVED;
-        this.active = true;
+        approvalStatus = ApprovalStatus.APPROVED;
+        active = true;
     }
 
     public void reject() {
-        this.approvalStatus = ApprovalStatus.REJECTED;
-        this.active = false;
+        approvalStatus = ApprovalStatus.REJECTED;
+        active = false;
     }
 
     public void changeActive(boolean active) {
@@ -107,12 +111,14 @@ public class User {
         this.active = active;
     }
 
+    public void recordAccess(Instant accessedAt) {
+        lastAccessAt = Objects.requireNonNull(accessedAt, "접속 시각은 필수입니다.");
+    }
+
     @PrePersist
     private void prePersist() {
-        if (approvalStatus == null) {
-            approvalStatus = ApprovalStatus.PENDING;
-        }
-        createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
+        approvalStatus = approvalStatus == null ? ApprovalStatus.PENDING : approvalStatus;
+        createdAt = createdAt == null ? Instant.now() : createdAt;
     }
 
     private static String requireText(String value, String fieldName) {

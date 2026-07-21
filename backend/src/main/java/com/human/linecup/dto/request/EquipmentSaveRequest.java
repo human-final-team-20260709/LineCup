@@ -1,19 +1,16 @@
 package com.human.linecup.dto.request;
 
+import com.human.linecup.entity.Equipment.EquipmentStatus;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
-@Getter
-@NoArgsConstructor
-public class EquipmentSaveRequest {
-
-    @NotBlank
-    private String equipmentName;
-
-    @NotBlank
-    private String equipmentCode;
-
-    // 미기재 시 서비스에서 STOPPED 기본값 적용
-    private String status;
+public record EquipmentSaveRequest(
+        @NotBlank @Size(max = 50) String equipmentName,
+        @NotBlank @Size(max = 50) String equipmentCode,
+        @NotNull @Positive Long processId,
+        @NotBlank @Size(max = 100) String location,
+        EquipmentStatus status
+) {
 }

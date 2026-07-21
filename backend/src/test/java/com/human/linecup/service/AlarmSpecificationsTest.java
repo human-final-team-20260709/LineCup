@@ -1,6 +1,6 @@
 package com.human.linecup.service;
 
-import com.human.linecup.dto.request.alarm.AlarmSearchRequest;
+import com.human.linecup.dto.request.AlarmSearchRequest;
 import com.human.linecup.entity.Alarm;
 import com.human.linecup.entity.AlarmSeverity;
 import com.human.linecup.entity.AlarmStatus;
