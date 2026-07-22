@@ -1,27 +1,29 @@
 export const WORK_ORDER_STATUS = {
-  WAITING: 'WAITING',
+  PENDING: 'PENDING',
   IN_PROGRESS: 'IN_PROGRESS',
   HOLD: 'HOLD',
   DONE: 'DONE',
 };
 
 export const WORK_ORDER_STATUS_META = {
-  [WORK_ORDER_STATUS.WAITING]: { label: '대기', color: '#bccbb9' },
+  [WORK_ORDER_STATUS.PENDING]: { label: '대기', color: '#bccbb9' },
   [WORK_ORDER_STATUS.IN_PROGRESS]: { label: '진행중', color: '#4be277' },
   [WORK_ORDER_STATUS.HOLD]: { label: '보류', color: '#ffb95f' },
   [WORK_ORDER_STATUS.DONE]: { label: '완료', color: '#bccbb9' },
 };
 
 export const PROCESS_STATUS = {
-  WAITING: 'WAITING',
+  PENDING: 'PENDING',
   IN_PROGRESS: 'IN_PROGRESS',
-  DONE: 'DONE',
+  HOLD: 'HOLD',
+  COMPLETED: 'COMPLETED',
 };
 
 export const PROCESS_STATUS_META = {
-  [PROCESS_STATUS.WAITING]: { label: '대기', color: '#bccbb9' },
+  [PROCESS_STATUS.PENDING]: { label: '대기', color: '#bccbb9' },
   [PROCESS_STATUS.IN_PROGRESS]: { label: '진행중', color: '#4be277' },
-  [PROCESS_STATUS.DONE]: { label: '완료', color: '#bccbb9' },
+  [PROCESS_STATUS.HOLD]: { label: '보류', color: '#ffb95f' },
+  [PROCESS_STATUS.COMPLETED]: { label: '완료', color: '#bccbb9' },
 };
 
 export const EQUIPMENT_STATUS_META = {
@@ -52,17 +54,18 @@ export const DUMMY_SUPERVISORS = [
 ];
 
 export const DUMMY_EQUIPMENTS = [
-  { id: 'EQ-001', name: '혼합기 1호', process: '원료 혼합', status: 'RUNNING' },
-  { id: 'EQ-002', name: '혼합기 2호', process: '원료 혼합', status: 'STOPPED' },
-  { id: 'EQ-003', name: '증숙기 1호', process: '증숙', status: 'RUNNING' },
-  { id: 'EQ-004', name: '증숙기 2호', process: '증숙', status: 'STOPPED' },
-  { id: 'EQ-005', name: '건조기 1호', process: '건조', status: 'RUNNING' },
-  { id: 'EQ-006', name: '건조기 2호', process: '건조', status: 'ERROR' },
-  { id: 'EQ-007', name: '포장기 1호', process: '포장', status: 'RUNNING' },
-  { id: 'EQ-008', name: '포장기 2호', process: '포장', status: 'STOPPED' },
+  { id: 'MIXER-01', name: '혼합기 1호', process: '혼합', status: 'RUNNING' },
+  { id: 'ROLLER-01', name: '압연기 1호', process: '압연', status: 'RUNNING' },
+  { id: 'NOODLE-01', name: '제면기 1호', process: '제면', status: 'RUNNING' },
+  { id: 'STEAMER-01', name: '증숙기 1호', process: '증숙', status: 'RUNNING' },
+  { id: 'CUTTER-01', name: '절단기 1호', process: '절단', status: 'RUNNING' },
+  { id: 'FRYER-01', name: '유탕기 1호', process: '유탕', status: 'RUNNING' },
+  { id: 'COOLER-01', name: '냉각기 1호', process: '냉각', status: 'RUNNING' },
+  { id: 'PACKER-01', name: '포장기 1호', process: '포장', status: 'RUNNING' },
+  { id: 'INSPECTOR-01', name: '검사기 1호', process: '검사', status: 'RUNNING' },
 ];
 
-export const PROCESS_TEMPLATE = ['원료 혼합', '증숙', '건조', '포장'];
+export const PROCESS_TEMPLATE = ['혼합', '압연', '제면', '증숙', '절단', '유탕', '냉각', '포장', '검사'];
 
 const findEquipment = (processName) => DUMMY_EQUIPMENTS.find((equipment) => equipment.process === processName);
 
@@ -72,7 +75,7 @@ const buildProcesses = (statusPattern, qtyPattern) =>
     return {
       id: `P${index + 1}`,
       name,
-      status: statusPattern[index],
+      status: statusPattern[index] ?? PROCESS_STATUS.PENDING,
       goodQty: qtyPattern[index]?.good ?? 0,
       defectQty: qtyPattern[index]?.defect ?? 0,
       equipmentName: equipment?.name ?? '-',
@@ -84,11 +87,11 @@ const buildWaitingProcesses = () =>
   PROCESS_TEMPLATE.map((name, index) => ({
     id: `P${index + 1}`,
     name,
-    status: PROCESS_STATUS.WAITING,
+    status: PROCESS_STATUS.PENDING,
     goodQty: 0,
     defectQty: 0,
-    equipmentName: '-',
-    equipmentStatus: 'STOPPED',
+    equipmentName: findEquipment(name)?.name ?? '-',
+    equipmentStatus: findEquipment(name)?.status ?? 'STOPPED',
   }));
 
 const buildEquipmentList = (processNames) =>
@@ -112,7 +115,7 @@ export const INITIAL_WORK_ORDERS = [
     completedAt: null,
     remark: '주간조 정규 생산',
     processes: buildProcesses(
-      [PROCESS_STATUS.DONE, PROCESS_STATUS.IN_PROGRESS, PROCESS_STATUS.WAITING, PROCESS_STATUS.WAITING],
+      Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.IN_PROGRESS),
       [{ good: 3120, defect: 40 }, { good: 3040, defect: 60 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }]
     ),
     equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
@@ -125,7 +128,7 @@ export const INITIAL_WORK_ORDERS = [
     id: 'WO-002',
     code: 'WO-20260709-002',
     productName: '고소 크림누들',
-    status: WORK_ORDER_STATUS.HOLD,
+    status: WORK_ORDER_STATUS.DONE,
     targetQty: 3000,
     currentQty: 900,
     goodQty: 860,
@@ -135,14 +138,15 @@ export const INITIAL_WORK_ORDERS = [
     supervisor: '한수빈',
     supervisorId: 'SV-002',
     startedAt: '2026-07-09 09:10',
-    completedAt: null,
-    remark: '건조기 2호 이상으로 보류',
+    completedAt: '2026-07-09 12:05',
+    remark: '설비 점검을 위해 목표 수량 전 조기 완료',
     processes: buildProcesses(
-      [PROCESS_STATUS.DONE, PROCESS_STATUS.DONE, PROCESS_STATUS.IN_PROGRESS, PROCESS_STATUS.WAITING],
+      Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
       [{ good: 900, defect: 20 }, { good: 880, defect: 10 }, { good: 860, defect: 10 }, { good: 0, defect: 0 }]
     ),
     equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
+      { id: 'H4', status: 'DONE', changedAt: '2026-07-09 12:05', changedBy: '박도윤', note: '조기 완료' },
       { id: 'H3', status: 'HOLD', changedAt: '2026-07-09 11:45', changedBy: '박도윤', note: '건조기 2호 이상 알람으로 보류' },
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-09 09:10', changedBy: '박도윤', note: '작업 시작' },
       { id: 'H1', status: 'REGISTERED', changedAt: '2026-07-06 10:05', changedBy: '정하늘', note: '작업지시 등록' },
@@ -165,7 +169,7 @@ export const INITIAL_WORK_ORDERS = [
     completedAt: '2026-07-08 17:32',
     remark: '',
     processes: buildProcesses(
-      [PROCESS_STATUS.DONE, PROCESS_STATUS.DONE, PROCESS_STATUS.DONE, PROCESS_STATUS.DONE],
+      Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
       [{ good: 4000, defect: 10 }, { good: 3990, defect: 15 }, { good: 3970, defect: 15 }, { good: 3950, defect: 10 }]
     ),
     equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
@@ -179,7 +183,7 @@ export const INITIAL_WORK_ORDERS = [
     id: 'WO-004',
     code: 'WO-20260709-003',
     productName: '해물육수 컵면',
-    status: WORK_ORDER_STATUS.IN_PROGRESS,
+    status: WORK_ORDER_STATUS.DONE,
     targetQty: 2000,
     currentQty: 120,
     goodQty: 110,
@@ -189,14 +193,15 @@ export const INITIAL_WORK_ORDERS = [
     supervisor: '한수빈',
     supervisorId: 'SV-002',
     startedAt: '2026-07-09 13:20',
-    completedAt: null,
+    completedAt: '2026-07-09 14:10',
     remark: '거래처 요청 건, 우선 진행',
     processes: buildProcesses(
-      [PROCESS_STATUS.IN_PROGRESS, PROCESS_STATUS.WAITING, PROCESS_STATUS.WAITING, PROCESS_STATUS.WAITING],
+      Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
       [{ good: 110, defect: 10 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }]
     ),
     equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
+      { id: 'H3', status: 'DONE', changedAt: '2026-07-09 14:10', changedBy: '최지우', note: '우선 생산 완료' },
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-09 13:20', changedBy: '최지우', note: '작업 시작' },
       { id: 'H1', status: 'REGISTERED', changedAt: '2026-07-09 13:00', changedBy: '정하늘', note: '작업지시 등록' },
     ],
@@ -205,7 +210,7 @@ export const INITIAL_WORK_ORDERS = [
     id: 'WO-005',
     code: 'WO-20260709-004',
     productName: '치즈불닭 컵면',
-    status: WORK_ORDER_STATUS.IN_PROGRESS,
+    status: WORK_ORDER_STATUS.DONE,
     targetQty: 6000,
     currentQty: 1180,
     goodQty: 1150,
@@ -215,14 +220,15 @@ export const INITIAL_WORK_ORDERS = [
     supervisor: '이도윤',
     supervisorId: 'SV-001',
     startedAt: '2026-07-09 08:30',
-    completedAt: null,
+    completedAt: '2026-07-09 10:15',
     remark: '',
     processes: buildProcesses(
-      [PROCESS_STATUS.IN_PROGRESS, PROCESS_STATUS.WAITING, PROCESS_STATUS.WAITING, PROCESS_STATUS.WAITING],
+      Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
       [{ good: 1150, defect: 30 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }]
     ),
     equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
+      { id: 'H3', status: 'DONE', changedAt: '2026-07-09 10:15', changedBy: '한소율', note: '조기 완료' },
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-09 08:30', changedBy: '한소율', note: '작업 시작' },
       { id: 'H1', status: 'REGISTERED', changedAt: '2026-07-07 16:40', changedBy: '정하늘', note: '작업지시 등록' },
     ],
@@ -231,7 +237,7 @@ export const INITIAL_WORK_ORDERS = [
     id: 'WO-006',
     code: 'WO-20260710-001',
     productName: '얼큰 컵누들',
-    status: WORK_ORDER_STATUS.WAITING,
+    status: WORK_ORDER_STATUS.PENDING,
     targetQty: 2500,
     currentQty: 0,
     goodQty: 0,
@@ -244,7 +250,7 @@ export const INITIAL_WORK_ORDERS = [
     completedAt: null,
     remark: '원자재(스프) 입고 대기',
     processes: buildWaitingProcesses(),
-    equipmentList: [],
+    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H1', status: 'REGISTERED', changedAt: '2026-07-08 10:00', changedBy: '정하늘', note: '작업지시 등록' },
     ],
@@ -288,7 +294,7 @@ export const createWaitingWorkOrder = (values, workOrders) => {
     id: nextWorkOrderId(workOrders),
     code: nextWorkOrderCode(workOrders, dateKey),
     productName: product?.name ?? '미지정 제품',
-    status: WORK_ORDER_STATUS.WAITING,
+    status: WORK_ORDER_STATUS.PENDING,
     targetQty: Number(values.targetQty),
     currentQty: 0,
     goodQty: 0,
@@ -301,7 +307,7 @@ export const createWaitingWorkOrder = (values, workOrders) => {
     completedAt: null,
     remark: values.remark ?? '',
     processes: buildWaitingProcesses(),
-    equipmentList: [],
+    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H1', status: 'REGISTERED', changedAt: dateTime, changedBy: values.supervisorName, note: '작업지시 등록' },
     ],

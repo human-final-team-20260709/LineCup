@@ -21,6 +21,7 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  PRODUCTION_STATUS,
   dailyProduction,
   formatNumber,
   productionRecords,
@@ -144,7 +145,8 @@ function ProductionAnalysisPage() {
   const analysis = useMemo(() => {
     const selectedDates = new Set(days.map((item) => item.date));
     const records = productionRecords.filter(
-      (item) => item.status !== '취소' && selectedDates.has(item.occurredAt.slice(0, 10)),
+      (item) => item.status !== PRODUCTION_STATUS.CANCELED
+        && selectedDates.has(item.occurredAt.slice(0, 10)),
     );
     const products = groupRecords(records, 'product', 5);
     const processes = groupRecords(records, 'process', 7);

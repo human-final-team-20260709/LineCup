@@ -13,6 +13,9 @@ import java.util.List;
 public interface EquipmentAssignmentRepository extends JpaRepository<EquipmentAssignment, Long> {
 
     @EntityGraph(attributePaths = {"user", "equipment", "equipment.manufacturingProcess"})
+    List<EquipmentAssignment> findAllByEndedAtIsNull();
+
+    @EntityGraph(attributePaths = {"user", "equipment", "equipment.manufacturingProcess"})
     List<EquipmentAssignment> findByEquipmentEquipmentIdAndEndedAtIsNullOrderByStartedAtDesc(
             Long equipmentId
     );

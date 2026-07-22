@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface BomRepository extends JpaRepository<Bom, Long> {
@@ -32,6 +33,12 @@ public interface BomRepository extends JpaRepository<Bom, Long> {
 
     @EntityGraph(attributePaths = "product")
     List<Bom> findByProductProductIdOrderByBomIdDesc(Long productId);
+
+    @EntityGraph(attributePaths = "product")
+    List<Bom> findByProductProductIdInAndStatusOrderByBomIdDesc(
+            Collection<Long> productIds,
+            BomStatus status
+    );
 
     @EntityGraph(attributePaths = "product")
     @Query("""

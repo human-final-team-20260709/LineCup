@@ -1,12 +1,18 @@
 export const PRODUCTION_STATUS = {
-  IN_PROGRESS: '집계 중',
-  COMPLETED: '집계 완료',
-  CANCELED: '취소',
+  COLLECTING: 'COLLECTING',
+  COMPLETED: 'COMPLETED',
+  CANCELED: 'CANCELED',
+};
+
+export const PRODUCTION_STATUS_LABEL = {
+  [PRODUCTION_STATUS.COLLECTING]: '집계 중',
+  [PRODUCTION_STATUS.COMPLETED]: '집계 완료',
+  [PRODUCTION_STATUS.CANCELED]: '취소',
 };
 
 export const statusTone = {
   [PRODUCTION_STATUS.COMPLETED]: 'success',
-  [PRODUCTION_STATUS.IN_PROGRESS]: 'warning',
+  [PRODUCTION_STATUS.COLLECTING]: 'warning',
   [PRODUCTION_STATUS.CANCELED]: 'neutral',
 };
 
@@ -25,7 +31,7 @@ export const productionRecords = [
     goodQty: 612,
     defectQty: 8,
     achievementRate: 47.7,
-    status: PRODUCTION_STATUS.IN_PROGRESS,
+    status: PRODUCTION_STATUS.COLLECTING,
   },
   {
     occurredAt: '2026-07-15 16:10',
@@ -39,7 +45,7 @@ export const productionRecords = [
     goodQty: 1004,
     defectQty: 16,
     achievementRate: 78.5,
-    status: PRODUCTION_STATUS.IN_PROGRESS,
+    status: PRODUCTION_STATUS.COLLECTING,
   },
   {
     occurredAt: '2026-07-15 15:35',
@@ -47,7 +53,7 @@ export const productionRecords = [
     workOrder: 'WO-20260715-010',
     lot: 'LOT-260715-C04',
     product: '고소 크림누들',
-    process: '건조',
+    process: '냉각',
     targetQty: 950,
     productionQty: 420,
     goodQty: 410,
@@ -89,7 +95,7 @@ export const productionRecords = [
     workOrder: 'WO-20260715-007',
     lot: 'LOT-260715-C01',
     product: '치즈불닭 컵면',
-    process: '건조',
+    process: '냉각',
     targetQty: 1200,
     productionQty: 1180,
     goodQty: 1152,
@@ -117,7 +123,7 @@ export const productionRecords = [
     workOrder: 'WO-20260715-005',
     lot: 'LOT-260715-B01',
     product: '얼큰 컵누들',
-    process: '건조',
+    process: '냉각',
     targetQty: 1000,
     productionQty: 990,
     goodQty: 974,
@@ -145,7 +151,7 @@ export const productionRecords = [
     workOrder: 'WO-20260715-003',
     lot: 'LOT-260715-A03',
     product: '해물육수 컵면',
-    process: '원료 혼합',
+    process: '혼합',
     targetQty: 1100,
     productionQty: 1080,
     goodQty: 1060,
@@ -173,7 +179,7 @@ export const productionRecords = [
     workOrder: 'WO-20260715-001',
     lot: 'LOT-260715-A01',
     product: '고소 크림누들',
-    process: '원료 혼합',
+    process: '혼합',
     targetQty: 900,
     productionQty: 890,
     goodQty: 875,
@@ -215,7 +221,7 @@ export const productionRecords = [
     workOrder: 'WO-20260713-002',
     lot: 'LOT-260713-B02',
     product: '매콤 볶음누들',
-    process: '건조',
+    process: '냉각',
     targetQty: 1100,
     productionQty: 1095,
     goodQty: 1078,
@@ -257,7 +263,7 @@ export const productionRecords = [
     workOrder: 'WO-20260712-001',
     lot: 'LOT-260712-B01',
     product: '해물육수 컵면',
-    process: '건조',
+    process: '냉각',
     targetQty: 1000,
     productionQty: 995,
     goodQty: 979,
@@ -285,7 +291,7 @@ export const productionRecords = [
     workOrder: 'WO-20260711-001',
     lot: 'LOT-260711-B01',
     product: '고소 크림누들',
-    process: '원료 혼합',
+    process: '혼합',
     targetQty: 900,
     productionQty: 900,
     goodQty: 887,
@@ -299,7 +305,7 @@ export const productionRecords = [
     workOrder: 'WO-20260710-002',
     lot: 'LOT-260710-B02',
     product: '매콤 볶음누들',
-    process: '건조',
+    process: '냉각',
     targetQty: 1050,
     productionQty: 1040,
     goodQty: 1021,
@@ -327,7 +333,7 @@ export const productionRecords = [
     workOrder: 'WO-20260709-002',
     lot: 'LOT-260709-B02',
     product: '해물육수 컵면',
-    process: '건조',
+    process: '냉각',
     targetQty: 900,
     productionQty: 890,
     goodQty: 874,
@@ -341,7 +347,7 @@ export const productionRecords = [
     workOrder: 'WO-20260709-001',
     lot: 'LOT-260709-B01',
     product: '치즈불닭 컵면',
-    process: '원료 혼합',
+    process: '혼합',
     targetQty: 1100,
     productionQty: 1080,
     goodQty: 1056,
@@ -370,7 +376,7 @@ export const getProductionSummary = (records = productionRecords, date = PRODUCT
   const dayRecords = getRecordsByDate(date, records);
   const activeRecords = dayRecords.filter(isActiveProductionRecord);
   const completedRecords = activeRecords.filter((record) => record.status === PRODUCTION_STATUS.COMPLETED);
-  const inProgressRecords = activeRecords.filter((record) => record.status === PRODUCTION_STATUS.IN_PROGRESS);
+  const inProgressRecords = activeRecords.filter((record) => record.status === PRODUCTION_STATUS.COLLECTING);
   const targetQty = sum(activeRecords, 'targetQty');
   const productionQty = sum(activeRecords, 'productionQty');
   const completedProductionQty = sum(completedRecords, 'productionQty');

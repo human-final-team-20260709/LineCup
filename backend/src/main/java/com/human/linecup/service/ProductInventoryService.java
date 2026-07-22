@@ -9,7 +9,7 @@ import com.human.linecup.entity.ProductionLot;
 import com.human.linecup.entity.ProductionLot.ProductionLotStatus;
 import com.human.linecup.repository.ProductInventoryRepository;
 import com.human.linecup.repository.ProductionLotRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ public class ProductInventoryService {
             throw new IllegalArgumentException("해당 생산 LOT의 완제품 재고가 이미 등록되어 있습니다.");
         }
         ProductionLot lot = productionLotRepository.findById(request.productionLotId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "생산 LOT를 찾을 수 없습니다: " + request.productionLotId()
                 ));
         if (lot.getStatus() != ProductionLotStatus.COMPLETED) {
@@ -56,7 +56,7 @@ public class ProductInventoryService {
     public ProductInventoryResponse getInventoryByProductionLot(Long productionLotId) {
         ProductInventory inventory = productInventoryRepository
                 .findByProductionLotProductionLotId(productionLotId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "생산 LOT의 완제품 재고를 찾을 수 없습니다: " + productionLotId
                 ));
         return toResponse(inventory);
@@ -83,7 +83,10 @@ public class ProductInventoryService {
 
     @Transactional
     public ProductInventoryResponse adjustCurrentQty(Long inventoryId, int currentQty) {
-        ProductInventory inventory = findInventory(inventoryId);
+        ProductInventory inventory = productInventoryRepository.findByIdForUpdate(inventoryId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "완제품 재고를 찾을 수 없습니다: " + inventoryId
+                ));
         validateMaximumQty(currentQty, inventory.getProductionLot());
         inventory.adjustCurrentQty(currentQty);
         return toResponse(inventory);
@@ -91,7 +94,7 @@ public class ProductInventoryService {
 
     private ProductInventory findInventory(Long inventoryId) {
         return productInventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "완제품 재고를 찾을 수 없습니다: " + inventoryId
                 ));
     }

@@ -15,7 +15,7 @@ import com.human.linecup.repository.BomRepository;
 import com.human.linecup.repository.ManufacturingProcessRepository;
 import com.human.linecup.repository.ProductRepository;
 import com.human.linecup.repository.RawMaterialRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -67,7 +67,7 @@ public class BomService {
 
     public BomResponse getBomByCode(String bomCode) {
         Bom bom = bomRepository.findByBomCode(bomCode)
-                .orElseThrow(() -> new EntityNotFoundException("BOM을 찾을 수 없습니다: " + bomCode));
+                .orElseThrow(() -> new NoSuchElementException("BOM을 찾을 수 없습니다: " + bomCode));
         return toResponse(
                 bom,
                 bomItemRepository.findByBomBomIdOrderByBomItemIdAsc(bom.getBomId())
@@ -161,10 +161,10 @@ public class BomService {
                 .collect(Collectors.toMap(ManufacturingProcess::getProcessId, Function.identity()));
 
         if (materials.size() != materialIds.size()) {
-            throw new EntityNotFoundException("존재하지 않는 원자재가 BOM 항목에 포함되어 있습니다.");
+            throw new NoSuchElementException("존재하지 않는 원자재가 BOM 항목에 포함되어 있습니다.");
         }
         if (processes.size() != processIds.size()) {
-            throw new EntityNotFoundException("존재하지 않는 공정이 BOM 항목에 포함되어 있습니다.");
+            throw new NoSuchElementException("존재하지 않는 공정이 BOM 항목에 포함되어 있습니다.");
         }
 
         return requests.stream()
@@ -238,12 +238,12 @@ public class BomService {
 
     private Bom findBom(Long bomId) {
         return bomRepository.findById(bomId)
-                .orElseThrow(() -> new EntityNotFoundException("BOM을 찾을 수 없습니다: " + bomId));
+                .orElseThrow(() -> new NoSuchElementException("BOM을 찾을 수 없습니다: " + bomId));
     }
 
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("제품을 찾을 수 없습니다: " + productId));
+                .orElseThrow(() -> new NoSuchElementException("제품을 찾을 수 없습니다: " + productId));
     }
 
     private String normalizeKeyword(String keyword) {

@@ -8,8 +8,10 @@ import java.util.List;
 
 public interface WorkOrderEquipmentRepository extends JpaRepository<WorkOrderEquipment, Long> {
 
-    @EntityGraph(attributePaths = "equipment")
+    @EntityGraph(attributePaths = {"equipment", "equipment.manufacturingProcess"})
     List<WorkOrderEquipment> findByWorkOrder_WorkOrderId(Long workOrderId);
+
+    void deleteByWorkOrder_WorkOrderId(Long workOrderId);
 
     List<WorkOrderEquipment> findByEquipment_EquipmentId(Long equipmentId);
 

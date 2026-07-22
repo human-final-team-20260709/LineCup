@@ -14,7 +14,7 @@ import com.human.linecup.repository.InventoryMovementRepository;
 import com.human.linecup.repository.ProductInventoryRepository;
 import com.human.linecup.repository.RawMaterialLotRepository;
 import com.human.linecup.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +45,7 @@ public class InventoryMovementService {
     public InventoryMovementResponse registerMovement(InventoryMovementRequest request) {
         validateTarget(request);
         User handledBy = userRepository.findById(request.handledById())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "담당자를 찾을 수 없습니다: " + request.handledById()
                 ));
         String movementNo = generateMovementNo();
@@ -53,8 +53,8 @@ public class InventoryMovementService {
 
         InventoryMovement movement;
         if (request.itemType() == InventoryItemType.RAW_MATERIAL) {
-            RawMaterialLot lot = rawMaterialLotRepository.findById(request.rawMaterialLotId())
-                    .orElseThrow(() -> new EntityNotFoundException(
+            RawMaterialLot lot = rawMaterialLotRepository.findByIdForUpdate(request.rawMaterialLotId())
+                    .orElseThrow(() -> new NoSuchElementException(
                             "원자재 LOT를 찾을 수 없습니다: " + request.rawMaterialLotId()
                     ));
             applyRawMaterialMovement(lot, request.movementType(), request.quantity());
@@ -68,8 +68,8 @@ public class InventoryMovementService {
                     request.remarks()
             );
         } else {
-            ProductInventory inventory = productInventoryRepository.findById(request.productInventoryId())
-                    .orElseThrow(() -> new EntityNotFoundException(
+            ProductInventory inventory = productInventoryRepository.findByIdForUpdate(request.productInventoryId())
+                    .orElseThrow(() -> new NoSuchElementException(
                             "완제품 재고를 찾을 수 없습니다: " + request.productInventoryId()
                     ));
             applyProductMovement(inventory, request.movementType(), request.quantity());
@@ -89,7 +89,7 @@ public class InventoryMovementService {
 
     public InventoryMovementResponse getMovement(Long movementId) {
         InventoryMovement movement = inventoryMovementRepository.findById(movementId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "재고 이동 이력을 찾을 수 없습니다: " + movementId
                 ));
         return toResponse(movement);
@@ -97,7 +97,7 @@ public class InventoryMovementService {
 
     public InventoryMovementResponse getMovementByNumber(String movementNo) {
         InventoryMovement movement = inventoryMovementRepository.findByMovementNo(movementNo)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "재고 이동 이력을 찾을 수 없습니다: " + movementNo
                 ));
         return toResponse(movement);

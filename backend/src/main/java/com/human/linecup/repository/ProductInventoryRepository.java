@@ -2,10 +2,12 @@ package com.human.linecup.repository;
 
 import com.human.linecup.entity.InventoryStatus;
 import com.human.linecup.entity.ProductInventory;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,6 +15,15 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface ProductInventoryRepository extends JpaRepository<ProductInventory, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {
+            "productionLot",
+            "productionLot.workOrder",
+            "productionLot.workOrder.product"
+    })
+    @Query("select pi from ProductInventory pi where pi.inventoryId = :inventoryId")
+    Optional<ProductInventory> findByIdForUpdate(@Param("inventoryId") Long inventoryId);
 
     @EntityGraph(attributePaths = {
             "productionLot",

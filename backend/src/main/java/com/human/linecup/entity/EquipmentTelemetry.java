@@ -12,6 +12,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,10 @@ import java.util.Objects;
 @Entity
 @Table(
         name = "equipment_telemetry",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_telemetry_equipment_order_metric_time",
+                columnNames = {"equipment_id", "work_order_id", "metric_type", "measured_at"}
+        ),
         indexes = {
                 @Index(name = "idx_telemetry_equipment_metric_time", columnList = "equipment_id, metric_type, measured_at"),
                 @Index(name = "idx_telemetry_work_order_time", columnList = "work_order_id, measured_at")

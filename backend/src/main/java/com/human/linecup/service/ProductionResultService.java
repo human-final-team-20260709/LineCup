@@ -3,7 +3,6 @@ package com.human.linecup.service;
 import com.human.linecup.dto.response.ProductionGroupResponse;
 import com.human.linecup.dto.response.ProductionResultResponse;
 import com.human.linecup.dto.response.ProductionSummaryResponse;
-import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.Product;
 import com.human.linecup.entity.ProductionProcessProgress;
 import com.human.linecup.entity.ProductionQuantityPolicy;
@@ -18,16 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +38,7 @@ public class ProductionResultService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "존재하지 않는 생산 실적입니다: " + normalizedResultNo
                 ));
-        return toResponse(result, resolveProcessName(result.getProductionLot().getProductionLotId()));
+        return toResponse(result, null);
     }
 
     public ProductionResultResponse getProductionResultByLot(Long productionLotId) {
@@ -55,7 +50,7 @@ public class ProductionResultService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "생산 LOT에 연결된 생산 실적이 없습니다: " + productionLotId
                 ));
-        return toResponse(result, resolveProcessName(productionLotId));
+        return toResponse(result, null);
     }
 
     public List<ProductionResultResponse> getProductionResults(Instant from, Instant to) {
@@ -107,14 +102,23 @@ public class ProductionResultService {
 
     public List<ProductionGroupResponse> getProductionByProcess(Instant from, Instant to) {
         List<ProductionResult> results = findActiveResultsByPeriod(from, to);
-        Map<Long, String> processNames = resolveProcessNames(results);
-        return groupResults(
-                results,
-                result -> processNames.getOrDefault(
-                        result.getProductionLot().getProductionLotId(),
-                        "미지정 공정"
-                )
-        );
+        List<Long> productionLotIds = results.stream()
+                .map(result -> result.getProductionLot().getProductionLotId())
+                .distinct()
+                .toList();
+        if (productionLotIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, GroupAccumulator> groups = new LinkedHashMap<>();
+        productionProcessProgressRepository.findByProductionLotIds(productionLotIds)
+                .forEach(progress -> groups
+                        .computeIfAbsent(
+                                progress.getManufacturingProcess().getProcessName(),
+                                ignored -> new GroupAccumulator()
+                        )
+                        .add(progress));
+        return toSortedGroupResponses(groups);
     }
 
     private List<ProductionResult> findByPeriod(Instant from, Instant to) {
@@ -130,12 +134,8 @@ public class ProductionResultService {
     }
 
     private List<ProductionResultResponse> toResponses(List<ProductionResult> results) {
-        Map<Long, String> processNames = resolveProcessNames(results);
         return results.stream()
-                .map(result -> toResponse(
-                        result,
-                        processNames.get(result.getProductionLot().getProductionLotId())
-                ))
+                .map(result -> toResponse(result, null))
                 .toList();
     }
 
@@ -171,66 +171,6 @@ public class ProductionResultService {
         );
     }
 
-    private String resolveProcessName(Long productionLotId) {
-        return selectRepresentativeProcess(
-                productionProcessProgressRepository
-                        .findByProductionLotProductionLotIdOrderByManufacturingProcessSequenceAsc(productionLotId)
-        );
-    }
-
-    private Map<Long, String> resolveProcessNames(List<ProductionResult> results) {
-        List<Long> productionLotIds = results.stream()
-                .map(result -> result.getProductionLot().getProductionLotId())
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-        if (productionLotIds.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<Long, List<ProductionProcessProgress>> progressByLot = productionProcessProgressRepository
-                .findByProductionLotIds(productionLotIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        progress -> progress.getProductionLot().getProductionLotId(),
-                        LinkedHashMap::new,
-                        Collectors.toCollection(ArrayList::new)
-                ));
-
-        Map<Long, String> processNames = new HashMap<>();
-        progressByLot.forEach((productionLotId, progresses) -> {
-            String processName = selectRepresentativeProcess(progresses);
-            if (processName != null) {
-                processNames.put(productionLotId, processName);
-            }
-        });
-        return processNames;
-    }
-
-    private String selectRepresentativeProcess(List<ProductionProcessProgress> progresses) {
-        if (progresses == null || progresses.isEmpty()) {
-            return null;
-        }
-
-        return progresses.stream()
-                .filter(progress -> progress.getStatus() == ProductionProcessProgress.ProcessProgressStatus.IN_PROGRESS
-                        || progress.getStatus() == ProductionProcessProgress.ProcessProgressStatus.HOLD)
-                .min(Comparator.comparingInt(progress -> progress.getManufacturingProcess().getSequence()))
-                .or(() -> progresses.stream()
-                        .filter(progress -> progress.getStatus()
-                                == ProductionProcessProgress.ProcessProgressStatus.COMPLETED)
-                        .max(Comparator.comparingInt(
-                                progress -> progress.getManufacturingProcess().getSequence()
-                        )))
-                .or(() -> progresses.stream()
-                        .min(Comparator.comparingInt(
-                                progress -> progress.getManufacturingProcess().getSequence()
-                        )))
-                .map(ProductionProcessProgress::getManufacturingProcess)
-                .map(ManufacturingProcess::getProcessName)
-                .orElse(null);
-    }
-
     private List<ProductionGroupResponse> groupResults(
             List<ProductionResult> results,
             Function<ProductionResult, String> groupNameResolver
@@ -243,6 +183,10 @@ public class ProductionResultService {
                     .add(result);
         }
 
+        return toSortedGroupResponses(groups);
+    }
+
+    private List<ProductionGroupResponse> toSortedGroupResponses(Map<String, GroupAccumulator> groups) {
         return groups.entrySet().stream()
                 .map(entry -> entry.getValue().toResponse(entry.getKey()))
                 .sorted(Comparator
@@ -277,6 +221,13 @@ public class ProductionResultService {
             productionQty += result.getProductionQty();
             goodQty += result.getGoodQty();
             defectQty += result.getDefectQty();
+        }
+
+        private void add(ProductionProcessProgress progress) {
+            targetQty += progress.getTargetQty();
+            productionQty += progress.getProductionQty();
+            goodQty += progress.getGoodQty();
+            defectQty += progress.getDefectQty();
         }
 
         private ProductionGroupResponse toResponse(String name) {

@@ -10,9 +10,9 @@ import {
 
 const equipmentRows = [
   {
-    id: 'EQ-MX-01',
-    name: '배합기 MX-01',
-    process: '배합',
+    id: 'MIXER-01',
+    name: '혼합기 1호',
+    process: '혼합',
     total: 18,
     critical: 2,
     warning: 9,
@@ -22,8 +22,8 @@ const equipmentRows = [
     health: '주의',
   },
   {
-    id: 'EQ-RL-01',
-    name: '압연기 RL-01',
+    id: 'ROLLER-01',
+    name: '압연기 1호',
     process: '압연',
     total: 9,
     critical: 1,
@@ -34,8 +34,8 @@ const equipmentRows = [
     health: '정상',
   },
   {
-    id: 'EQ-NM-01',
-    name: '제면기 NM-01',
+    id: 'NOODLE-01',
+    name: '제면기 1호',
     process: '제면',
     total: 15,
     critical: 2,
@@ -46,8 +46,8 @@ const equipmentRows = [
     health: '주의',
   },
   {
-    id: 'EQ-ST-01',
-    name: '증숙기 ST-01',
+    id: 'STEAMER-01',
+    name: '증숙기 1호',
     process: '증숙',
     total: 24,
     critical: 5,
@@ -58,9 +58,9 @@ const equipmentRows = [
     health: '위험',
   },
   {
-    id: 'EQ-CT-01',
-    name: '성형/절단기 CT-01',
-    process: '성형/절단',
+    id: 'CUTTER-01',
+    name: '절단기 1호',
+    process: '절단',
     total: 7,
     critical: 1,
     warning: 3,
@@ -70,8 +70,8 @@ const equipmentRows = [
     health: '정상',
   },
   {
-    id: 'EQ-FR-01',
-    name: '유탕기 FR-01',
+    id: 'FRYER-01',
+    name: '유탕기 1호',
     process: '유탕',
     total: 18,
     critical: 3,
@@ -82,8 +82,8 @@ const equipmentRows = [
     health: '주의',
   },
   {
-    id: 'EQ-CL-01',
-    name: '냉각기 CL-01',
+    id: 'COOLER-01',
+    name: '냉각기 1호',
     process: '냉각',
     total: 9,
     critical: 1,
@@ -94,8 +94,8 @@ const equipmentRows = [
     health: '주의',
   },
   {
-    id: 'EQ-PK-01',
-    name: '포장기 PK-01',
+    id: 'PACKER-01',
+    name: '포장기 1호',
     process: '포장',
     total: 15,
     critical: 1,
@@ -106,8 +106,8 @@ const equipmentRows = [
     health: '정상',
   },
   {
-    id: 'EQ-IN-01',
-    name: '검사기 IN-01',
+    id: 'INSPECTOR-01',
+    name: '검사기 1호',
     process: '검사',
     total: 7,
     critical: 0,
@@ -153,7 +153,7 @@ const selectedEquipmentAlarms = [
 
 function EquipmentAlarmPage() {
   const [showEmpty, setShowEmpty] = useState(false);
-  const [selectedEquipmentId, setSelectedEquipmentId] = useState('EQ-MX-01');
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState('MIXER-01');
   const navigate = useNavigate();
 
   const equipments = useMemo(() => (showEmpty ? [] : equipmentRows), [showEmpty]);

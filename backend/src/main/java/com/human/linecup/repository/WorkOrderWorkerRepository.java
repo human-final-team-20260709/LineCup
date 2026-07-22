@@ -15,4 +15,6 @@ public interface WorkOrderWorkerRepository extends JpaRepository<WorkOrderWorker
     boolean existsByWorkOrder_WorkOrderIdAndUser_UserId(Long workOrderId, Long userId);
 
     void deleteByWorkOrder_WorkOrderIdAndUser_UserId(Long workOrderId, Long userId);
+
+    void deleteByWorkOrder_WorkOrderId(Long workOrderId);
 }

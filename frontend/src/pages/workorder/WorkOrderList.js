@@ -35,7 +35,7 @@ import {
 
 const WORK_ORDER_FILTERS = [
   { key: 'ALL', label: '전체', accent: '#4be277' },
-  { key: WORK_ORDER_STATUS.WAITING, label: '대기', accent: '#bccbb9' },
+  { key: WORK_ORDER_STATUS.PENDING, label: '대기', accent: '#bccbb9' },
   { key: WORK_ORDER_STATUS.IN_PROGRESS, label: '진행중', accent: '#4be277' },
   { key: WORK_ORDER_STATUS.HOLD, label: '보류', accent: '#ffb95f' },
   { key: WORK_ORDER_STATUS.DONE, label: '완료', accent: '#bccbb9' },

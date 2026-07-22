@@ -15,12 +15,14 @@ import com.human.linecup.entity.ProductionProcessProgress.ProcessProgressStatus;
 import com.human.linecup.entity.RawMaterial;
 import com.human.linecup.entity.RawMaterialLot;
 import com.human.linecup.entity.WorkOrder;
+import com.human.linecup.entity.WorkOrderEquipment;
+import com.human.linecup.repository.ManufacturingProcessRepository;
 import com.human.linecup.repository.ProductionLotMaterialRepository;
 import com.human.linecup.repository.ProductionLotRepository;
 import com.human.linecup.repository.ProductionProcessProgressRepository;
 import com.human.linecup.repository.RawMaterialLotRepository;
 import com.human.linecup.repository.WorkOrderRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.human.linecup.repository.WorkOrderEquipmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,8 +33,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +50,8 @@ public class ProductionLotService {
     private final ProductionProcessProgressRepository processProgressRepository;
     private final RawMaterialLotRepository rawMaterialLotRepository;
     private final WorkOrderRepository workOrderRepository;
+    private final WorkOrderEquipmentRepository workOrderEquipmentRepository;
+    private final ManufacturingProcessRepository manufacturingProcessRepository;
 
     @Transactional
     public ProductionLotResponse createProductionLot(ProductionLotRequest request) {
@@ -52,12 +59,24 @@ public class ProductionLotService {
             throw new IllegalArgumentException("이미 사용 중인 생산 LOT 번호입니다: " + request.lotNo());
         }
         WorkOrder workOrder = workOrderRepository.findById(request.workOrderId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "작업지시를 찾을 수 없습니다: " + request.workOrderId()
                 ));
-        ProductionLot lot = ProductionLot.start(request.lotNo(), workOrder, request.startedAt());
-        productionLotRepository.save(lot);
-        return toResponse(lot, List.of(), List.of());
+        if (workOrder.getStatus() != WorkOrder.Status.PENDING) {
+            throw new IllegalStateException("대기 중인 작업지시에만 생산 LOT를 등록할 수 있습니다.");
+        }
+        if (productionLotRepository.findFirstByWorkOrderWorkOrderIdAndStatusInOrderByStartedAtDesc(
+                workOrder.getWorkOrderId(),
+                EnumSet.of(ProductionLotStatus.PENDING, ProductionLotStatus.IN_PROGRESS, ProductionLotStatus.HOLD)
+        ).isPresent()) {
+            throw new IllegalStateException("작업지시에 이미 완료되지 않은 생산 LOT가 있습니다.");
+        }
+
+        ProductionLot lot = productionLotRepository.saveAndFlush(
+                ProductionLot.createPending(request.lotNo(), workOrder)
+        );
+        List<ProductionProcessProgress> progresses = initializeProcessProgresses(lot, workOrder);
+        return toResponse(lot, progresses, List.of());
     }
 
     public ProductionLotResponse getProductionLot(Long productionLotId) {
@@ -73,7 +92,7 @@ public class ProductionLotService {
 
     public ProductionLotResponse getProductionLotByNumber(String lotNo) {
         ProductionLot lot = productionLotRepository.findByLotNo(lotNo)
-                .orElseThrow(() -> new EntityNotFoundException("생산 LOT를 찾을 수 없습니다: " + lotNo));
+                .orElseThrow(() -> new NoSuchElementException("생산 LOT를 찾을 수 없습니다: " + lotNo));
         return getProductionLot(lot.getProductionLotId());
     }
 
@@ -122,25 +141,71 @@ public class ProductionLotService {
     @Transactional
     public ProductionLotResponse holdProductionLot(Long productionLotId) {
         ProductionLot lot = findLot(productionLotId);
+        requireWorkOrderStatus(lot, WorkOrder.Status.HOLD);
         requireStatus(lot, ProductionLotStatus.IN_PROGRESS, "생산 중인 LOT만 보류할 수 있습니다.");
         lot.hold();
+        transitionProgresses(lot.getProductionLotId(), WorkOrder.Action.HOLD, Instant.now());
         return getProductionLot(productionLotId);
     }
 
     @Transactional
     public ProductionLotResponse resumeProductionLot(Long productionLotId) {
         ProductionLot lot = findLot(productionLotId);
+        requireWorkOrderStatus(lot, WorkOrder.Status.IN_PROGRESS);
         requireStatus(lot, ProductionLotStatus.HOLD, "보류된 LOT만 생산을 재개할 수 있습니다.");
         lot.resume();
+        transitionProgresses(lot.getProductionLotId(), WorkOrder.Action.RESUME, Instant.now());
         return getProductionLot(productionLotId);
     }
 
     @Transactional
     public ProductionLotResponse completeProductionLot(Long productionLotId, Instant completedAt) {
         ProductionLot lot = findLot(productionLotId);
+        requireWorkOrderStatus(lot, WorkOrder.Status.DONE);
         requireStatus(lot, ProductionLotStatus.IN_PROGRESS, "생산 중인 LOT만 완료할 수 있습니다.");
         lot.complete(completedAt);
+        transitionProgresses(lot.getProductionLotId(), WorkOrder.Action.COMPLETE, completedAt);
         return getProductionLot(productionLotId);
+    }
+
+    @Transactional
+    public void applyWorkOrderAction(Long workOrderId, WorkOrder.Action action, Instant occurredAt) {
+        Instant effectiveAt = occurredAt == null ? Instant.now() : occurredAt;
+        ProductionLotStatus requiredStatus = switch (action) {
+            case START -> ProductionLotStatus.PENDING;
+            case HOLD, COMPLETE -> ProductionLotStatus.IN_PROGRESS;
+            case RESUME -> ProductionLotStatus.HOLD;
+            case REGISTERED -> throw new IllegalArgumentException("등록 액션은 생산 LOT 전환에 사용할 수 없습니다.");
+        };
+        ProductionLot lot = productionLotRepository
+                .findFirstByWorkOrderWorkOrderIdAndStatusInOrderByStartedAtDesc(
+                        workOrderId,
+                        EnumSet.of(requiredStatus)
+                )
+                .orElseThrow(() -> new IllegalStateException(
+                        "작업 상태 변경에 필요한 생산 LOT가 없습니다: workOrderId=" + workOrderId
+                                + ", requiredStatus=" + requiredStatus
+                ));
+
+        switch (action) {
+            case START -> lot.start(effectiveAt);
+            case HOLD -> lot.hold();
+            case RESUME -> lot.resume();
+            case COMPLETE -> lot.complete(effectiveAt);
+            case REGISTERED -> throw new IllegalArgumentException("등록 액션은 생산 LOT 전환에 사용할 수 없습니다.");
+        }
+        transitionProgresses(lot.getProductionLotId(), action, effectiveAt);
+    }
+
+    public ProductionLot getActiveProductionLot(Long workOrderId) {
+        return productionLotRepository
+                .findFirstByWorkOrderWorkOrderIdAndStatusInOrderByStartedAtDesc(
+                        workOrderId,
+                        EnumSet.of(ProductionLotStatus.IN_PROGRESS, ProductionLotStatus.HOLD)
+                )
+                .orElseThrow(() -> new NoSuchElementException(
+                        "활성 생산 LOT가 없습니다: workOrderId=" + workOrderId
+                ));
     }
 
     @Transactional
@@ -157,8 +222,8 @@ public class ProductionLotService {
             throw new IllegalArgumentException("해당 원자재 LOT가 이미 생산 LOT에 등록되어 있습니다.");
         }
 
-        RawMaterialLot materialLot = rawMaterialLotRepository.findById(request.materialLotId())
-                .orElseThrow(() -> new EntityNotFoundException(
+        RawMaterialLot materialLot = rawMaterialLotRepository.findByIdForUpdate(request.materialLotId())
+                .orElseThrow(() -> new NoSuchElementException(
                         "원자재 LOT를 찾을 수 없습니다: " + request.materialLotId()
                 ));
         BigDecimal remainingQty = materialLot.getCurrentQty().subtract(request.usedQty());
@@ -182,8 +247,11 @@ public class ProductionLotService {
                         productionLotId,
                         materialLotId
                 )
-                .orElseThrow(() -> new EntityNotFoundException("원자재 투입 내역을 찾을 수 없습니다."));
-        RawMaterialLot materialLot = usage.getMaterialLot();
+                .orElseThrow(() -> new NoSuchElementException("원자재 투입 내역을 찾을 수 없습니다."));
+        RawMaterialLot materialLot = rawMaterialLotRepository.findByIdForUpdate(materialLotId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "원자재 LOT를 찾을 수 없습니다: " + materialLotId
+                ));
         materialLot.adjustCurrentQty(materialLot.getCurrentQty().add(usage.getUsedQty()));
         productionLotMaterialRepository.delete(usage);
     }
@@ -198,6 +266,53 @@ public class ProductionLotService {
                         materials.getOrDefault(lot.getProductionLotId(), List.of())
                 ))
                 .toList();
+    }
+
+    private List<ProductionProcessProgress> initializeProcessProgresses(
+            ProductionLot lot,
+            WorkOrder workOrder
+    ) {
+        Map<Long, Equipment> equipmentByProcessId = workOrderEquipmentRepository
+                .findByWorkOrder_WorkOrderId(workOrder.getWorkOrderId())
+                .stream()
+                .map(WorkOrderEquipment::getEquipment)
+                .collect(Collectors.toMap(
+                        equipment -> equipment.getManufacturingProcess().getProcessId(),
+                        Function.identity(),
+                        (left, right) -> Comparator.comparing(Equipment::getEquipmentId).compare(left, right) <= 0
+                                ? left
+                                : right
+                ));
+
+        List<ProductionProcessProgress> progresses = manufacturingProcessRepository
+                .findByActiveTrueOrderBySequenceAsc()
+                .stream()
+                .map(process -> ProductionProcessProgress.create(
+                        lot,
+                        process,
+                        equipmentByProcessId.get(process.getProcessId()),
+                        workOrder.getTargetQty()
+                ))
+                .toList();
+        return processProgressRepository.saveAll(progresses);
+    }
+
+    private void transitionProgresses(
+            Long productionLotId,
+            WorkOrder.Action action,
+            Instant occurredAt
+    ) {
+        List<ProductionProcessProgress> progresses = processProgressRepository
+                .findByProductionLotProductionLotIdOrderByManufacturingProcessSequenceAsc(productionLotId);
+        for (ProductionProcessProgress progress : progresses) {
+            switch (action) {
+                case START -> progress.start(occurredAt);
+                case HOLD -> progress.hold();
+                case RESUME -> progress.resume();
+                case COMPLETE -> progress.complete(occurredAt);
+                case REGISTERED -> throw new IllegalArgumentException("등록 액션은 공정 전환에 사용할 수 없습니다.");
+            }
+        }
     }
 
     private Map<Long, List<ProductionProcessProgress>> getProgressesByLotId(List<ProductionLot> lots) {
@@ -224,11 +339,15 @@ public class ProductionLotService {
             List<ProductionLotMaterial> materials
     ) {
         WorkOrder workOrder = lot.getWorkOrder();
-        String currentProcess = progresses.stream()
+        List<String> activeProcesses = progresses.stream()
                 .filter(progress -> progress.getStatus() == ProcessProgressStatus.IN_PROGRESS)
                 .map(progress -> progress.getManufacturingProcess().getProcessName())
-                .findFirst()
-                .orElse(null);
+                .toList();
+        String currentProcess = activeProcesses.isEmpty()
+                ? null
+                : activeProcesses.size() == 1
+                        ? activeProcesses.get(0)
+                        : "독립 설비 " + activeProcesses.size() + "개 진행 중";
         return new ProductionLotResponse(
                 lot.getProductionLotId(),
                 lot.getLotNo(),
@@ -288,7 +407,7 @@ public class ProductionLotService {
 
     private ProductionLot findLot(Long productionLotId) {
         return productionLotRepository.findById(productionLotId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "생산 LOT를 찾을 수 없습니다: " + productionLotId
                 ));
     }
@@ -296,6 +415,12 @@ public class ProductionLotService {
     private void requireStatus(ProductionLot lot, ProductionLotStatus status, String message) {
         if (lot.getStatus() != status) {
             throw new IllegalStateException(message);
+        }
+    }
+
+    private void requireWorkOrderStatus(ProductionLot lot, WorkOrder.Status status) {
+        if (lot.getWorkOrder().getStatus() != status) {
+            throw new IllegalStateException("작업지시 상태와 생산 LOT 상태 변경 요청이 일치하지 않습니다.");
         }
     }
 

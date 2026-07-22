@@ -144,7 +144,10 @@ public class HourlyProductionService {
     }
 
     private void synchronizeProductionResult(WorkOrder workOrder, HourlyProductionRequest request) {
-        ProductionLot productionLot = findCurrentProductionLot(workOrder.getWorkOrderId());
+        ProductionLot productionLot = findProductionLotForAggregate(
+                workOrder.getWorkOrderId(),
+                request.closeReason()
+        );
         HourlyProductionRepository.QuantityTotals totals = hourlyProductionRepository
                 .summarizeByWorkOrderId(workOrder.getWorkOrderId());
 
@@ -180,15 +183,25 @@ public class HourlyProductionService {
         productionResultRepository.saveAndFlush(productionResult);
     }
 
-    private ProductionLot findCurrentProductionLot(Long workOrderId) {
+    private ProductionLot findProductionLotForAggregate(
+            Long workOrderId,
+            HourlyProductionCloseReason closeReason
+    ) {
+        if (closeReason == HourlyProductionCloseReason.WORK_ORDER_COMPLETED) {
+            return productionLotRepository
+                    .findFirstByWorkOrderWorkOrderIdOrderByStartedAtDesc(workOrderId)
+                    .filter(lot -> lot.getStatus() == ProductionLot.ProductionLotStatus.COMPLETED)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "완료 집계를 연결할 생산 LOT가 없습니다: workOrderId=" + workOrderId
+                    ));
+        }
         return productionLotRepository
                 .findFirstByWorkOrderWorkOrderIdAndStatusInOrderByStartedAtDesc(
                         workOrderId,
                         ACTIVE_LOT_STATUSES
                 )
-                .or(() -> productionLotRepository.findFirstByWorkOrderWorkOrderIdOrderByStartedAtDesc(workOrderId))
                 .orElseThrow(() -> new IllegalStateException(
-                        "시간별 실적을 연결할 생산 LOT가 없습니다: workOrderId=" + workOrderId
+                        "시간별 실적을 연결할 활성 생산 LOT가 없습니다: workOrderId=" + workOrderId
                 ));
     }
 
