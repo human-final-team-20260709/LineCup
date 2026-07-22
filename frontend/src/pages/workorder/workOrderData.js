@@ -94,9 +94,6 @@ const buildWaitingProcesses = () =>
     equipmentStatus: findEquipment(name)?.status ?? 'STOPPED',
   }));
 
-const buildEquipmentList = (processNames) =>
-  processNames.map((name) => findEquipment(name)).filter(Boolean).map((equipment) => ({ ...equipment }));
-
 export const INITIAL_WORK_ORDERS = [
   {
     id: 'WO-001',
@@ -116,9 +113,18 @@ export const INITIAL_WORK_ORDERS = [
     remark: '주간조 정규 생산',
     processes: buildProcesses(
       Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.IN_PROGRESS),
-      [{ good: 3120, defect: 40 }, { good: 3040, defect: 60 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }]
+      [
+        { good: 3120, defect: 40 }, // 혼합
+        { good: 3040, defect: 60 }, // 압연
+        { good: 2980, defect: 55 }, // 제면
+        { good: 2930, defect: 58 }, // 증숙
+        { good: 2870, defect: 65 }, // 절단
+        { good: 2810, defect: 70 }, // 유탕
+        { good: 2760, defect: 68 }, // 냉각
+        { good: 2700, defect: 75 }, // 포장
+        { good: 2650, defect: 78 }, // 검사
+      ]
     ),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-09 08:02', changedBy: '김민준', note: '작업 시작' },
       { id: 'H1', status: 'REGISTERED', changedAt: '2026-07-05 14:20', changedBy: '정하늘', note: '작업지시 등록' },
@@ -142,9 +148,18 @@ export const INITIAL_WORK_ORDERS = [
     remark: '설비 점검을 위해 목표 수량 전 조기 완료',
     processes: buildProcesses(
       Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
-      [{ good: 900, defect: 20 }, { good: 880, defect: 10 }, { good: 860, defect: 10 }, { good: 0, defect: 0 }]
+      [
+        { good: 900, defect: 20 }, // 혼합
+        { good: 880, defect: 10 }, // 압연
+        { good: 860, defect: 10 }, // 제면
+        { good: 845, defect: 16 }, // 증숙
+        { good: 830, defect: 19 }, // 절단
+        { good: 815, defect: 24 }, // 유탕
+        { good: 870, defect: 28 }, // 냉각
+        { good: 865, defect: 33 }, // 포장
+        { good: 860, defect: 40 }, // 검사 (최종 정상/불량 수량과 동일)
+      ]
     ),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H4', status: 'DONE', changedAt: '2026-07-09 12:05', changedBy: '박도윤', note: '조기 완료' },
       { id: 'H3', status: 'HOLD', changedAt: '2026-07-09 11:45', changedBy: '박도윤', note: '건조기 2호 이상 알람으로 보류' },
@@ -170,9 +185,18 @@ export const INITIAL_WORK_ORDERS = [
     remark: '',
     processes: buildProcesses(
       Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
-      [{ good: 4000, defect: 10 }, { good: 3990, defect: 15 }, { good: 3970, defect: 15 }, { good: 3950, defect: 10 }]
+      [
+        { good: 4000, defect: 10 }, // 혼합
+        { good: 3990, defect: 15 }, // 압연
+        { good: 3970, defect: 15 }, // 제면
+        { good: 3950, defect: 10 }, // 증숙
+        { good: 3940, defect: 20 }, // 절단
+        { good: 3920, defect: 25 }, // 유탕
+        { good: 3910, defect: 30 }, // 냉각
+        { good: 3930, defect: 35 }, // 포장
+        { good: 3950, defect: 50 }, // 검사 (최종 정상/불량 수량과 동일)
+      ]
     ),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H3', status: 'DONE', changedAt: '2026-07-08 17:32', changedBy: '이서연', note: '전 공정 완료' },
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-08 08:00', changedBy: '이서연', note: '작업 시작' },
@@ -197,9 +221,18 @@ export const INITIAL_WORK_ORDERS = [
     remark: '거래처 요청 건, 우선 진행',
     processes: buildProcesses(
       Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
-      [{ good: 110, defect: 10 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }]
+      [
+        { good: 110, defect: 10 }, // 혼합
+        { good: 108, defect: 9 }, // 압연
+        { good: 106, defect: 8 }, // 제면
+        { good: 104, defect: 7 }, // 증숙
+        { good: 102, defect: 6 }, // 절단
+        { good: 100, defect: 5 }, // 유탕
+        { good: 98, defect: 4 }, // 냉각
+        { good: 112, defect: 8 }, // 포장
+        { good: 110, defect: 10 }, // 검사 (최종 정상/불량 수량과 동일)
+      ]
     ),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H3', status: 'DONE', changedAt: '2026-07-09 14:10', changedBy: '최지우', note: '우선 생산 완료' },
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-09 13:20', changedBy: '최지우', note: '작업 시작' },
@@ -224,9 +257,18 @@ export const INITIAL_WORK_ORDERS = [
     remark: '',
     processes: buildProcesses(
       Array(PROCESS_TEMPLATE.length).fill(PROCESS_STATUS.COMPLETED),
-      [{ good: 1150, defect: 30 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }, { good: 0, defect: 0 }]
+      [
+        { good: 1150, defect: 30 }, // 혼합
+        { good: 1140, defect: 28 }, // 압연
+        { good: 1130, defect: 25 }, // 제면
+        { good: 1120, defect: 22 }, // 증숙
+        { good: 1110, defect: 20 }, // 절단
+        { good: 1100, defect: 18 }, // 유탕
+        { good: 1160, defect: 26 }, // 냉각
+        { good: 1155, defect: 29 }, // 포장
+        { good: 1150, defect: 30 }, // 검사 (최종 정상/불량 수량과 동일)
+      ]
     ),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H3', status: 'DONE', changedAt: '2026-07-09 10:15', changedBy: '한소율', note: '조기 완료' },
       { id: 'H2', status: 'IN_PROGRESS', changedAt: '2026-07-09 08:30', changedBy: '한소율', note: '작업 시작' },
@@ -250,7 +292,6 @@ export const INITIAL_WORK_ORDERS = [
     completedAt: null,
     remark: '원자재(스프) 입고 대기',
     processes: buildWaitingProcesses(),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H1', status: 'REGISTERED', changedAt: '2026-07-08 10:00', changedBy: '정하늘', note: '작업지시 등록' },
     ],
@@ -307,7 +348,6 @@ export const createWaitingWorkOrder = (values, workOrders) => {
     completedAt: null,
     remark: values.remark ?? '',
     processes: buildWaitingProcesses(),
-    equipmentList: buildEquipmentList(PROCESS_TEMPLATE),
     statusHistory: [
       { id: 'H1', status: 'REGISTERED', changedAt: dateTime, changedBy: values.supervisorName, note: '작업지시 등록' },
     ],

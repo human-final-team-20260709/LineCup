@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
-  FiArrowLeft, FiUsers, FiSettings, FiClock, FiEdit2, FiPackage, FiX, FiSearch,
+  FiArrowLeft, FiUsers, FiClock, FiEdit2, FiPackage, FiX, FiSearch,
 } from 'react-icons/fi';
 import {
   Page, BackLink, HeaderRow, TitleRow, Code, Title, LiveDot, SparkWrap, ActionRow,
@@ -10,26 +10,23 @@ import {
   ProcessGrid, ProcessCard, ProcessCardHeader, ProcessIdentity, ProcessMode, ProcessName,
   ProcessQtyRow, ProcessQtyBlock, ProcessQtyLabel, ProcessQtyValue, ProcessEquipRow,
   ProcessEquipLabel, ContentGrid, Card, CardHeaderRow, CardTitle, CardDescription, LinkButton,
-  InfoList, InfoRow, InfoLabel, InfoValue, RemarkBox, EquipList, EquipRow, EquipName,
+  InfoList, InfoRow, InfoLabel, InfoValue, RemarkBox,
   TargetEditRow, TargetInput, Badge, BadgeDot, ProgressRow, ProgressTrack, ProgressFill,
   ProgressRate, StyledButton, EmptyWrap, EmptyIconCircle, EmptyTitle, EmptyDesc,
   EmptyActionBtn, ToggleWrap, ToggleLabel, ToggleSwitch, ToggleKnob, ModalOverlay,
   ModalPanel, ModalHeader, ModalTitle, ModalCloseBtn, ModalBody, ModalFooter, HistoryToolRow,
   HistoryList, HistoryItem, HistoryDot, HistoryContent, HistoryTop, HistoryEventLabel,
   HistoryNote, PickerSearchBox, PickerSearchInput, PickerList, PickerRow, PickerRadioDot,
-  PickerInfo, PickerName, PickerMeta, PickerTaskLoad, EquipModalGroup, EquipModalTitle,
-  EquipModalRow, EquipModalCheckbox, EquipModalInfo, EquipModalName, ConfirmText, ConfirmSub,
+  PickerInfo, PickerName, PickerMeta, PickerTaskLoad, ConfirmText, ConfirmSub,
 } from './WorkOrderDetailCss';
 
 import {
-  DUMMY_EQUIPMENTS as dummyEquipments,
   DUMMY_SUPERVISORS as dummySupervisors,
   EQUIPMENT_STATUS_META,
   HISTORY_EVENT_META,
   nowString,
   PROCESS_STATUS,
   PROCESS_STATUS_META,
-  PROCESS_TEMPLATE,
   WORK_ORDER_STATUS,
   WORK_ORDER_STATUS_META,
 } from './workOrderData';
@@ -248,65 +245,6 @@ const SupervisorAssignModal = ({ open, onClose, currentSupervisorId, onAssign, w
   );
 };
 
-/* 3.10 작업지시별 설비 매핑 */
-const EquipmentMapModal = ({ open, onClose, selectedIds = [], onSave }) => {
-  const [checked, setChecked] = useState(selectedIds);
-
-  const toggle = (id) => {
-    setChecked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
-  };
-
-  const handleSave = () => {
-    onSave?.(checked);
-    onClose?.();
-  };
-
-  return (
-    <ModalBase
-      open={open}
-      onClose={onClose}
-      title="설비 매핑"
-      width="520px"
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose}>
-            취소
-          </Button>
-          <Button variant="primary" onClick={handleSave}>
-            매핑 저장
-          </Button>
-        </>
-      }
-    >
-      {dummyEquipments.length === 0 ? (
-        <EmptyState icon={<FiSettings size={22} />} title="등록된 설비가 없습니다" description="설비 마스터를 먼저 등록해 주세요." />
-      ) : (
-        PROCESS_TEMPLATE.map((processName) => {
-          const equips = dummyEquipments.filter((eq) => eq.process === processName);
-          return (
-            <EquipModalGroup key={processName}>
-              <EquipModalTitle>{processName}</EquipModalTitle>
-              {equips.map((eq) => {
-                const meta = EQUIPMENT_STATUS_META[eq.status];
-                const isChecked = checked.includes(eq.id);
-                return (
-                  <EquipModalRow key={eq.id} $active={isChecked} onClick={() => toggle(eq.id)}>
-                    <EquipModalCheckbox $active={isChecked} />
-                    <EquipModalInfo>
-                      <EquipModalName>{eq.name}</EquipModalName>
-                      <StatusBadge label={meta.label} color={meta.color} />
-                    </EquipModalInfo>
-                  </EquipModalRow>
-                );
-              })}
-            </EquipModalGroup>
-          );
-        })
-      )}
-    </ModalBase>
-  );
-};
-
 /* 3.4 작업 시작 / 보류 / 완료 처리 확인 */
 const VARIANT_BY_ACTION = { START: 'primary', HOLD: 'warning', DONE: 'primary' };
 
@@ -343,7 +281,7 @@ const ProcessProgressGrid = ({ processes = [] }) => (
         <ProcessCard key={p.id} $delay={idx * 60}>
           <ProcessCardHeader>
             <ProcessIdentity>
-              <ProcessMode>Independent Equipment</ProcessMode>
+              <ProcessMode>UNIT {String(idx + 1).padStart(2, '0')} · INDEPENDENT</ProcessMode>
               <ProcessName>{p.name}</ProcessName>
             </ProcessIdentity>
             <StatusBadge label={statusMeta.label} color={statusMeta.color} pulse={p.status === PROCESS_STATUS.IN_PROGRESS} />
@@ -428,7 +366,6 @@ const WorkOrderDetail = ({ workOrders, setWorkOrders }) => {
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [supervisorModalOpen, setSupervisorModalOpen] = useState(false);
-  const [equipModalOpen, setEquipModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null); // 'START' | 'HOLD' | 'DONE'
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetDraft, setTargetDraft] = useState('');
@@ -506,11 +443,6 @@ const WorkOrderDetail = ({ workOrders, setWorkOrders }) => {
     updateWorkOrder((prev) => ({ ...prev, supervisor: supervisor.name, supervisorId: supervisor.id }));
   };
 
-  const handleSaveEquipment = (ids) => {
-    const list = dummyEquipments.filter((eq) => ids.includes(eq.id));
-    updateWorkOrder((prev) => ({ ...prev, equipmentList: list }));
-  };
-
   const openTargetEdit = () => {
     setTargetDraft(String(workOrder.targetQty));
     setEditingTarget(true);
@@ -577,9 +509,10 @@ const WorkOrderDetail = ({ workOrders, setWorkOrders }) => {
           <div>
             <CardTitle>독립 설비 공정 진행 현황</CardTitle>
             <CardDescription>
-              각 기기는 선후 관계 없이 독립적으로 운영되며, 설비별 작업 상태와 생산 실적을 개별 표시합니다.
+              {workOrder.processes.length}개 설비가 선후 관계 없이 독립적으로 운영되며, 설비별 작업 상태와 생산 실적을 개별 표시합니다.
             </CardDescription>
           </div>
+          <StatusBadge label={`UNIT × ${workOrder.processes.length}`} color="#4be277" />
         </CardHeaderRow>
         <ProcessProgressGrid processes={workOrder.processes} />
       </Card>
@@ -648,38 +581,6 @@ const WorkOrderDetail = ({ workOrders, setWorkOrders }) => {
               <InfoValue>{workOrder.supervisor}</InfoValue>
             </InfoRow>
           </InfoList>
-
-          <CardHeaderRow $spaced>
-            <CardTitle>매핑된 설비 목록</CardTitle>
-            <LinkButton type="button" onClick={() => setEquipModalOpen(true)}>
-              <FiSettings size={12} />
-              매핑 수정
-            </LinkButton>
-          </CardHeaderRow>
-          {workOrder.equipmentList.length === 0 ? (
-            <EmptyState
-              icon={<FiSettings size={20} />}
-              title="매핑된 설비가 없습니다"
-              description="매핑 수정 버튼으로 설비를 연결해 주세요."
-              actionLabel="설비 매핑하기"
-              onAction={() => setEquipModalOpen(true)}
-            />
-          ) : (
-            <EquipList>
-              {workOrder.equipmentList.map((eq) => {
-                const meta = EQUIPMENT_STATUS_META[eq.status];
-                return (
-                  <EquipRow key={eq.id}>
-                    <EquipName>
-                      {eq.name}
-                      <span>{eq.process}</span>
-                    </EquipName>
-                    <StatusBadge label={meta.label} color={meta.color} />
-                  </EquipRow>
-                );
-              })}
-            </EquipList>
-          )}
         </Card>
       </ContentGrid>
 
@@ -690,12 +591,6 @@ const WorkOrderDetail = ({ workOrders, setWorkOrders }) => {
         currentSupervisorId={workOrder.supervisorId}
         onAssign={handleAssignSupervisor}
         workOrders={workOrders}
-      />
-      <EquipmentMapModal
-        open={equipModalOpen}
-        onClose={() => setEquipModalOpen(false)}
-        selectedIds={workOrder.equipmentList.map((eq) => eq.id)}
-        onSave={handleSaveEquipment}
       />
       {confirmAction && (
         <ConfirmActionModal

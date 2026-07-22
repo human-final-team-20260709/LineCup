@@ -305,24 +305,28 @@ export const ProgressRate = styled.span`
  * ========================================================= */
 export const ProcessGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(320px, 1fr));
-  gap: ${spacing.lg};
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: ${spacing.md};
 
-  @media (max-width: 960px) {
+  @media (max-width: 1240px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
 
 export const ProcessCard = styled.div`
-  min-height: 224px;
+  min-height: 208px;
   background: ${colors.surfaceContainerLow};
   border: 1px solid ${colors.outlineVariant};
   border-radius: ${radius.md};
-  padding: ${spacing.lg};
+  padding: ${spacing.md};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: ${spacing.md};
+  gap: ${spacing.sm};
   opacity: 0;
   animation: ${fadeSlideUp} 0.4s ease both;
   animation-delay: ${({ $delay }) => $delay || 0}ms;
@@ -366,9 +370,9 @@ export const ProcessQtyRow = styled.div`
 export const ProcessQtyBlock = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid ${colors.outlineVariant};
   border-radius: ${radius.DEFAULT};
   background: ${colors.surfaceContainerLowest};
@@ -381,9 +385,9 @@ export const ProcessQtyLabel = styled.span`
 
 export const ProcessQtyValue = styled.span`
   font-family: ${font.mono};
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  line-height: 30px;
+  line-height: 26px;
   text-transform: none;
   color: ${({ $alert }) => ($alert ? colors.tertiary : colors.onSurface)};
 `;
@@ -392,8 +396,8 @@ export const ProcessEquipRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: ${spacing.md};
-  padding: 14px 16px;
+  gap: ${spacing.sm};
+  padding: 12px 14px;
   border-top: 1px solid ${colors.outlineVariant};
   border-radius: ${radius.DEFAULT};
   background: ${colors.surfaceContainerHigh};
@@ -424,6 +428,7 @@ export const ProcessEquipLabel = styled.span`
 export const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 1.1fr 1fr;
+  align-items: start;
   gap: ${spacing.lg};
 
   @media (max-width: 960px) {
@@ -528,36 +533,6 @@ export const RemarkBox = styled.div`
   border: 1px solid ${colors.outlineVariant};
   border-radius: ${radius.DEFAULT};
   padding: ${spacing.sm} ${spacing.md};
-`;
-
-export const EquipList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-export const EquipRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: ${spacing.sm};
-  background: ${colors.surfaceContainerLow};
-  border: 1px solid ${colors.outlineVariant};
-  border-radius: ${radius.DEFAULT};
-`;
-
-export const EquipName = styled.span`
-  display: flex;
-  flex-direction: column;
-  ${typography.bodySm};
-  color: ${colors.onSurface};
-
-  span {
-    ${typography.dataSm};
-    text-transform: none;
-    color: ${colors.onSurfaceVariant};
-    margin-top: 2px;
-  }
 `;
 
 export const TargetEditRow = styled.div`
@@ -990,61 +965,6 @@ export const PickerTaskLoad = styled.span`
   color: ${({ $busy }) => ($busy ? colors.secondary : colors.onSurfaceVariant)};
   white-space: nowrap;
   flex-shrink: 0;
-`;
-
-/* =========================================================
- * 설비 매핑 모달 (3.10)
- * ========================================================= */
-export const EquipModalGroup = styled.div`
-  margin-bottom: ${spacing.md};
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-export const EquipModalTitle = styled.p`
-  ${typography.labelCaps};
-  color: ${colors.onSurfaceVariant};
-  margin: 0 0 ${spacing.sm} 0;
-`;
-
-export const EquipModalRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${spacing.sm};
-  padding: ${spacing.sm};
-  border-radius: ${radius.DEFAULT};
-  border: 1px solid ${({ $active }) => ($active ? colors.primary : colors.outlineVariant)};
-  background: ${({ $active }) => ($active ? colors.surfaceContainerHigh : 'transparent')};
-  cursor: pointer;
-  margin-bottom: 6px;
-
-  &:hover {
-    background: ${colors.surfaceContainerHigh};
-  }
-`;
-
-export const EquipModalCheckbox = styled.span`
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 2px solid ${({ $active }) => ($active ? colors.primary : colors.outline)};
-  background: ${({ $active }) => ($active ? colors.primary : 'transparent')};
-  flex-shrink: 0;
-`;
-
-export const EquipModalInfo = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-export const EquipModalName = styled.span`
-  ${typography.bodySm};
-  color: ${colors.onSurface};
 `;
 
 /* =========================================================
