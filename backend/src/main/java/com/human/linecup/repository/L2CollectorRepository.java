@@ -1,6 +1,8 @@
 package com.human.linecup.repository;
 
+import com.human.linecup.entity.ConnectionStatus;
 import com.human.linecup.entity.L2Collector;
+import com.human.linecup.entity.L2Collector.CollectorStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -8,12 +10,11 @@ import java.util.Optional;
 
 public interface L2CollectorRepository extends JpaRepository<L2Collector, Long> {
 
-    // name UNIQUE - 수집기 단건 조회
-    Optional<L2Collector> findByName(String name);
+    Optional<L2Collector> findByCollectorCode(String collectorCode);
 
-    // 가동중 / 정지 상태별 목록 (수집기가 여러 대인 환경 대비)
-    List<L2Collector> findAllByStatus(String status);
+    boolean existsByCollectorCode(String collectorCode);
 
-    // 백엔드 연결이 끊긴 수집기 감지용
-    List<L2Collector> findAllByBackendConnectionStatus(String backendConnectionStatus);
+    List<L2Collector> findAllByStatus(CollectorStatus status);
+
+    List<L2Collector> findAllByBackendConnectionStatus(ConnectionStatus backendConnectionStatus);
 }

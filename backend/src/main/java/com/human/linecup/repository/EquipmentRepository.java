@@ -1,23 +1,28 @@
 package com.human.linecup.repository;
 
 import com.human.linecup.entity.Equipment;
+import com.human.linecup.entity.Equipment.EquipmentStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
 
-    // equipment_code UNIQUE - 단건 조회 및 중복 검증
+    @EntityGraph(attributePaths = "manufacturingProcess")
     Optional<Equipment> findByEquipmentCode(String equipmentCode);
 
     boolean existsByEquipmentCode(String equipmentCode);
 
-    // equipment_name UNIQUE - 등록 시 중복 검증
     boolean existsByEquipmentName(String equipmentName);
 
-    // 대시보드 - 상태별 설비 목록 (RUNNING / STOPPED / ERROR)
-    List<Equipment> findAllByStatus(String status);
+    @EntityGraph(attributePaths = "manufacturingProcess")
+    List<Equipment> findAllByEquipmentCodeIn(Collection<String> equipmentCodes);
 
-    long countByStatus(String status);
+    @EntityGraph(attributePaths = "manufacturingProcess")
+    List<Equipment> findAllByStatus(EquipmentStatus status);
+
+    long countByStatus(EquipmentStatus status);
 }

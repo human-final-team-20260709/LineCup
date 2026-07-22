@@ -1,12 +1,14 @@
 package com.human.linecup.repository;
 
 import com.human.linecup.entity.WorkOrderEquipment;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
 public interface WorkOrderEquipmentRepository extends JpaRepository<WorkOrderEquipment, Long> {
 
+    @EntityGraph(attributePaths = "equipment")
     List<WorkOrderEquipment> findByWorkOrder_WorkOrderId(Long workOrderId);
 
     List<WorkOrderEquipment> findByEquipment_EquipmentId(Long equipmentId);
