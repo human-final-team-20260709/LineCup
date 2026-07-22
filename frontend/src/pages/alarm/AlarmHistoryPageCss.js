@@ -1,41 +1,54 @@
-.alarm-history-page {
+import styled from 'styled-components';
+
+function cx(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
+function withClass(Tag, baseClass) {
+  return styled(Tag).attrs(({ className }) => ({
+    className: cx(baseClass, className),
+  }))``;
+}
+
+export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
+& {
   min-height: 100vh;
   padding: 32px;
   background: #0b1326;
   color: #dae2fd;
 }
 
-.alarm-history-page button,
-.alarm-history-page input,
-.alarm-history-page select {
+& button,
+& input,
+& select {
   font: inherit;
 }
 
-.alarm-history-page button {
+& button {
   border: 0;
 }
 
-.alarm-history-page .alarm-page-header,
-.alarm-history-page .alarm-panel-header,
-.alarm-history-page .alarm-modal-header {
+& .alarm-page-header,
+& .alarm-panel-header,
+& .alarm-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.alarm-history-page .alarm-page-header {
+& .alarm-page-header {
   gap: 24px;
   margin-bottom: 16px;
 }
 
-.alarm-history-page .alarm-title-block {
+& .alarm-title-block {
   max-width: 760px;
 }
 
-.alarm-history-page .alarm-title-block h1,
-.alarm-history-page .alarm-panel-header h2,
-.alarm-history-page .alarm-modal-header h2 {
+& .alarm-title-block h1,
+& .alarm-panel-header h2,
+& .alarm-modal-header h2 {
   margin: 4px 0 0;
   font-size: 18px;
   font-weight: 600;
@@ -43,22 +56,22 @@
   letter-spacing: 0;
 }
 
-.alarm-history-page .alarm-title-block h1 {
+& .alarm-title-block h1 {
   margin-bottom: 8px;
   font-size: 24px;
   line-height: 32px;
 }
 
-.alarm-history-page .alarm-title-block p {
+& .alarm-title-block p {
   margin: 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-history-page .alarm-eyebrow,
-.alarm-history-page .alarm-panel-label,
-.alarm-history-page .alarm-summary-card span {
+& .alarm-eyebrow,
+& .alarm-panel-label,
+& .alarm-summary-card span {
   color: #4be277;
   font-size: 11px;
   font-weight: 700;
@@ -67,11 +80,11 @@
   text-transform: uppercase;
 }
 
-.alarm-history-page .alarm-text-button:hover {
+& .alarm-text-button:hover {
   border-color: #4be277;
 }
 
-.alarm-history-page .alarm-state-switch {
+& .alarm-state-switch {
   display: inline-flex;
   padding: 3px;
   margin-bottom: 16px;
@@ -80,7 +93,7 @@
   background: #060e20;
 }
 
-.alarm-history-page .alarm-state-switch__button {
+& .alarm-state-switch__button {
   min-width: 92px;
   min-height: 30px;
   padding: 0 12px;
@@ -92,31 +105,31 @@
   cursor: pointer;
 }
 
-.alarm-history-page .alarm-state-switch__button.is-active {
+& .alarm-state-switch__button.is-active {
   background: #22c55e;
   color: #003915;
 }
 
-.alarm-history-page .alarm-summary-grid {
+& .alarm-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.alarm-history-page .alarm-summary-card,
-.alarm-history-page .alarm-panel,
-.alarm-history-page .alarm-modal {
+& .alarm-summary-card,
+& .alarm-panel,
+& .alarm-modal {
   border: 1px solid #334155;
   border-radius: 4px;
   background: #171f33;
 }
 
-.alarm-history-page .alarm-summary-card {
+& .alarm-summary-card {
   padding: 16px;
 }
 
-.alarm-history-page .alarm-summary-card strong {
+& .alarm-summary-card strong {
   display: block;
   margin-top: 12px;
   color: #4be277;
@@ -126,7 +139,7 @@
   line-height: 32px;
 }
 
-.alarm-history-page .alarm-summary-card small {
+& .alarm-summary-card small {
   display: block;
   margin-top: 4px;
   color: #bccbb9;
@@ -134,14 +147,14 @@
   line-height: 18px;
 }
 
-.alarm-history-page .alarm-history-filter-panel {
+& .alarm-history-filter-panel {
   display: grid;
   grid-template-columns: 150px 150px minmax(280px, 1fr) 180px 160px;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.alarm-history-page .alarm-field {
+& .alarm-field {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -153,8 +166,8 @@
   color: #869585;
 }
 
-.alarm-history-page .alarm-field input,
-.alarm-history-page .alarm-field select {
+& .alarm-field input,
+& .alarm-field select {
   width: 100%;
   min-width: 0;
   border: 0;
@@ -164,59 +177,59 @@
   font-size: 14px;
 }
 
-.alarm-history-page .alarm-field input[type="date"] {
+& .alarm-field input[type="date"] {
   color-scheme: dark;
 }
 
-.alarm-history-page .alarm-field select {
+& .alarm-field select {
   color-scheme: dark;
 }
 
-.alarm-history-page .alarm-field select option {
+& .alarm-field select option {
   background: #131b2e;
   color: #dae2fd;
 }
 
-.alarm-history-page .alarm-field:focus-within {
+& .alarm-field:focus-within {
   border-color: #4be277;
 }
 
-.alarm-history-page .alarm-panel-header {
+& .alarm-panel-header {
   align-items: center;
   padding: 16px;
   border-bottom: 1px solid #334155;
 }
 
-.alarm-history-page .alarm-panel-meta,
-.alarm-history-page .alarm-mono {
+& .alarm-panel-meta,
+& .alarm-mono {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-history-page .alarm-panel-meta {
+& .alarm-panel-meta {
   color: #bccbb9;
 }
 
-.alarm-history-page .alarm-table-frame {
+& .alarm-table-frame {
   overflow-x: auto;
 }
 
-.alarm-history-page .alarm-table {
+& .alarm-table {
   width: 100%;
   min-width: 980px;
   border-collapse: collapse;
 }
 
-.alarm-history-page .alarm-table th,
-.alarm-history-page .alarm-table td {
+& .alarm-table th,
+& .alarm-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #2d3449;
   text-align: left;
   vertical-align: middle;
 }
 
-.alarm-history-page .alarm-table th {
+& .alarm-table th {
   color: #bccbb9;
   font-size: 11px;
   font-weight: 700;
@@ -225,43 +238,43 @@
   text-transform: uppercase;
 }
 
-.alarm-history-page .alarm-table td {
+& .alarm-table td {
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-history-page .alarm-table tbody tr:nth-child(even) {
+& .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
 }
 
-.alarm-history-page .alarm-clickable-row {
+& .alarm-clickable-row {
   cursor: pointer;
 }
 
-.alarm-history-page .alarm-clickable-row:hover {
+& .alarm-clickable-row:hover {
   background: rgba(75, 226, 119, 0.06);
 }
 
-.alarm-history-page .alarm-clickable-row:focus {
+& .alarm-clickable-row:focus {
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
 }
 
-.alarm-history-page .alarm-time-cell {
+& .alarm-time-cell {
   display: grid;
   gap: 2px;
 }
 
-.alarm-history-page .alarm-time-cell span:last-child {
+& .alarm-time-cell span:last-child {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-history-page .alarm-severity-chip,
-.alarm-history-page .alarm-status-chip {
+& .alarm-severity-chip,
+& .alarm-status-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -278,32 +291,32 @@
   line-height: 16px;
 }
 
-.alarm-history-page .alarm-severity-chip--info {
+& .alarm-severity-chip--info {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
   color: #8bd5ff;
 }
 
-.alarm-history-page .alarm-severity-chip--warning,
-.alarm-history-page .alarm-status-chip.is-pending {
+& .alarm-severity-chip--warning,
+& .alarm-status-chip.is-pending {
   border-color: rgba(255, 185, 95, 0.34);
   background: rgba(255, 185, 95, 0.14);
   color: #ffb95f;
 }
 
-.alarm-history-page .alarm-severity-chip--critical {
+& .alarm-severity-chip--critical {
   border-color: rgba(255, 138, 131, 0.42);
   background: rgba(255, 138, 131, 0.16);
   color: #ffb4ab;
 }
 
-.alarm-history-page .alarm-status-chip.is-handled {
+& .alarm-status-chip.is-handled {
   border-color: rgba(75, 226, 119, 0.3);
   background: rgba(75, 226, 119, 0.12);
   color: #4be277;
 }
 
-.alarm-history-page .alarm-text-button {
+& .alarm-text-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -318,7 +331,7 @@
   cursor: pointer;
 }
 
-.alarm-history-page .alarm-empty-state {
+& .alarm-empty-state {
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -328,26 +341,26 @@
   text-align: center;
 }
 
-.alarm-history-page .alarm-empty-state svg {
+& .alarm-empty-state svg {
   width: 36px;
   height: 36px;
   color: #4be277;
 }
 
-.alarm-history-page .alarm-empty-state strong {
+& .alarm-empty-state strong {
   color: #dae2fd;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-history-page .alarm-empty-state span {
+& .alarm-empty-state span {
   max-width: 420px;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-history-page .alarm-modal-backdrop {
+& .alarm-modal-backdrop {
   position: fixed;
   inset: 0;
   display: grid;
@@ -357,16 +370,16 @@
   z-index: 20;
 }
 
-.alarm-history-page .alarm-modal {
+& .alarm-modal {
   width: min(520px, 100%);
 }
 
-.alarm-history-page .alarm-modal-header {
+& .alarm-modal-header {
   padding: 16px;
   border-bottom: 1px solid #334155;
 }
 
-.alarm-history-page .alarm-icon-button {
+& .alarm-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -379,38 +392,38 @@
   cursor: pointer;
 }
 
-.alarm-history-page .alarm-icon-button:hover {
+& .alarm-icon-button:hover {
   border-color: #ffb4ab;
   color: #ffb4ab;
 }
 
-.alarm-history-page .alarm-modal-body {
+& .alarm-modal-body {
   display: grid;
   gap: 16px;
   padding: 16px;
 }
 
-.alarm-history-page .alarm-detail-grid {
+& .alarm-detail-grid {
   display: grid;
   grid-template-columns: 100px minmax(0, 1fr);
   gap: 8px 12px;
   margin: 0;
 }
 
-.alarm-history-page .alarm-detail-grid dt {
+& .alarm-detail-grid dt {
   color: #bccbb9;
   font-size: 12px;
   line-height: 18px;
 }
 
-.alarm-history-page .alarm-detail-grid dd {
+& .alarm-detail-grid dd {
   margin: 0;
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-history-page .alarm-note-box {
+& .alarm-note-box {
   min-height: 96px;
   padding: 12px;
   border: 1px solid #334155;
@@ -420,3 +433,43 @@
   font-size: 14px;
   line-height: 20px;
 }
+
+`;
+export const PageHeader = withClass('section', 'alarm-page-header');
+export const TitleBlock = withClass('div', 'alarm-title-block');
+export const Eyebrow = withClass('span', 'alarm-eyebrow');
+export const StateSwitch = withClass('div', 'alarm-state-switch');
+export const SummaryGrid = withClass('section', 'alarm-summary-grid');
+export const SummaryCard = withClass('article', 'alarm-summary-card');
+export const FilterPanel = withClass('section', 'alarm-history-filter-panel');
+export const FilterField = withClass('label', 'alarm-field');
+export const SelectField = withClass('label', 'alarm-field');
+export const Panel = withClass('article', 'alarm-panel');
+export const PanelHeader = withClass('div', 'alarm-panel-header');
+export const PanelLabel = withClass('span', 'alarm-panel-label');
+export const PanelMeta = withClass('span', 'alarm-panel-meta');
+export const TableFrame = withClass('div', 'alarm-table-frame');
+export const HistoryTable = withClass('table', 'alarm-table');
+export const TimeCell = withClass('div', 'alarm-time-cell');
+export const MonoText = withClass('span', 'alarm-mono');
+export const TextButton = withClass('button', 'alarm-text-button');
+export const EmptyState = withClass('div', 'alarm-empty-state');
+export const ModalBackdrop = withClass('div', 'alarm-modal-backdrop');
+export const Modal = withClass('div', 'alarm-modal');
+export const ModalHeader = withClass('div', 'alarm-modal-header');
+export const IconButton = withClass('button', 'alarm-icon-button');
+export const ModalBody = withClass('div', 'alarm-modal-body');
+export const DetailGrid = withClass('dl', 'alarm-detail-grid');
+export const NoteBox = withClass('div', 'alarm-note-box');
+
+export const SwitchButton = styled.button.attrs(({ $active, className }) => ({
+  className: cx('alarm-state-switch__button', $active && 'is-active', className),
+}))``;
+
+export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
+  className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
+}))``;
+
+export const StatusChip = styled.span.attrs(({ $handled, className }) => ({
+  className: cx('alarm-status-chip', $handled ? 'is-handled' : 'is-pending', className),
+}))``;

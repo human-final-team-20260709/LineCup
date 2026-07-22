@@ -1,21 +1,34 @@
-.current-alarm-page {
+import styled from 'styled-components';
+
+function cx(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
+function withClass(Tag, baseClass) {
+  return styled(Tag).attrs(({ className }) => ({
+    className: cx(baseClass, className),
+  }))``;
+}
+
+export const PageShell = styled.main.attrs({ className: 'current-alarm-page' })`
+& {
   min-height: 100vh;
   padding: 32px;
   background: #0b1326;
   color: #dae2fd;
 }
 
-.current-alarm-page button,
-.current-alarm-page input,
-.current-alarm-page select {
+& button,
+& input,
+& select {
   font: inherit;
 }
 
-.current-alarm-page button {
+& button {
   border: 0;
 }
 
-.current-alarm-page .alarm-page-header {
+& .alarm-page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -23,11 +36,11 @@
   margin-bottom: 16px;
 }
 
-.current-alarm-page .alarm-title-block {
+& .alarm-title-block {
   max-width: 760px;
 }
 
-.current-alarm-page .alarm-title-block h1 {
+& .alarm-title-block h1 {
   margin: 4px 0 8px;
   font-size: 24px;
   font-weight: 600;
@@ -35,15 +48,15 @@
   letter-spacing: 0;
 }
 
-.current-alarm-page .alarm-title-block p {
+& .alarm-title-block p {
   margin: 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.current-alarm-page .alarm-eyebrow,
-.current-alarm-page .alarm-panel-label {
+& .alarm-eyebrow,
+& .alarm-panel-label {
   color: #4be277;
   font-size: 11px;
   font-weight: 700;
@@ -52,7 +65,7 @@
   text-transform: uppercase;
 }
 
-.current-alarm-page .alarm-state-switch {
+& .alarm-state-switch {
   display: inline-flex;
   padding: 3px;
   margin-bottom: 16px;
@@ -61,7 +74,7 @@
   background: #060e20;
 }
 
-.current-alarm-page .alarm-state-switch__button {
+& .alarm-state-switch__button {
   min-width: 92px;
   min-height: 30px;
   padding: 0 12px;
@@ -73,19 +86,19 @@
   cursor: pointer;
 }
 
-.current-alarm-page .alarm-state-switch__button.is-active {
+& .alarm-state-switch__button.is-active {
   background: #22c55e;
   color: #003915;
 }
 
-.current-alarm-page .alarm-metric-grid {
+& .alarm-metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.current-alarm-page .alarm-current-metric-card {
+& .alarm-current-metric-card {
   min-height: 128px;
   padding: 16px;
   border: 1px solid #334155;
@@ -93,23 +106,23 @@
   background: #171f33;
 }
 
-.current-alarm-page .alarm-current-metric-card--critical {
+& .alarm-current-metric-card--critical {
   border-color: rgba(255, 138, 131, 0.42);
 }
 
-.current-alarm-page .alarm-current-metric-card--warning {
+& .alarm-current-metric-card--warning {
   border-color: rgba(255, 185, 95, 0.34);
 }
 
-.current-alarm-page .alarm-current-metric-card--normal {
+& .alarm-current-metric-card--normal {
   border-color: rgba(75, 226, 119, 0.28);
 }
 
-.current-alarm-page .alarm-current-metric-card--info {
+& .alarm-current-metric-card--info {
   border-color: rgba(56, 189, 248, 0.32);
 }
 
-.current-alarm-page .alarm-current-metric-card strong {
+& .alarm-current-metric-card strong {
   display: block;
   margin-top: 16px;
   font-family: "JetBrains Mono", Consolas, monospace;
@@ -118,23 +131,23 @@
   line-height: 32px;
 }
 
-.current-alarm-page .alarm-current-metric-card--critical strong {
+& .alarm-current-metric-card--critical strong {
   color: #ffb4ab;
 }
 
-.current-alarm-page .alarm-current-metric-card--warning strong {
+& .alarm-current-metric-card--warning strong {
   color: #ffb95f;
 }
 
-.current-alarm-page .alarm-current-metric-card--normal strong {
+& .alarm-current-metric-card--normal strong {
   color: #4be277;
 }
 
-.current-alarm-page .alarm-current-metric-card--info strong {
+& .alarm-current-metric-card--info strong {
   color: #8bd5ff;
 }
 
-.current-alarm-page .alarm-current-metric-card small {
+& .alarm-current-metric-card small {
   display: block;
   margin-top: 4px;
   color: #bccbb9;
@@ -142,7 +155,7 @@
   line-height: 18px;
 }
 
-.current-alarm-page .alarm-metric-header {
+& .alarm-metric-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -154,18 +167,18 @@
   text-transform: uppercase;
 }
 
-.current-alarm-page .alarm-metric-header svg {
+& .alarm-metric-header svg {
   color: #4be277;
 }
 
-.current-alarm-page .alarm-toolbar {
+& .alarm-toolbar {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) 190px 190px;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.current-alarm-page .alarm-field {
+& .alarm-field {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -177,8 +190,8 @@
   color: #869585;
 }
 
-.current-alarm-page .alarm-field input,
-.current-alarm-page .alarm-field select {
+& .alarm-field input,
+& .alarm-field select {
   width: 100%;
   min-width: 0;
   border: 0;
@@ -188,39 +201,39 @@
   font-size: 14px;
 }
 
-.current-alarm-page .alarm-field input::placeholder {
+& .alarm-field input::placeholder {
   color: #869585;
 }
 
-.current-alarm-page .alarm-field select {
+& .alarm-field select {
   color-scheme: dark;
 }
 
-.current-alarm-page .alarm-field select option {
+& .alarm-field select option {
   background: #131b2e;
   color: #dae2fd;
 }
 
-.current-alarm-page .alarm-field:focus-within {
+& .alarm-field:focus-within {
   border-color: #4be277;
 }
 
-.current-alarm-page .alarm-main-grid {
+& .alarm-main-grid {
   display: grid;
   gap: 16px;
 }
 
-.current-alarm-page .alarm-panel {
+& .alarm-panel {
   border: 1px solid #334155;
   border-radius: 4px;
   background: #171f33;
 }
 
-.current-alarm-page .alarm-main-grid > .alarm-panel:first-child {
+& .alarm-main-grid > .alarm-panel:first-child {
   min-height: 680px;
 }
 
-.current-alarm-page .alarm-current-side-panel {
+& .alarm-current-side-panel {
   display: none;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
@@ -228,37 +241,37 @@
   padding: 16px;
 }
 
-.current-alarm-page .alarm-current-side-panel h2 {
+& .alarm-current-side-panel h2 {
   margin: 4px 0 16px;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.current-alarm-page .alarm-current-side-panel h2,
-.current-alarm-page .alarm-current-side-panel .alarm-queue-list {
+& .alarm-current-side-panel h2,
+& .alarm-current-side-panel .alarm-queue-list {
   grid-column: 1;
 }
 
-.current-alarm-page .alarm-current-side-panel > .alarm-panel-label:first-child {
+& .alarm-current-side-panel > .alarm-panel-label:first-child {
   grid-column: 1;
 }
 
-.current-alarm-page .alarm-current-side-panel > .alarm-panel-label:nth-of-type(2),
-.current-alarm-page .alarm-current-side-panel .alarm-event-list {
+& .alarm-current-side-panel > .alarm-panel-label:nth-of-type(2),
+& .alarm-current-side-panel .alarm-event-list {
   grid-column: 2;
 }
 
-.current-alarm-page .alarm-current-side-panel > .alarm-panel-label:nth-of-type(2) {
+& .alarm-current-side-panel > .alarm-panel-label:nth-of-type(2) {
   grid-row: 1;
 }
 
-.current-alarm-page .alarm-current-side-panel .alarm-event-list {
+& .alarm-current-side-panel .alarm-event-list {
   grid-row: 2 / span 2;
   margin-top: 4px;
 }
 
-.current-alarm-page .alarm-panel-header {
+& .alarm-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -267,77 +280,77 @@
   border-bottom: 1px solid #334155;
 }
 
-.current-alarm-page .alarm-panel-header h2 {
+& .alarm-panel-header h2 {
   margin: 4px 0 0;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.current-alarm-page .alarm-panel-meta,
-.current-alarm-page .alarm-mono {
+& .alarm-panel-meta,
+& .alarm-mono {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
 }
 
-.current-alarm-page .alarm-panel-meta {
+& .alarm-panel-meta {
   color: #bccbb9;
 }
 
-.current-alarm-page .alarm-table-frame {
+& .alarm-table-frame {
   display: flex;
   flex-direction: column;
   min-height: 600px;
   overflow-x: visible;
 }
 
-.current-alarm-page .alarm-table {
+& .alarm-table {
   width: 100%;
   min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-.current-alarm-page .alarm-table th:nth-child(1),
-.current-alarm-page .alarm-table td:nth-child(1) {
+& .alarm-table th:nth-child(1),
+& .alarm-table td:nth-child(1) {
   width: 132px;
 }
 
-.current-alarm-page .alarm-table th:nth-child(2),
-.current-alarm-page .alarm-table td:nth-child(2) {
+& .alarm-table th:nth-child(2),
+& .alarm-table td:nth-child(2) {
   width: 190px;
 }
 
-.current-alarm-page .alarm-table th:nth-child(4),
-.current-alarm-page .alarm-table td:nth-child(4) {
+& .alarm-table th:nth-child(4),
+& .alarm-table td:nth-child(4) {
   width: 84px;
 }
 
-.current-alarm-page .alarm-table th:nth-child(5),
-.current-alarm-page .alarm-table td:nth-child(5) {
+& .alarm-table th:nth-child(5),
+& .alarm-table td:nth-child(5) {
   width: 168px;
 }
 
-.current-alarm-page .alarm-table th:nth-child(6),
-.current-alarm-page .alarm-table td:nth-child(6) {
+& .alarm-table th:nth-child(6),
+& .alarm-table td:nth-child(6) {
   width: 112px;
 }
 
-.current-alarm-page .alarm-table th:nth-child(7),
-.current-alarm-page .alarm-table td:nth-child(7) {
+& .alarm-table th:nth-child(7),
+& .alarm-table td:nth-child(7) {
   width: 92px;
 }
 
-.current-alarm-page .alarm-table th,
-.current-alarm-page .alarm-table td {
+& .alarm-table th,
+& .alarm-table td {
   padding: 13px 12px;
   border-bottom: 1px solid #2d3449;
   text-align: left;
   vertical-align: middle;
 }
 
-.current-alarm-page .alarm-table th {
+& .alarm-table th {
   color: #bccbb9;
   font-size: 11px;
   font-weight: 700;
@@ -346,50 +359,50 @@
   text-transform: uppercase;
 }
 
-.current-alarm-page .alarm-table td {
+& .alarm-table td {
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
   overflow-wrap: anywhere;
 }
 
-.current-alarm-page .alarm-table tbody tr:nth-child(even) {
+& .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
 }
 
-.current-alarm-page .alarm-table tbody tr:hover {
+& .alarm-table tbody tr:hover {
   background: rgba(75, 226, 119, 0.06);
 }
 
-.current-alarm-page .alarm-clickable-row {
+& .alarm-clickable-row {
   cursor: pointer;
 }
 
-.current-alarm-page .alarm-clickable-row:focus {
+& .alarm-clickable-row:focus {
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
 }
 
-.current-alarm-page .alarm-equipment-cell,
-.current-alarm-page .alarm-time-stack {
+& .alarm-equipment-cell,
+& .alarm-time-stack {
   display: grid;
   gap: 2px;
 }
 
-.current-alarm-page .alarm-equipment-cell strong {
+& .alarm-equipment-cell strong {
   font-size: 14px;
   font-weight: 600;
 }
 
-.current-alarm-page .alarm-equipment-cell span,
-.current-alarm-page .alarm-time-stack span {
+& .alarm-equipment-cell span,
+& .alarm-time-stack span {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.current-alarm-page .alarm-severity-chip {
+& .alarm-severity-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -406,25 +419,25 @@
   line-height: 16px;
 }
 
-.current-alarm-page .alarm-severity-chip--info {
+& .alarm-severity-chip--info {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
   color: #8bd5ff;
 }
 
-.current-alarm-page .alarm-severity-chip--warning {
+& .alarm-severity-chip--warning {
   border-color: rgba(255, 185, 95, 0.34);
   background: rgba(255, 185, 95, 0.14);
   color: #ffb95f;
 }
 
-.current-alarm-page .alarm-severity-chip--critical {
+& .alarm-severity-chip--critical {
   border-color: rgba(255, 138, 131, 0.42);
   background: rgba(255, 138, 131, 0.16);
   color: #ffb4ab;
 }
 
-.current-alarm-page .alarm-status-pill {
+& .alarm-status-pill {
   display: inline-flex;
   align-items: center;
   min-height: 24px;
@@ -437,12 +450,12 @@
   font-weight: 600;
 }
 
-.current-alarm-page .alarm-queue-list {
+& .alarm-queue-list {
   display: grid;
   gap: 8px;
 }
 
-.current-alarm-page .alarm-queue-item {
+& .alarm-queue-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -455,14 +468,14 @@
   font-size: 14px;
 }
 
-.current-alarm-page .alarm-divider {
+& .alarm-divider {
   display: none;
   height: 1px;
   margin: 0;
   background: #334155;
 }
 
-.current-alarm-page .alarm-event-list {
+& .alarm-event-list {
   display: grid;
   gap: 10px;
   margin: 12px 0 0;
@@ -470,7 +483,7 @@
   list-style: none;
 }
 
-.current-alarm-page .alarm-event-list li {
+& .alarm-event-list li {
   display: grid;
   gap: 3px;
   color: #bccbb9;
@@ -478,7 +491,7 @@
   line-height: 18px;
 }
 
-.current-alarm-page .alarm-empty-state {
+& .alarm-empty-state {
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -488,21 +501,61 @@
   text-align: center;
 }
 
-.current-alarm-page .alarm-empty-state svg {
+& .alarm-empty-state svg {
   width: 36px;
   height: 36px;
   color: #4be277;
 }
 
-.current-alarm-page .alarm-empty-state strong {
+& .alarm-empty-state strong {
   color: #dae2fd;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.current-alarm-page .alarm-empty-state span {
+& .alarm-empty-state span {
   max-width: 420px;
   font-size: 14px;
   line-height: 20px;
 }
+
+`;
+export const PageHeader = withClass('section', 'alarm-page-header');
+export const TitleBlock = withClass('div', 'alarm-title-block');
+export const Eyebrow = withClass('span', 'alarm-eyebrow');
+export const StateSwitch = withClass('div', 'alarm-state-switch');
+export const MetricGrid = withClass('section', 'alarm-metric-grid');
+export const MetricHeader = withClass('div', 'alarm-metric-header');
+export const Toolbar = withClass('section', 'alarm-toolbar');
+export const SearchBox = withClass('label', 'alarm-field alarm-search-box');
+export const SelectGroup = withClass('label', 'alarm-field alarm-select-group');
+export const MainGrid = withClass('section', 'alarm-main-grid');
+export const Panel = withClass('article', 'alarm-panel');
+export const PanelHeader = withClass('div', 'alarm-panel-header');
+export const PanelLabel = withClass('span', 'alarm-panel-label');
+export const PanelMeta = withClass('span', 'alarm-panel-meta');
+export const TableFrame = withClass('div', 'alarm-table-frame');
+export const AlarmTable = withClass('table', 'alarm-table');
+export const EquipmentCell = withClass('div', 'alarm-equipment-cell');
+export const TimeStack = withClass('div', 'alarm-time-stack');
+export const MonoText = withClass('span', 'alarm-mono');
+export const StatusPill = withClass('span', 'alarm-status-pill');
+export const QueueList = withClass('div', 'alarm-queue-list');
+export const QueueItem = withClass('div', 'alarm-queue-item');
+export const Divider = withClass('div', 'alarm-divider');
+export const EventList = withClass('ul', 'alarm-event-list');
+export const EmptyState = withClass('div', 'alarm-empty-state');
+export const SidePanel = withClass('article', 'alarm-panel alarm-current-side-panel');
+
+export const SwitchButton = styled.button.attrs(({ $active, className }) => ({
+  className: cx('alarm-state-switch__button', $active && 'is-active', className),
+}))``;
+
+export const MetricCard = styled.article.attrs(({ $tone, className }) => ({
+  className: cx('alarm-current-metric-card', $tone && `alarm-current-metric-card--${$tone}`, className),
+}))``;
+
+export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
+  className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
+}))``;

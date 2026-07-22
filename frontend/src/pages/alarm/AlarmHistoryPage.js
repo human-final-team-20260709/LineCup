@@ -1,6 +1,37 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './AlarmHistoryPage.css';
+import {
+  PageShell,
+  PageHeader,
+  TitleBlock,
+  Eyebrow,
+  StateSwitch,
+  SummaryGrid,
+  SummaryCard,
+  FilterPanel,
+  FilterField,
+  SelectField,
+  Panel,
+  PanelHeader,
+  PanelLabel,
+  PanelMeta,
+  TableFrame,
+  HistoryTable,
+  TimeCell,
+  MonoText,
+  TextButton,
+  EmptyState,
+  ModalBackdrop,
+  Modal,
+  ModalHeader,
+  IconButton,
+  ModalBody,
+  DetailGrid,
+  NoteBox,
+  SwitchButton,
+  SeverityChip,
+  StatusChip
+} from './AlarmHistoryPageCss';
 import {
   FiCalendar,
   FiFileText,
@@ -265,53 +296,4 @@ function AlarmHistoryPage() {
   );
 }
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-function withClass(Tag, baseClass) {
-  return function ClassComponent({ className, ...props }) {
-    return <Tag className={cx(baseClass, className)} {...props} />;
-  };
-}
-
-const PageShell = withClass('main', 'alarm-history-page');
-const PageHeader = withClass('section', 'alarm-page-header');
-const TitleBlock = withClass('div', 'alarm-title-block');
-const Eyebrow = withClass('span', 'alarm-eyebrow');
-const StateSwitch = withClass('div', 'alarm-state-switch');
-const SummaryGrid = withClass('section', 'alarm-summary-grid');
-const SummaryCard = withClass('article', 'alarm-summary-card');
-const FilterPanel = withClass('section', 'alarm-history-filter-panel');
-const FilterField = withClass('label', 'alarm-field');
-const SelectField = withClass('label', 'alarm-field');
-const Panel = withClass('article', 'alarm-panel');
-const PanelHeader = withClass('div', 'alarm-panel-header');
-const PanelLabel = withClass('span', 'alarm-panel-label');
-const PanelMeta = withClass('span', 'alarm-panel-meta');
-const TableFrame = withClass('div', 'alarm-table-frame');
-const HistoryTable = withClass('table', 'alarm-table');
-const TimeCell = withClass('div', 'alarm-time-cell');
-const MonoText = withClass('span', 'alarm-mono');
-const TextButton = withClass('button', 'alarm-text-button');
-const EmptyState = withClass('div', 'alarm-empty-state');
-const ModalBackdrop = withClass('div', 'alarm-modal-backdrop');
-const Modal = withClass('div', 'alarm-modal');
-const ModalHeader = withClass('div', 'alarm-modal-header');
-const IconButton = withClass('button', 'alarm-icon-button');
-const ModalBody = withClass('div', 'alarm-modal-body');
-const DetailGrid = withClass('dl', 'alarm-detail-grid');
-const NoteBox = withClass('div', 'alarm-note-box');
-
-const SwitchButton = ({ $active, className, ...props }) => (
-  <button className={cx('alarm-state-switch__button', $active && 'is-active', className)} {...props} />
-);
-
-const SeverityChip = ({ $severity, className, ...props }) => (
-  <span className={cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className)} {...props} />
-);
-
-const StatusChip = ({ $handled, className, ...props }) => (
-  <span className={cx('alarm-status-chip', $handled ? 'is-handled' : 'is-pending', className)} {...props} />
-);
 export default AlarmHistoryPage;

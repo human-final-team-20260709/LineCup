@@ -1,6 +1,48 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './EquipmentAlarmPage.css';
+import {
+  PageShell,
+  PageHeader,
+  TitleBlock,
+  Eyebrow,
+  StateSwitch,
+  FilterBar,
+  SearchBox,
+  SelectBox,
+  ContentGrid,
+  EquipmentColumn,
+  CardTopLine,
+  EquipmentTitle,
+  EquipmentMeta,
+  AlarmCountRow,
+  CountItem,
+  RecentAlarm,
+  Panel,
+  PanelHeader,
+  PanelLabel,
+  PanelMeta,
+  DetailGrid,
+  FrequencyPanel,
+  TrendCard,
+  RankList,
+  RankItem,
+  RankNumber,
+  RankBody,
+  ProgressTrack,
+  SplitGrid,
+  SplitItem,
+  SubPanel,
+  TableFrame,
+  AlarmTable,
+  TimeStack,
+  MonoText,
+  EmptyState,
+  SwitchButton,
+  EquipmentCard,
+  ProgressFill,
+  SeverityChip,
+  HealthChip
+} from './EquipmentAlarmPageCss';
 import {
   FiCheckCircle,
   FiCpu,
@@ -371,76 +413,4 @@ function EquipmentAlarmPage() {
   );
 }
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-function withClass(Tag, baseClass) {
-  return function ClassComponent({ className, ...props }) {
-    return <Tag className={cx(baseClass, className)} {...props} />;
-  };
-}
-
-const healthClassMap = {
-  '\uC815\uC0C1': 'normal',
-  '\uC8FC\uC758': 'warning',
-  '\uC704\uD5D8': 'danger',
-};
-
-const PageShell = withClass('main', 'equipment-alarm-page');
-const PageHeader = withClass('section', 'alarm-page-header');
-const TitleBlock = withClass('div', 'alarm-title-block');
-const Eyebrow = withClass('span', 'alarm-eyebrow');
-const StateSwitch = withClass('div', 'alarm-state-switch');
-const FilterBar = withClass('section', 'alarm-filter-bar');
-const SearchBox = withClass('label', 'alarm-field alarm-search-box');
-const SelectBox = withClass('label', 'alarm-field alarm-select-box');
-const ContentGrid = withClass('section', 'equipment-content-grid');
-const EquipmentColumn = withClass('div', 'equipment-column');
-const CardTopLine = withClass('div', 'equipment-card-top-line');
-const EquipmentTitle = withClass('div', 'equipment-title');
-const EquipmentMeta = withClass('div', 'equipment-meta');
-const AlarmCountRow = withClass('div', 'equipment-count-row');
-const CountItem = withClass('div', 'equipment-count-item');
-const RecentAlarm = withClass('div', 'equipment-recent-alarm');
-const Panel = withClass('article', 'alarm-panel');
-const PanelHeader = withClass('div', 'alarm-panel-header');
-const PanelLabel = withClass('span', 'alarm-panel-label');
-const PanelMeta = withClass('span', 'alarm-panel-meta');
-const DetailGrid = withClass('div', 'equipment-detail-grid');
-const FrequencyPanel = withClass('section', 'equipment-frequency-panel');
-const TrendCard = withClass('section', 'equipment-frequency-panel');
-const RankList = withClass('div', 'equipment-rank-list');
-const RankItem = withClass('div', 'equipment-rank-item');
-const RankNumber = withClass('span', 'equipment-rank-number');
-const RankBody = withClass('div', 'equipment-rank-body');
-const ProgressTrack = withClass('div', 'alarm-progress-track');
-const SplitGrid = withClass('div', 'equipment-split-grid');
-const SplitItem = withClass('div', 'equipment-split-item');
-const SubPanel = withClass('section', 'equipment-sub-panel');
-const TableFrame = withClass('div', 'alarm-table-frame');
-const AlarmTable = withClass('table', 'alarm-table');
-const TimeStack = withClass('div', 'alarm-time-stack');
-const MonoText = withClass('span', 'alarm-mono');
-const EmptyState = withClass('div', 'alarm-empty-state');
-
-const SwitchButton = ({ $active, className, ...props }) => (
-  <button className={cx('alarm-state-switch__button', $active && 'is-active', className)} {...props} />
-);
-
-const EquipmentCard = ({ $active, className, ...props }) => (
-  <button className={cx('equipment-card', $active && 'is-active', className)} {...props} />
-);
-
-const ProgressFill = ({ $value, className, ...props }) => (
-  <div className={cx('alarm-progress-fill', `alarm-progress-fill--${Math.round($value || 0)}`, className)} {...props} />
-);
-
-const SeverityChip = ({ $severity, className, ...props }) => (
-  <span className={cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className)} {...props} />
-);
-
-const HealthChip = ({ $health, className, ...props }) => (
-  <span className={cx('equipment-health-chip', $health && `equipment-health-chip--${healthClassMap[$health] || 'unknown'}`, className)} {...props} />
-);
 export default EquipmentAlarmPage;
