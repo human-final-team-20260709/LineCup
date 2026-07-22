@@ -7,7 +7,6 @@ import com.human.linecup.entity.Equipment;
 import com.human.linecup.entity.EquipmentTelemetry;
 import com.human.linecup.entity.TelemetryMetricType;
 import com.human.linecup.entity.WorkOrder;
-import com.human.linecup.exception.ResourceNotFoundException;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.EquipmentTelemetryRepository;
 import com.human.linecup.repository.WorkOrderRepository;
@@ -19,11 +18,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * 설비 텔레메트리(온도/습도/속도) 적재 및 조회를 담당한다.
- * L2 수집기가 초 단위로 보내는 배치를 한 번의 트랜잭션/한 번의 insert 묶음으로 처리해
- * 라운드트립과 쿼리 수를 최소화하는 데 초점을 둔다.
+ * L2 수집기가 재전송하더라도 설비/작업지시/metric/측정 시각의 같은 샘플은 갱신되도록
+ * MySQL upsert를 사용한다. 요청 전체는 한 트랜잭션에서 승인된다.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,8 +42,6 @@ public class EquipmentTelemetryService {
     public void ingest(TelemetryBatchRequest request) {
         Map<String, Equipment> equipmentCache = new HashMap<>();
         Map<Long, WorkOrder> workOrderCache = new HashMap<>();
-        List<EquipmentTelemetry> entities = new ArrayList<>(request.samples().size());
-
         for (TelemetrySampleRequest sample : request.samples()) {
             Equipment equipment = equipmentCache.computeIfAbsent(
                     sample.equipmentCode(),
@@ -54,17 +52,15 @@ public class EquipmentTelemetryService {
                     this::getWorkOrder
             );
 
-            entities.add(EquipmentTelemetry.record(
-                    equipment,
-                    workOrder,
-                    sample.metricType(),
+            telemetryRepository.upsertSample(
+                    equipment.getEquipmentId(),
+                    workOrder.getWorkOrderId(),
+                    sample.metricType().name(),
                     sample.value(),
                     sample.unit(),
                     sample.measuredAt()
-            ));
+            );
         }
-
-        telemetryRepository.saveAll(entities);
     }
 
     public List<TelemetryResponse> getLatestByEquipment(Long equipmentId) {
@@ -89,12 +85,12 @@ public class EquipmentTelemetryService {
 
     private Equipment getEquipmentByCode(String equipmentCode) {
         return equipmentRepository.findByEquipmentCode(equipmentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("설비를 찾을 수 없습니다. equipmentCode=" + equipmentCode));
+                .orElseThrow(() -> new NoSuchElementException("설비를 찾을 수 없습니다. equipmentCode=" + equipmentCode));
     }
 
     private WorkOrder getWorkOrder(Long workOrderId) {
         return workOrderRepository.findById(workOrderId)
-                .orElseThrow(() -> ResourceNotFoundException.of("작업지시", workOrderId));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 작업지시입니다: " + workOrderId));
     }
 
     private TelemetryResponse toResponse(EquipmentTelemetry telemetry) {

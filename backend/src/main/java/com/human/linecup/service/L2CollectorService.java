@@ -1,18 +1,22 @@
 package com.human.linecup.service;
 
 import com.human.linecup.dto.request.L2HeartbeatRequest;
-import com.human.linecup.dto.response.L2CollectorResponse;
+import com.human.linecup.dto.response.L2StatusResponse;
 import com.human.linecup.entity.CommunicationLog.CommunicationDirection;
 import com.human.linecup.entity.ConnectionStatus;
 import com.human.linecup.entity.L2Collector;
-import com.human.linecup.exception.ResourceNotFoundException;
 import com.human.linecup.repository.L2CollectorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * L2 수집기 상태(백엔드 관점)를 관리한다.
@@ -28,17 +32,18 @@ public class L2CollectorService {
     private final L2CollectorRepository l2CollectorRepository;
     private final L1DeviceService l1DeviceService;
     private final CommunicationLogService communicationLogService;
+    private final PlatformTransactionManager transactionManager;
 
-    public List<L2CollectorResponse> getAll() {
+    public List<L2StatusResponse> getAll() {
         return l2CollectorRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    public L2CollectorResponse getByCode(String collectorCode) {
+    public L2StatusResponse getByCode(String collectorCode) {
         return toResponse(findByCode(collectorCode));
     }
 
     @Transactional
-    public L2CollectorResponse processHeartbeat(L2HeartbeatRequest request) {
+    public L2StatusResponse processHeartbeat(L2HeartbeatRequest request) {
         L2Collector collector = findOrCreate(request.collectorCode());
         collector.updateHeartbeat(
                 L2Collector.CollectorStatus.RUNNING,
@@ -71,8 +76,12 @@ public class L2CollectorService {
      * 초기화하고, 운영자가 설정 화면에서 나중에 사람이 읽기 좋은 이름으로 바꿀 수 있게 한다.
      */
     private L2Collector createSafely(String collectorCode) {
+        TransactionTemplate registrationTransaction = new TransactionTemplate(transactionManager);
+        registrationTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         try {
-            return l2CollectorRepository.save(L2Collector.create(collectorCode, collectorCode));
+            return Objects.requireNonNull(registrationTransaction.execute(status ->
+                    l2CollectorRepository.saveAndFlush(L2Collector.create(collectorCode, collectorCode))
+            ));
         } catch (DataIntegrityViolationException raceLoserException) {
             return l2CollectorRepository.findByCollectorCode(collectorCode)
                     .orElseThrow(() -> raceLoserException);
@@ -81,17 +90,18 @@ public class L2CollectorService {
 
     private L2Collector findByCode(String collectorCode) {
         return l2CollectorRepository.findByCollectorCode(collectorCode)
-                .orElseThrow(() -> new ResourceNotFoundException("L2 수집기를 찾을 수 없습니다. collectorCode=" + collectorCode));
+                .orElseThrow(() -> new NoSuchElementException("L2 수집기를 찾을 수 없습니다. collectorCode=" + collectorCode));
     }
 
-    private L2CollectorResponse toResponse(L2Collector collector) {
-        return new L2CollectorResponse(
+    private L2StatusResponse toResponse(L2Collector collector) {
+        return new L2StatusResponse(
                 collector.getCollectorId(),
                 collector.getCollectorCode(),
                 collector.getName(),
                 collector.getStatus(),
                 collector.getStatus().getLabel(),
                 collector.getConnectedL1Count(),
+                L2EquipmentCatalog.EQUIPMENT_CODES.size(),
                 collector.getBackendConnectionStatus(),
                 collector.getBackendConnectionStatus().getLabel(),
                 collector.getLastSentAt()

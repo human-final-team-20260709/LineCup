@@ -2,10 +2,12 @@ package com.human.linecup.repository;
 
 import com.human.linecup.entity.InventoryStatus;
 import com.human.linecup.entity.RawMaterialLot;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +16,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RawMaterialLotRepository extends JpaRepository<RawMaterialLot, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "material")
+    @Query("select rml from RawMaterialLot rml where rml.materialLotId = :materialLotId")
+    Optional<RawMaterialLot> findByIdForUpdate(@Param("materialLotId") Long materialLotId);
 
     @EntityGraph(attributePaths = "material")
     Optional<RawMaterialLot> findByMaterialLotNo(String materialLotNo);

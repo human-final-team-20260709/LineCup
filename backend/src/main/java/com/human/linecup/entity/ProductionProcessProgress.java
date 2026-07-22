@@ -97,8 +97,19 @@ public class ProductionProcessProgress {
     }
 
     public void start(Instant startedAt) {
+        requireStatus(ProcessProgressStatus.PENDING, "대기 중인 공정만 시작할 수 있습니다.");
         status = ProcessProgressStatus.IN_PROGRESS;
         this.startedAt = startedAt == null ? Instant.now() : startedAt;
+    }
+
+    public void hold() {
+        requireStatus(ProcessProgressStatus.IN_PROGRESS, "진행 중인 공정만 보류할 수 있습니다.");
+        status = ProcessProgressStatus.HOLD;
+    }
+
+    public void resume() {
+        requireStatus(ProcessProgressStatus.HOLD, "보류된 공정만 재개할 수 있습니다.");
+        status = ProcessProgressStatus.IN_PROGRESS;
     }
 
     public void updateQuantities(int productionQty, int goodQty, int defectQty) {
@@ -109,12 +120,19 @@ public class ProductionProcessProgress {
     }
 
     public void complete(Instant completedAt) {
+        requireStatus(ProcessProgressStatus.IN_PROGRESS, "진행 중인 공정만 완료할 수 있습니다.");
         Instant effectiveAt = completedAt == null ? Instant.now() : completedAt;
         if (startedAt == null || effectiveAt.isBefore(startedAt)) {
             throw new IllegalStateException("시작된 공정만 정상 시각으로 완료할 수 있습니다.");
         }
         status = ProcessProgressStatus.COMPLETED;
         this.completedAt = effectiveAt;
+    }
+
+    private void requireStatus(ProcessProgressStatus required, String message) {
+        if (status != required) {
+            throw new IllegalStateException(message);
+        }
     }
 
     public enum ProcessProgressStatus {

@@ -7,7 +7,7 @@ import com.human.linecup.entity.RawMaterial;
 import com.human.linecup.entity.RawMaterialLot;
 import com.human.linecup.repository.RawMaterialLotRepository;
 import com.human.linecup.repository.RawMaterialRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +39,7 @@ public class RawMaterialLotService {
         }
 
         RawMaterial material = rawMaterialRepository.findById(request.materialId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "원자재를 찾을 수 없습니다: " + request.materialId()
                 ));
         RawMaterialLot lot = RawMaterialLot.receive(
@@ -61,7 +61,7 @@ public class RawMaterialLotService {
 
     public RawMaterialLotResponse getLotByNumber(String materialLotNo) {
         RawMaterialLot lot = rawMaterialLotRepository.findByMaterialLotNo(materialLotNo)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "원자재 LOT를 찾을 수 없습니다: " + materialLotNo
                 ));
         return toResponse(lot);
@@ -94,14 +94,17 @@ public class RawMaterialLotService {
 
     @Transactional
     public RawMaterialLotResponse adjustCurrentQty(Long materialLotId, BigDecimal currentQty) {
-        RawMaterialLot lot = findLot(materialLotId);
+        RawMaterialLot lot = rawMaterialLotRepository.findByIdForUpdate(materialLotId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "원자재 LOT를 찾을 수 없습니다: " + materialLotId
+                ));
         lot.adjustCurrentQty(currentQty);
         return toResponse(lot);
     }
 
     private RawMaterialLot findLot(Long materialLotId) {
         return rawMaterialLotRepository.findById(materialLotId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "원자재 LOT를 찾을 수 없습니다: " + materialLotId
                 ));
     }

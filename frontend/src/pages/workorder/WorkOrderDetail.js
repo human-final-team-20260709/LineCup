@@ -452,7 +452,7 @@ const WorkOrderDetail = ({ workOrders, setWorkOrders }) => {
   }
 
   const statusMeta = WORK_ORDER_STATUS_META[workOrder.status];
-  const canStart = [WORK_ORDER_STATUS.WAITING, WORK_ORDER_STATUS.HOLD].includes(workOrder.status);
+  const canStart = [WORK_ORDER_STATUS.PENDING, WORK_ORDER_STATUS.HOLD].includes(workOrder.status);
   const canHold = workOrder.status === WORK_ORDER_STATUS.IN_PROGRESS;
   const canComplete = workOrder.status === WORK_ORDER_STATUS.IN_PROGRESS;
 

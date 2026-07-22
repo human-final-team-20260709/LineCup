@@ -62,19 +62,24 @@ public class ProductionLot {
     @Column(nullable = false, length = 20)
     private ProductionLotStatus status;
 
-    @Column(name = "started_at", nullable = false)
+    @Column(name = "started_at")
     private Instant startedAt;
 
     @Column(name = "completed_at")
     private Instant completedAt;
 
-    public static ProductionLot start(String lotNo, WorkOrder workOrder, Instant startedAt) {
+    public static ProductionLot createPending(String lotNo, WorkOrder workOrder) {
         ProductionLot lot = new ProductionLot();
         lot.lotNo = requireText(lotNo, "생산 LOT 번호");
         lot.workOrder = Objects.requireNonNull(workOrder, "작업지시는 필수입니다.");
-        lot.status = ProductionLotStatus.IN_PROGRESS;
-        lot.startedAt = startedAt == null ? Instant.now() : startedAt;
+        lot.status = ProductionLotStatus.PENDING;
         return lot;
+    }
+
+    public void start(Instant startedAt) {
+        requireStatus(ProductionLotStatus.PENDING, "대기 중인 생산 LOT만 시작할 수 있습니다.");
+        status = ProductionLotStatus.IN_PROGRESS;
+        this.startedAt = startedAt == null ? Instant.now() : startedAt;
     }
 
     public void updateQuantities(int productionQty, int goodQty, int defectQty) {
@@ -85,18 +90,28 @@ public class ProductionLot {
     }
 
     public void hold() {
+        requireStatus(ProductionLotStatus.IN_PROGRESS, "생산 중인 LOT만 보류할 수 있습니다.");
         status = ProductionLotStatus.HOLD;
     }
 
     public void resume() {
+        requireStatus(ProductionLotStatus.HOLD, "보류된 LOT만 재개할 수 있습니다.");
         status = ProductionLotStatus.IN_PROGRESS;
     }
 
     public void complete(Instant completedAt) {
-        this.status = ProductionLotStatus.COMPLETED;
-        this.completedAt = completedAt == null ? Instant.now() : completedAt;
-        if (this.completedAt.isBefore(startedAt)) {
+        requireStatus(ProductionLotStatus.IN_PROGRESS, "생산 중인 LOT만 완료할 수 있습니다.");
+        Instant effectiveAt = completedAt == null ? Instant.now() : completedAt;
+        if (startedAt == null || effectiveAt.isBefore(startedAt)) {
             throw new IllegalArgumentException("완료 시각은 시작 시각 이후여야 합니다.");
+        }
+        this.status = ProductionLotStatus.COMPLETED;
+        this.completedAt = effectiveAt;
+    }
+
+    private void requireStatus(ProductionLotStatus required, String message) {
+        if (status != required) {
+            throw new IllegalStateException(message);
         }
     }
 
@@ -108,6 +123,7 @@ public class ProductionLot {
     }
 
     public enum ProductionLotStatus {
+        PENDING("대기"),
         IN_PROGRESS("생산 중"),
         HOLD("보류"),
         COMPLETED("완료");

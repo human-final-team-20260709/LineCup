@@ -6,16 +6,20 @@ import com.human.linecup.entity.CommunicationLog.CommunicationDirection;
 import com.human.linecup.entity.ConnectionStatus;
 import com.human.linecup.entity.Equipment;
 import com.human.linecup.entity.L1Device;
-import com.human.linecup.exception.ResourceNotFoundException;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.L1DeviceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * L1 장비(TCP 서버로 동작하는 개별 설비 제어기)의 연결 상태를 관리한다.
@@ -30,6 +34,7 @@ public class L1DeviceService {
     private final L1DeviceRepository l1DeviceRepository;
     private final EquipmentRepository equipmentRepository;
     private final CommunicationLogService communicationLogService;
+    private final PlatformTransactionManager transactionManager;
 
     public List<L1DeviceResponse> getAll() {
         return l1DeviceRepository.findAllByOrderByEquipmentEquipmentIdAsc()
@@ -49,7 +54,7 @@ public class L1DeviceService {
     @Transactional
     public void applyHeartbeat(L1HeartbeatDeviceRequest deviceReport, Instant sentAt) {
         Equipment equipment = equipmentRepository.findByEquipmentCode(deviceReport.equipmentCode())
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "설비를 찾을 수 없습니다. equipmentCode=" + deviceReport.equipmentCode()
                 ));
 
@@ -79,8 +84,12 @@ public class L1DeviceService {
      * 예외 없이 기존 행을 재조회해 반환한다.
      */
     private L1Device createSafely(Equipment equipment) {
+        TransactionTemplate registrationTransaction = new TransactionTemplate(transactionManager);
+        registrationTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         try {
-            return l1DeviceRepository.save(L1Device.create(equipment, null, null));
+            return Objects.requireNonNull(registrationTransaction.execute(status ->
+                    l1DeviceRepository.saveAndFlush(L1Device.create(equipment, null, null))
+            ));
         } catch (DataIntegrityViolationException raceLoserException) {
             return l1DeviceRepository.findByEquipmentEquipmentId(equipment.getEquipmentId())
                     .orElseThrow(() -> raceLoserException);
@@ -89,7 +98,7 @@ public class L1DeviceService {
 
     private L1Device findByEquipmentId(Long equipmentId) {
         return l1DeviceRepository.findByEquipmentEquipmentId(equipmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("L1 장비 연결 정보를 찾을 수 없습니다. equipmentId=" + equipmentId));
+                .orElseThrow(() -> new NoSuchElementException("L1 장비 연결 정보를 찾을 수 없습니다. equipmentId=" + equipmentId));
     }
 
     private L1DeviceResponse toResponse(L1Device device) {

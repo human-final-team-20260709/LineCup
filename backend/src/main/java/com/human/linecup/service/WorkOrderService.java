@@ -1,11 +1,13 @@
 package com.human.linecup.service;
 
 import com.human.linecup.dto.request.WorkOrderCreateRequest;
+import com.human.linecup.dto.request.IdListRequest;
 import com.human.linecup.dto.request.WorkOrderStatusChangeRequest;
 import com.human.linecup.dto.request.WorkOrderSupervisorChangeRequest;
 import com.human.linecup.dto.request.WorkOrderTargetQtyUpdateRequest;
 import com.human.linecup.dto.response.EquipmentResponse;
 import com.human.linecup.dto.response.ProcessProgressResponse;
+import com.human.linecup.dto.response.L2ActiveWorkOrderResponse;
 import com.human.linecup.dto.response.UserResponse;
 import com.human.linecup.dto.response.WorkOrderDashboardSummaryResponse;
 import com.human.linecup.dto.response.WorkOrderDetailResponse;
@@ -28,7 +30,6 @@ import com.human.linecup.repository.WorkOrderEquipmentRepository;
 import com.human.linecup.repository.WorkOrderRepository;
 import com.human.linecup.repository.WorkOrderStatusHistoryRepository;
 import com.human.linecup.repository.WorkOrderWorkerRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -46,6 +47,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 작업지시(WorkOrder) 도메인 서비스.
@@ -66,6 +73,7 @@ public class WorkOrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final EquipmentRepository equipmentRepository;
+    private final ProductionLotService productionLotService;
 
     public WorkOrderService(
             WorkOrderRepository workOrderRepository,
@@ -75,7 +83,8 @@ public class WorkOrderService {
             ProductionProcessProgressRepository productionProcessProgressRepository,
             ProductRepository productRepository,
             UserRepository userRepository,
-            EquipmentRepository equipmentRepository
+            EquipmentRepository equipmentRepository,
+            ProductionLotService productionLotService
     ) {
         this.workOrderRepository = workOrderRepository;
         this.workOrderEquipmentRepository = workOrderEquipmentRepository;
@@ -85,6 +94,7 @@ public class WorkOrderService {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.equipmentRepository = equipmentRepository;
+        this.productionLotService = productionLotService;
     }
 
     // ===== 등록 =====
@@ -92,10 +102,10 @@ public class WorkOrderService {
     @Transactional
     public WorkOrderSummaryResponse create(WorkOrderCreateRequest request) {
         Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "제품을 찾을 수 없습니다. (productId=" + request.productId() + ")"));
         User supervisor = userRepository.findById(request.supervisorUserId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "지시자를 찾을 수 없습니다. (supervisorUserId=" + request.supervisorUserId() + ")"));
 
         String workOrderNo = generateWorkOrderNo(request.plannedStartDate());
@@ -143,7 +153,7 @@ public class WorkOrderService {
     private void assignWorkers(WorkOrder workOrder, List<Long> workerUserIds) {
         for (Long userId : new LinkedHashSet<>(workerUserIds)) {
             User worker = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException(
+                    .orElseThrow(() -> new NoSuchElementException(
                             "작업자를 찾을 수 없습니다. (userId=" + userId + ")"));
             workOrderWorkerRepository.save(WorkOrderWorker.create(workOrder, worker));
         }
@@ -151,18 +161,34 @@ public class WorkOrderService {
 
     private void assignEquipments(WorkOrder workOrder, List<Long> equipmentIds) {
         List<Equipment> equipments = equipmentIds.isEmpty()
-                ? equipmentRepository.findAll()
+                ? resolveDefaultL2Equipments()
                 : resolveEquipments(equipmentIds);
         for (Equipment equipment : equipments) {
             workOrderEquipmentRepository.save(WorkOrderEquipment.create(workOrder, equipment));
         }
     }
 
+    private List<Equipment> resolveDefaultL2Equipments() {
+        Map<String, Equipment> equipmentByCode = equipmentRepository
+                .findAllByEquipmentCodeIn(L2EquipmentCatalog.EQUIPMENT_CODES)
+                .stream()
+                .collect(Collectors.toMap(Equipment::getEquipmentCode, Function.identity()));
+        List<String> missingCodes = L2EquipmentCatalog.EQUIPMENT_CODES.stream()
+                .filter(code -> !equipmentByCode.containsKey(code))
+                .toList();
+        if (!missingCodes.isEmpty()) {
+            throw new IllegalStateException("C 연동 설비 기준 정보가 누락되었습니다: " + missingCodes);
+        }
+        return L2EquipmentCatalog.EQUIPMENT_CODES.stream()
+                .map(equipmentByCode::get)
+                .toList();
+    }
+
     private List<Equipment> resolveEquipments(List<Long> equipmentIds) {
         List<Equipment> equipments = new ArrayList<>();
         for (Long equipmentId : new LinkedHashSet<>(equipmentIds)) {
             equipments.add(equipmentRepository.findById(equipmentId)
-                    .orElseThrow(() -> new EntityNotFoundException(
+                    .orElseThrow(() -> new NoSuchElementException(
                             "설비를 찾을 수 없습니다. (equipmentId=" + equipmentId + ")")));
         }
         return equipments;
@@ -248,27 +274,88 @@ public class WorkOrderService {
 
     private WorkOrder getWorkOrderOrThrow(Long workOrderId) {
         return workOrderRepository.findById(workOrderId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "작업지시를 찾을 수 없습니다. (workOrderId=" + workOrderId + ")"));
     }
 
     // ===== 상태 변경 / 수정 =====
 
     @Transactional
-    public WorkOrderSummaryResponse changeStatus(Long workOrderId, WorkOrderStatusChangeRequest request) {
+    public synchronized WorkOrderSummaryResponse changeStatus(
+            Long workOrderId,
+            WorkOrderStatusChangeRequest request
+    ) {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
         User changedBy = userRepository.findById(request.changedByUserId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "처리자를 찾을 수 없습니다. (userId=" + request.changedByUserId() + ")"));
 
         Instant now = Instant.now();
+        validateSingleActiveWorkOrder(workOrderId, request.action());
         WorkOrder.Status prevStatus = workOrder.applyAction(request.action(), now);
+        productionLotService.applyWorkOrderAction(workOrderId, request.action(), now);
 
         workOrderStatusHistoryRepository.save(WorkOrderStatusHistory.record(
                 workOrder, changedBy, request.action(), prevStatus, workOrder.getStatus(), request.note(), now
         ));
 
         return toSummary(workOrder);
+    }
+
+    public Optional<L2ActiveWorkOrderResponse> getActiveWorkOrderForL2(String collectorCode) {
+        if (collectorCode == null || collectorCode.isBlank()) {
+            throw new IllegalArgumentException("L2 수집기 코드는 필수입니다.");
+        }
+
+        List<WorkOrder> activeOrders = workOrderRepository.findByStatusInOrderByRegisteredAtAsc(
+                EnumSet.of(WorkOrder.Status.IN_PROGRESS, WorkOrder.Status.HOLD)
+        );
+        if (activeOrders.size() > 1) {
+            throw new IllegalStateException("동시에 둘 이상의 활성 작업지시가 존재합니다.");
+        }
+        if (activeOrders.isEmpty()) {
+            return Optional.empty();
+        }
+
+        WorkOrder workOrder = activeOrders.get(0);
+        Long productionLotId = productionLotService
+                .getActiveProductionLot(workOrder.getWorkOrderId())
+                .getProductionLotId();
+        List<String> mappedCodes = workOrderEquipmentRepository
+                .findByWorkOrder_WorkOrderId(workOrder.getWorkOrderId())
+                .stream()
+                .map(mapping -> mapping.getEquipment().getEquipmentCode())
+                .filter(L2EquipmentCatalog.EQUIPMENT_CODES::contains)
+                .distinct()
+                .toList();
+        List<String> equipmentCodes = mappedCodes.isEmpty()
+                ? L2EquipmentCatalog.EQUIPMENT_CODES
+                : L2EquipmentCatalog.EQUIPMENT_CODES.stream().filter(mappedCodes::contains).toList();
+
+        return Optional.of(new L2ActiveWorkOrderResponse(
+                workOrder.getWorkOrderId(),
+                productionLotId,
+                workOrder.getStatus(),
+                workOrder.getTargetQty(),
+                workOrder.getCurrentQty(),
+                workOrder.getHourlyTargetQty(),
+                equipmentCodes
+        ));
+    }
+
+    private void validateSingleActiveWorkOrder(Long workOrderId, WorkOrder.Action action) {
+        if (action != WorkOrder.Action.START && action != WorkOrder.Action.RESUME) {
+            return;
+        }
+        boolean anotherActiveOrderExists = workOrderRepository
+                .findByStatusInOrderByRegisteredAtAsc(
+                        EnumSet.of(WorkOrder.Status.IN_PROGRESS, WorkOrder.Status.HOLD)
+                )
+                .stream()
+                .anyMatch(order -> !order.getWorkOrderId().equals(workOrderId));
+        if (anotherActiveOrderExists) {
+            throw new IllegalStateException("이미 진행 중이거나 보류된 작업지시가 있습니다.");
+        }
     }
 
     @Transactional
@@ -282,7 +369,7 @@ public class WorkOrderService {
     public WorkOrderSummaryResponse changeSupervisor(Long workOrderId, WorkOrderSupervisorChangeRequest request) {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
         User supervisor = userRepository.findById(request.supervisorUserId())
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "지시자를 찾을 수 없습니다. (supervisorUserId=" + request.supervisorUserId() + ")"));
         workOrder.changeSupervisor(supervisor);
         return toSummary(workOrder);
@@ -305,7 +392,7 @@ public class WorkOrderService {
             throw new IllegalStateException("이미 배정된 작업자입니다. (userId=" + userId + ")");
         }
         User worker = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NoSuchElementException(
                         "작업자를 찾을 수 없습니다. (userId=" + userId + ")"));
         workOrderWorkerRepository.save(WorkOrderWorker.create(workOrder, worker));
         return toUserResponse(worker);
@@ -314,7 +401,7 @@ public class WorkOrderService {
     @Transactional
     public void removeWorker(Long workOrderId, Long userId) {
         if (!workOrderWorkerRepository.existsByWorkOrder_WorkOrderIdAndUser_UserId(workOrderId, userId)) {
-            throw new EntityNotFoundException(
+            throw new NoSuchElementException(
                     "작업지시(" + workOrderId + ")에 배정되지 않은 작업자입니다. (userId=" + userId + ")");
         }
         workOrderWorkerRepository.deleteByWorkOrder_WorkOrderIdAndUser_UserId(workOrderId, userId);
@@ -325,6 +412,31 @@ public class WorkOrderService {
         return workOrderWorkerRepository.findByWorkOrder_WorkOrderId(workOrderId).stream()
                 .map(WorkOrderWorker::getUser)
                 .map(this::toUserResponse)
+                .toList();
+    }
+
+    @Transactional
+    public List<UserResponse> replaceWorkers(Long workOrderId, IdListRequest request) {
+        WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
+        workOrderWorkerRepository.deleteByWorkOrder_WorkOrderId(workOrderId);
+        workOrderWorkerRepository.flush();
+        assignWorkers(workOrder, request == null ? List.of() : request.ids());
+        return getWorkers(workOrderId);
+    }
+
+    @Transactional
+    public List<EquipmentResponse> replaceEquipments(Long workOrderId, IdListRequest request) {
+        WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
+        if (workOrder.getStatus() != WorkOrder.Status.PENDING) {
+            throw new IllegalStateException("대기 중인 작업지시의 설비만 변경할 수 있습니다.");
+        }
+        workOrderEquipmentRepository.deleteByWorkOrder_WorkOrderId(workOrderId);
+        workOrderEquipmentRepository.flush();
+        assignEquipments(workOrder, request == null ? List.of() : request.ids());
+        return workOrderEquipmentRepository.findByWorkOrder_WorkOrderId(workOrderId)
+                .stream()
+                .map(WorkOrderEquipment::getEquipment)
+                .map(this::toEquipmentResponse)
                 .toList();
     }
 

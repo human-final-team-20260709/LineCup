@@ -30,13 +30,17 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -70,6 +74,7 @@ public class DefectService {
     private final EquipmentRepository equipmentRepository;
     private final UserRepository userRepository;
     private final Clock clock;
+    private final PlatformTransactionManager transactionManager;
 
     @Autowired
     public DefectService(
@@ -78,7 +83,8 @@ public class DefectService {
             DefectHandlingHistoryRepository historyRepository,
             ProductionLotRepository productionLotRepository,
             EquipmentRepository equipmentRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            PlatformTransactionManager transactionManager
     ) {
         this(
                 defectRepository,
@@ -87,7 +93,8 @@ public class DefectService {
                 productionLotRepository,
                 equipmentRepository,
                 userRepository,
-                Clock.systemUTC()
+                Clock.systemUTC(),
+                transactionManager
         );
     }
 
@@ -98,7 +105,8 @@ public class DefectService {
             ProductionLotRepository productionLotRepository,
             EquipmentRepository equipmentRepository,
             UserRepository userRepository,
-            Clock clock
+            Clock clock,
+            PlatformTransactionManager transactionManager
     ) {
         this.defectRepository = Objects.requireNonNull(defectRepository, "불량 저장소는 필수입니다.");
         this.defectTypeRepository = Objects.requireNonNull(
@@ -119,6 +127,7 @@ public class DefectService {
         );
         this.userRepository = Objects.requireNonNull(userRepository, "사용자 저장소는 필수입니다.");
         this.clock = Objects.requireNonNull(clock, "Clock은 필수입니다.");
+        this.transactionManager = Objects.requireNonNull(transactionManager, "트랜잭션 관리자는 필수입니다.");
     }
 
     @Transactional
@@ -185,7 +194,18 @@ public class DefectService {
                 occurredAt
         );
 
-        return toSummary(defectRepository.saveAndFlush(defect));
+        TransactionTemplate ingestTransaction = new TransactionTemplate(transactionManager);
+        ingestTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        try {
+            Defect saved = Objects.requireNonNull(ingestTransaction.execute(status ->
+                    defectRepository.saveAndFlush(defect)
+            ));
+            return toSummary(saved);
+        } catch (DataIntegrityViolationException raceLoserException) {
+            return defectRepository.findByIdempotencyKey(idempotencyKey)
+                    .map(this::toSummary)
+                    .orElseThrow(() -> raceLoserException);
+        }
     }
 
     public Page<DefectSummaryResponse> search(

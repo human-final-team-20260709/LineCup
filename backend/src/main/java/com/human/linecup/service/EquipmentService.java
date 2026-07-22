@@ -11,7 +11,6 @@ import com.human.linecup.entity.Equipment.EquipmentStatus;
 import com.human.linecup.entity.EquipmentAssignment;
 import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.User;
-import com.human.linecup.exception.ResourceNotFoundException;
 import com.human.linecup.repository.EquipmentAssignmentRepository;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.ManufacturingProcessRepository;
@@ -23,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -131,9 +131,9 @@ public class EquipmentService {
      */
     @Transactional
     public EquipmentAssignmentResponse assignWorker(Long equipmentId, EquipmentAssignRequest request) {
-        Equipment equipment = getEquipment(equipmentId);
+        Equipment equipment = getEquipmentForUpdate(equipmentId);
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> ResourceNotFoundException.of("사용자", request.userId()));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 사용자입니다: " + request.userId()));
 
         Instant now = Instant.now();
         findActiveAssignment(equipmentId).ifPresent(current -> current.end(now));
@@ -145,6 +145,7 @@ public class EquipmentService {
 
     @Transactional
     public void unassignWorker(Long equipmentId) {
+        getEquipmentForUpdate(equipmentId);
         EquipmentAssignment assignment = findActiveAssignment(equipmentId)
                 .orElseThrow(() -> new IllegalStateException("현재 배정된 작업자가 없습니다. equipmentId=" + equipmentId));
         assignment.end(Instant.now());
@@ -159,12 +160,17 @@ public class EquipmentService {
 
     private Equipment getEquipment(Long equipmentId) {
         return equipmentRepository.findById(equipmentId)
-                .orElseThrow(() -> ResourceNotFoundException.of("설비", equipmentId));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 설비입니다: " + equipmentId));
+    }
+
+    private Equipment getEquipmentForUpdate(Long equipmentId) {
+        return equipmentRepository.findByIdForUpdate(equipmentId)
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 설비입니다: " + equipmentId));
     }
 
     private ManufacturingProcess getProcess(Long processId) {
         return manufacturingProcessRepository.findById(processId)
-                .orElseThrow(() -> ResourceNotFoundException.of("공정", processId));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 공정입니다: " + processId));
     }
 
     private Optional<EquipmentAssignment> findActiveAssignment(Long equipmentId) {

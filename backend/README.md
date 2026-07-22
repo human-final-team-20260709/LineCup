@@ -7,6 +7,8 @@
 ```text
 com.human.linecup
 ├── entity/          # JPA Entity, enum, 도메인 불변식
+├── repository/      # 조회 그래프, 멱등 키, 잠금 쿼리
+├── service/         # 트랜잭션, 상태 전이, DTO 매핑
 └── dto/
     ├── request/     # 요청 record
     └── response/    # 응답 record
@@ -19,6 +21,8 @@ com.human.linecup
 - 이벤트 시각은 UTC ISO-8601 `Instant`, 업무 날짜는 `LocalDate`를 사용한다.
 - 숫자 PK와 업무 식별자를 구분한다. 예: `userId`/`empNo`, `productId`/`productCode`.
 - 요청 상태는 enum 코드로 받고 응답에는 코드와 `...Label`을 함께 제공한다.
+- 작업지시 상태는 `PENDING / IN_PROGRESS / HOLD / DONE`을 사용하며 화면에는 `PENDING`을 "대기"로 표시한다.
+- 생산 LOT는 작업 시작 전에 `PENDING`으로 만들고 작업지시와 같은 트랜잭션에서 시작·보류·재개·완료한다.
 
 ## L2 HTTP DTO 계약
 
@@ -87,7 +91,7 @@ erDiagram
 
 ## 초기 기준 데이터
 
-`data.sql`은 C가 보내는 불량 코드 `OK`, `SEALING`, `MOISTURE`, `WEIGHT`, `FOREIGN_MATERIAL`, `GENERAL_NG`를 `defect_type`에 등록한다. 개발 DB를 실제로 초기화할 때만 `schema-reset` 프로필을 활성화한다. 이 프로필은 `ddl-auto=create`이므로 기존 개발 데이터가 삭제된다.
+`data.sql`은 C가 보내는 불량 코드와 9개 표준 공정·설비(`MIXER-01`~`INSPECTOR-01`)를 등록한다. 설비 코드는 물리 설비 계약이고 공정의 `sequence_no`는 화면 표시 순서일 뿐 설비 간 선후 의존성을 만들지 않는다. 개발 DB를 실제로 초기화할 때만 `schema-reset` 프로필을 활성화한다. 이 프로필은 `ddl-auto=create`이므로 기존 개발 데이터가 삭제된다.
 
 ```bash
 SPRING_PROFILES_ACTIVE=schema-reset bash gradlew bootRun
@@ -96,7 +100,5 @@ SPRING_PROFILES_ACTIVE=schema-reset bash gradlew bootRun
 ## 검증
 
 ```bash
-bash gradlew compileJava
+bash gradlew clean compileJava
 ```
-
-기존 `src/test`의 Alarm/Defect 서비스 테스트는 해당 서비스·저장소·예외 구현이 없는 통합 전 코드이므로 전체 `test` 컴파일의 별도 선행 이슈다.

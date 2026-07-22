@@ -57,14 +57,16 @@ import {
 } from './ProductionOverviewPageCss';
 import {
   PRODUCTION_BASE_DATE,
+  PRODUCTION_STATUS,
+  PRODUCTION_STATUS_LABEL,
   formatNumber,
   hourlyProduction,
   productionRecords,
   statusTone,
 } from './productionData';
 
-const IN_PROGRESS = '집계 중';
-const CANCELED = '취소';
+const IN_PROGRESS = PRODUCTION_STATUS.COLLECTING;
+const CANCELED = PRODUCTION_STATUS.CANCELED;
 
 const numberOrZero = (value) => {
   const number = Number(value);
@@ -441,7 +443,9 @@ function ProductionOverviewPage() {
                         <Mono>{formatNumber(record.goodQty)} / {formatNumber(record.defectQty)} EA</Mono>
                       </td>
                       <td>
-                        <StatusChip $tone={statusTone[record.status]}>{record.status}</StatusChip>
+                        <StatusChip $tone={statusTone[record.status]}>
+                          {PRODUCTION_STATUS_LABEL[record.status]}
+                        </StatusChip>
                       </td>
                     </tr>
                   ))}

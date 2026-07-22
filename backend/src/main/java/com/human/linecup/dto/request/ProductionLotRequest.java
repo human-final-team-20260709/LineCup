@@ -5,11 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-import java.time.Instant;
-
 public record ProductionLotRequest(
         @NotBlank @Size(max = 50) String lotNo,
-        @NotNull @Positive Long workOrderId,
-        Instant startedAt
+        @NotNull @Positive Long workOrderId
 ) {
 }
