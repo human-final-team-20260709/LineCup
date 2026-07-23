@@ -91,7 +91,7 @@ public class ProductInventoryService {
         validateExpiryRange(expiryFrom, expiryTo);
         return productInventoryRepository.search(
                         normalizeKeyword(keyword),
-                        status,
+                        status == null ? "ALL" : status.name(),
                         LocalDate.now(),
                         expiryFrom,
                         expiryTo,

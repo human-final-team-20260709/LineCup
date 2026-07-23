@@ -1,477 +1,505 @@
-import { useMemo, useState } from 'react';
-import { FiInbox, FiSearch, FiSliders, FiX } from 'react-icons/fi';
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { materialApi, referenceApi } from "../../api/services";
+import { POLLING, queryKeys } from "../../api/config";
+import { extractApiError } from "../../api/client";
+import { toKst } from "../../api/time";
+import { useAuth } from "../../context/AuthContext";
+import { ApiErrors, EmptyState, QueryStatus } from "../../components/ApiState";
 import {
   Badge,
-  ConditionApplyButton,
-  ConditionCancelButton,
-  ConditionChip,
-  ConditionClearButton,
-  ConditionField,
-  ConditionFormGrid,
-  ConditionInput,
-  ConditionLabel,
-  ConditionModal,
-  ConditionModalBody,
-  ConditionModalCloseButton,
-  ConditionModalDescription,
-  ConditionModalFooter,
-  ConditionModalHeader,
-  ConditionModalOverlay,
-  ConditionModalTitle,
-  ConditionResetButton,
-  ConditionSelect,
-  ConditionSummaryBar,
-  DateRangeGroup,
-  EmptyState,
-  FilterButton,
-  InventoryEmptyState,
-  InventoryGrid,
-  Ledger,
-  LedgerItem,
-  MetricCard,
-  MetricGrid,
-  PageSection,
-  SearchBox,
-  StockCard,
-  StockHeader,
-  StockMeta,
-  StockName,
-  StockProgress,
-  StockProgressFill,
-  StockTable,
+  Button,
+  Card,
+  FormGrid,
+  Input,
+  Select,
+  Table,
+  TableWrap,
   Toolbar,
-} from './InventoryManagementCss';
+  formatNumber,
+  pageContent,
+  toneForStatus,
+} from "../../components/OperationalUi";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
+import StockMovementRegistration from "./StockMovementRegistration";
 
-const defaultCondition = {
-  itemType: '전체',
-  stockStatus: '전체',
-  safetyStock: '전체',
-  lotNo: '',
-  expireStartDate: '',
-  expireEndDate: '',
+const localDateValue = () => {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 };
 
-const stockItems = [
-  {
-    name: '면 블록',
-    lot: 'MAT-L-8831',
-    current: 13420,
-    safe: 9000,
-    unit: 'EA',
-    type: '자재',
-    status: '정상',
-    expireDate: '2026-08-09',
-  },
-  {
-    name: '분말 스프',
-    lot: 'MAT-L-7742',
-    current: 146200,
-    safe: 150000,
-    unit: 'g',
-    type: '자재',
-    status: '부족',
-    expireDate: '2026-10-07',
-  },
-  {
-    name: '컵 용기',
-    lot: 'MAT-L-9107',
-    current: 11680,
-    safe: 12000,
-    unit: 'EA',
-    type: '자재',
-    status: '주의',
-    expireDate: '',
-  },
-  {
-    name: '매운 컵라면 110g',
-    lot: 'LOT-240711-014',
-    current: 9200,
-    safe: 5000,
-    unit: 'EA',
-    type: '완제품',
-    status: '정상',
-    expireDate: '2026-09-15',
-  },
-];
+const emptyRawLotForm = () => ({
+  materialId: "",
+  materialLotNo: "",
+  supplierName: "",
+  supplierLotNo: "",
+  manufactureDate: "",
+  expiryDate: "",
+  receivedQty: "",
+  receivedDate: localDateValue(),
+});
 
-const ledger = [
-  { time: '14:20', type: '입고', item: '컵 용기', qty: '+2,000 EA', owner: '김민준' },
-  { time: '13:45', type: '출고', item: '분말 스프', qty: '-150,000 g', owner: '이서연' },
-  { time: '12:10', type: '입고', item: '완제품', qty: '+9,200 EA', owner: '박지훈' },
-];
-
-const isDefaultCondition = (condition) =>
-  condition.itemType === defaultCondition.itemType &&
-  condition.stockStatus === defaultCondition.stockStatus &&
-  condition.safetyStock === defaultCondition.safetyStock &&
-  condition.lotNo === defaultCondition.lotNo &&
-  condition.expireStartDate === defaultCondition.expireStartDate &&
-  condition.expireEndDate === defaultCondition.expireEndDate;
-
-function InventoryManagement({ showEmptyState = false }) {
-  const [activeType, setActiveType] = useState('전체');
-  const [isConditionModalOpen, setIsConditionModalOpen] = useState(false);
-  const [conditionForm, setConditionForm] = useState(defaultCondition);
-  const [appliedCondition, setAppliedCondition] = useState(defaultCondition);
-
-  const handleOpenConditionModal = () => {
-    setConditionForm(appliedCondition);
-    setIsConditionModalOpen(true);
-  };
-
-  const handleCloseConditionModal = () => {
-    setIsConditionModalOpen(false);
-  };
-
-  const handleConditionChange = (field, value) => {
-    setConditionForm((currentCondition) => ({
-      ...currentCondition,
-      [field]: value,
-    }));
-  };
-
-  const handleResetCondition = () => {
-    setConditionForm(defaultCondition);
-  };
-
-  const handleApplyCondition = () => {
-    setAppliedCondition(conditionForm);
-    setActiveType(conditionForm.itemType);
-    setIsConditionModalOpen(false);
-  };
-
-  const handleClearAppliedCondition = () => {
-    setAppliedCondition(defaultCondition);
-    setConditionForm(defaultCondition);
-    setActiveType('전체');
-  };
-
-  const filteredItems = useMemo(() => {
-    const lotKeyword = appliedCondition.lotNo.trim().toLowerCase();
-
-    return stockItems.filter((item) => {
-      const typeFilter = appliedCondition.itemType !== '전체' ? appliedCondition.itemType : activeType;
-      const matchesType = typeFilter === '전체' || item.type === typeFilter;
-      const matchesStatus =
-        appliedCondition.stockStatus === '전체' || item.status === appliedCondition.stockStatus;
-      const matchesSafety =
-        appliedCondition.safetyStock === '전체' ||
-        (appliedCondition.safetyStock === '미달만 보기' && item.current < item.safe) ||
-        (appliedCondition.safetyStock === '정상만 보기' && item.current >= item.safe);
-      const matchesLot = !lotKeyword || item.lot.toLowerCase().includes(lotKeyword);
-      const matchesExpireStart =
-        !appliedCondition.expireStartDate ||
-        !item.expireDate ||
-        item.expireDate >= appliedCondition.expireStartDate;
-      const matchesExpireEnd =
-        !appliedCondition.expireEndDate ||
-        !item.expireDate ||
-        item.expireDate <= appliedCondition.expireEndDate;
-
-      return (
-        matchesType &&
-        matchesStatus &&
-        matchesSafety &&
-        matchesLot &&
-        matchesExpireStart &&
-        matchesExpireEnd
-      );
-    });
-  }, [activeType, appliedCondition]);
-
-  const conditionChips = useMemo(() => {
-    if (isDefaultCondition(appliedCondition)) {
-      return [];
-    }
-
-    return [
-      appliedCondition.itemType !== '전체' ? appliedCondition.itemType : null,
-      appliedCondition.stockStatus !== '전체' ? appliedCondition.stockStatus : null,
-      appliedCondition.safetyStock !== '전체' ? appliedCondition.safetyStock : null,
-      appliedCondition.lotNo ? appliedCondition.lotNo : null,
-      appliedCondition.expireStartDate || appliedCondition.expireEndDate
-        ? `${appliedCondition.expireStartDate || '시작일'} ~ ${
-            appliedCondition.expireEndDate || '종료일'
-          }`
-        : null,
-    ].filter(Boolean);
-  }, [appliedCondition]);
-
-  if (showEmptyState) {
-    return (
-      <PageSection>
-        <Toolbar>
-          <SearchBox>
-            <FiSearch aria-hidden="true" />
-            <span>자재명, 제품명, LOT 번호 검색</span>
-          </SearchBox>
-          <FilterButton type="button">안전 재고 미달</FilterButton>
-        </Toolbar>
-        <EmptyState>
-          <FiInbox aria-hidden="true" />
-          <strong>표시할 재고 데이터가 없습니다.</strong>
-          <p>입고 또는 생산 완료 데이터가 등록되면 현재 재고와 입출고 이력이 표시됩니다.</p>
-        </EmptyState>
-      </PageSection>
-    );
-  }
-
+function Modal({ children, onClose }) {
   return (
-    <PageSection>
-      <Toolbar>
-        <SearchBox>
-          <FiSearch aria-hidden="true" />
-          <span>자재명, 제품명, LOT 번호 검색</span>
-        </SearchBox>
-        {['전체', '자재', '완제품'].map((type) => (
-          <FilterButton
-            key={type}
-            type="button"
-            $active={activeType === type && appliedCondition.itemType === '전체'}
-            onClick={() => {
-              setActiveType(type);
-              setAppliedCondition((currentCondition) => ({
-                ...currentCondition,
-                itemType: '전체',
-              }));
-            }}
-          >
-            {type}
-          </FilterButton>
-        ))}
-        <FilterButton type="button" onClick={handleOpenConditionModal}>
-          <FiSliders aria-hidden="true" />
-          조건
-        </FilterButton>
-      </Toolbar>
-
-      {conditionChips.length > 0 && (
-        <ConditionSummaryBar>
-          <span>적용 조건</span>
-          {conditionChips.map((chip) => (
-            <ConditionChip key={chip}>{chip}</ConditionChip>
-          ))}
-          <ConditionResetButton type="button" onClick={handleClearAppliedCondition}>
-            조건 초기화
-          </ConditionResetButton>
-        </ConditionSummaryBar>
-      )}
-
-      <MetricGrid>
-        <MetricCard>
-          <span>자재 재고 SKU</span>
-          <strong>128</strong>
-        </MetricCard>
-        <MetricCard>
-          <span>완제품 LOT</span>
-          <strong>34</strong>
-        </MetricCard>
-        <MetricCard>
-          <span>안전 재고 미달</span>
-          <strong>{stockItems.filter((item) => item.current < item.safe).length}</strong>
-        </MetricCard>
-      </MetricGrid>
-
-      {filteredItems.length > 0 ? (
-        <>
-          <InventoryGrid>
-            {filteredItems.map((item) => {
-              const percent = Math.min(Math.round((item.current / item.safe) * 100), 140);
-              return (
-                <StockCard key={`${item.name}-${item.lot}`}>
-                  <StockHeader>
-                    <div>
-                      <StockName>{item.name}</StockName>
-                      <StockMeta>
-                        {item.lot} · {item.type}
-                      </StockMeta>
-                    </div>
-                    <Badge
-                      $tone={
-                        item.status === '정상'
-                          ? 'success'
-                          : item.status === '주의'
-                            ? 'warning'
-                            : 'danger'
-                      }
-                    >
-                      {item.status}
-                    </Badge>
-                  </StockHeader>
-                  <strong>
-                    {item.current.toLocaleString()} {item.unit}
-                  </strong>
-                  <StockProgress>
-                    <StockProgressFill $tone={item.status} $value={Math.min(percent, 100)} />
-                  </StockProgress>
-                  <StockMeta>
-                    안전 재고 {item.safe.toLocaleString()} {item.unit}
-                  </StockMeta>
-                </StockCard>
-              );
-            })}
-          </InventoryGrid>
-
-          <StockTable>
-            <thead>
-              <tr>
-                <th>품목</th>
-                <th>LOT 번호</th>
-                <th>현재 재고</th>
-                <th>안전 재고</th>
-                <th>단위</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((item) => (
-                <tr key={item.lot}>
-                  <td>{item.name}</td>
-                  <td>{item.lot}</td>
-                  <td>{item.current.toLocaleString()}</td>
-                  <td>{item.safe.toLocaleString()}</td>
-                  <td>{item.unit}</td>
-                  <td>{item.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </StockTable>
-        </>
-      ) : (
-        <InventoryEmptyState>
-          <FiInbox aria-hidden="true" />
-          <strong>조건에 맞는 재고 데이터가 없습니다.</strong>
-          <p>조회 조건을 변경하거나 초기화해 주세요.</p>
-        </InventoryEmptyState>
-      )}
-
-      <Ledger>
-        {ledger.map((item) => (
-          <LedgerItem key={`${item.time}-${item.item}`}>
-            <span>{item.time}</span>
-            <strong>{item.type}</strong>
-            <em>{item.item}</em>
-            <b>{item.qty}</b>
-            <small>{item.owner}</small>
-          </LedgerItem>
-        ))}
-      </Ledger>
-
-      {isConditionModalOpen && (
-        <ConditionModalOverlay onClick={handleCloseConditionModal}>
-          <ConditionModal
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="inventory-condition-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <ConditionModalHeader>
-              <div>
-                <ConditionModalTitle id="inventory-condition-modal-title">
-                  재고 조회 조건
-                </ConditionModalTitle>
-                <ConditionModalDescription>
-                  품목 구분, 재고 상태, LOT 번호, 유통기한 조건으로 재고를 상세 조회합니다.
-                </ConditionModalDescription>
-              </div>
-              <ConditionModalCloseButton
-                type="button"
-                aria-label="재고 조회 조건 모달 닫기"
-                onClick={handleCloseConditionModal}
-              >
-                <FiX aria-hidden="true" />
-              </ConditionModalCloseButton>
-            </ConditionModalHeader>
-
-            <ConditionModalBody>
-              <ConditionFormGrid>
-                <ConditionField>
-                  <ConditionLabel htmlFor="condition-item-type">품목 구분</ConditionLabel>
-                  <ConditionSelect
-                    id="condition-item-type"
-                    value={conditionForm.itemType}
-                    onChange={(event) => handleConditionChange('itemType', event.target.value)}
-                  >
-                    <option>전체</option>
-                    <option>자재</option>
-                    <option>완제품</option>
-                  </ConditionSelect>
-                </ConditionField>
-                <ConditionField>
-                  <ConditionLabel htmlFor="condition-stock-status">재고 상태</ConditionLabel>
-                  <ConditionSelect
-                    id="condition-stock-status"
-                    value={conditionForm.stockStatus}
-                    onChange={(event) => handleConditionChange('stockStatus', event.target.value)}
-                  >
-                    <option>전체</option>
-                    <option>정상</option>
-                    <option>주의</option>
-                    <option>부족</option>
-                  </ConditionSelect>
-                </ConditionField>
-                <ConditionField>
-                  <ConditionLabel htmlFor="condition-safety-stock">안전재고 미달</ConditionLabel>
-                  <ConditionSelect
-                    id="condition-safety-stock"
-                    value={conditionForm.safetyStock}
-                    onChange={(event) => handleConditionChange('safetyStock', event.target.value)}
-                  >
-                    <option>전체</option>
-                    <option>미달만 보기</option>
-                    <option>정상만 보기</option>
-                  </ConditionSelect>
-                </ConditionField>
-                <ConditionField>
-                  <ConditionLabel htmlFor="condition-lot-no">LOT 번호</ConditionLabel>
-                  <ConditionInput
-                    id="condition-lot-no"
-                    value={conditionForm.lotNo}
-                    onChange={(event) => handleConditionChange('lotNo', event.target.value)}
-                    placeholder="예: MAT-L-7742 또는 LOT-240711-014"
-                  />
-                </ConditionField>
-                <ConditionField $wide>
-                  <ConditionLabel>유통기한</ConditionLabel>
-                  <DateRangeGroup>
-                    <ConditionInput
-                      type="date"
-                      aria-label="유통기한 시작일"
-                      value={conditionForm.expireStartDate}
-                      onChange={(event) =>
-                        handleConditionChange('expireStartDate', event.target.value)
-                      }
-                    />
-                    <span>~</span>
-                    <ConditionInput
-                      type="date"
-                      aria-label="유통기한 종료일"
-                      value={conditionForm.expireEndDate}
-                      onChange={(event) =>
-                        handleConditionChange('expireEndDate', event.target.value)
-                      }
-                    />
-                  </DateRangeGroup>
-                </ConditionField>
-              </ConditionFormGrid>
-            </ConditionModalBody>
-
-            <ConditionModalFooter>
-              <ConditionClearButton type="button" onClick={handleResetCondition}>
-                초기화
-              </ConditionClearButton>
-              <ConditionCancelButton type="button" onClick={handleCloseConditionModal}>
-                취소
-              </ConditionCancelButton>
-              <ConditionApplyButton type="button" onClick={handleApplyCondition}>
-                조회
-              </ConditionApplyButton>
-            </ConditionModalFooter>
-          </ConditionModal>
-        </ConditionModalOverlay>
-      )}
-    </PageSection>
+    <div
+      role="presentation"
+      onMouseDown={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(15,23,42,.55)",
+        zIndex: 1000,
+        display: "grid",
+        placeItems: "center",
+        padding: 20,
+      }}
+    >
+      <Card
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+        style={{ width: "min(820px, 100%)", maxHeight: "90vh", overflowY: "auto" }}
+      >
+        {children}
+      </Card>
+    </div>
   );
 }
 
-export default InventoryManagement;
+export default function InventoryManagement({ canManage = false }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [type, setType] = useState("ALL");
+  const [keywordDraft, setKeywordDraft] = useState("");
+  const [dialog, setDialog] = useState(null);
+  const [rawLotForm, setRawLotForm] = useState(emptyRawLotForm);
+  const [productInventoryForm, setProductInventoryForm] = useState({
+    productionLotId: "",
+    safetyStockQty: "0",
+    expiryDate: "",
+  });
+  const [message, setMessage] = useState("");
+  const keyword = useDebouncedValue(keywordDraft.trim());
+  const params = { keyword: keyword || undefined, page: 0, size: 100 };
+
+  const rawQuery = useQuery({
+    queryKey: queryKeys.rawMaterialLots(params),
+    queryFn: () => materialApi.rawMaterialLots(params),
+    refetchInterval: POLLING.INVENTORY,
+    placeholderData: (previous) => previous,
+  });
+  const productQuery = useQuery({
+    queryKey: queryKeys.productInventories(params),
+    queryFn: () => materialApi.productInventories(params),
+    refetchInterval: POLLING.INVENTORY,
+    placeholderData: (previous) => previous,
+  });
+  const movementQuery = useQuery({
+    queryKey: queryKeys.inventoryMovements({ recent: true }),
+    queryFn: () => materialApi.recentMovements({ size: 20 }),
+    refetchInterval: POLLING.INVENTORY,
+  });
+  const activeMaterialsQuery = useQuery({
+    queryKey: queryKeys.materials({ status: "ACTIVE", page: 0, size: 100 }),
+    queryFn: () => referenceApi.rawMaterials({ status: "ACTIVE", page: 0, size: 100 }),
+    enabled: dialog === "raw-lot",
+  });
+  const completedLotsQuery = useQuery({
+    queryKey: queryKeys.productionLots({ statuses: "COMPLETED", page: 0, size: 100 }),
+    queryFn: () => materialApi.productionLots({ statuses: "COMPLETED", page: 0, size: 100 }),
+    enabled: dialog === "product-inventory",
+  });
+  const registeredProductInventoriesQuery = useQuery({
+    queryKey: queryKeys.productInventories({ page: 0, size: 100, purpose: "candidate-filter" }),
+    queryFn: () => materialApi.productInventories({ page: 0, size: 100 }),
+    enabled: dialog === "product-inventory",
+  });
+
+  const invalidateInventory = () => queryClient.invalidateQueries({ queryKey: ["materials"] });
+  const receiveRawLotMutation = useMutation({
+    mutationFn: materialApi.receiveRawMaterialLot,
+    onSuccess: invalidateInventory,
+  });
+  const createProductInventoryMutation = useMutation({
+    mutationFn: materialApi.createProductInventory,
+    onSuccess: invalidateInventory,
+  });
+
+  const eligibleProductionLots = useMemo(() => {
+    const registeredLotIds = new Set(
+      pageContent(registeredProductInventoriesQuery.data)
+        .map((inventory) => Number(inventory.productionLotId)),
+    );
+    return pageContent(completedLotsQuery.data).filter((lot) => (
+      lot.status === "COMPLETED"
+      && Number(lot.goodQty) > 0
+      && !registeredLotIds.has(Number(lot.productionLotId))
+    ));
+  }, [completedLotsQuery.data, registeredProductInventoriesQuery.data]);
+
+  const openRawLotDialog = () => {
+    setRawLotForm(emptyRawLotForm());
+    setMessage("");
+    setDialog("raw-lot");
+  };
+  const openProductInventoryDialog = () => {
+    setProductInventoryForm({
+      productionLotId: "",
+      safetyStockQty: "0",
+      expiryDate: "",
+    });
+    setMessage("");
+    setDialog("product-inventory");
+  };
+
+  const receiveRawLot = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    try {
+      await receiveRawLotMutation.mutateAsync({
+        materialLotNo: rawLotForm.materialLotNo.trim(),
+        materialId: Number(rawLotForm.materialId),
+        supplierName: rawLotForm.supplierName.trim(),
+        supplierLotNo: rawLotForm.supplierLotNo.trim(),
+        manufactureDate: rawLotForm.manufactureDate,
+        expiryDate: rawLotForm.expiryDate,
+        receivedQty: Number(rawLotForm.receivedQty),
+        receivedDate: rawLotForm.receivedDate,
+        handledById: user.userId,
+      });
+      setDialog(null);
+      setMessage("원자재 LOT 입고를 등록했습니다.");
+    } catch (error) {
+      setMessage(extractApiError(error));
+    }
+  };
+
+  const createProductInventory = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    try {
+      await createProductInventoryMutation.mutateAsync({
+        productionLotId: Number(productInventoryForm.productionLotId),
+        safetyStockQty: Number(productInventoryForm.safetyStockQty),
+        expiryDate: productInventoryForm.expiryDate || null,
+        handledById: user.userId,
+      });
+      setDialog(null);
+      setMessage("완제품 입고를 등록했습니다.");
+    } catch (error) {
+      setMessage(extractApiError(error));
+    }
+  };
+
+  const rawRows = pageContent(rawQuery.data);
+  const productRows = pageContent(productQuery.data);
+  const activeMaterials = pageContent(activeMaterialsQuery.data);
+
+  return (
+    <>
+      {canManage && (
+        <Toolbar>
+          <Button type="button" onClick={openRawLotDialog}>원자재 LOT 입고</Button>
+          <Button type="button" onClick={openProductInventoryDialog}>완제품 입고</Button>
+          <Button
+            type="button"
+            $secondary
+            onClick={() => {
+              setMessage("");
+              setDialog("movement");
+            }}
+          >
+            재고 이동 등록
+          </Button>
+        </Toolbar>
+      )}
+      {message && !dialog && <p role="status">{message}</p>}
+      <ApiErrors queries={[rawQuery, productQuery, movementQuery]} />
+
+      <Toolbar>
+        <Select value={type} onChange={(event) => setType(event.target.value)}>
+          <option value="ALL">전체</option>
+          <option value="RAW_MATERIAL">원자재</option>
+          <option value="FINISHED_PRODUCT">완제품</option>
+        </Select>
+        <Input
+          value={keywordDraft}
+          onChange={(event) => setKeywordDraft(event.target.value)}
+          placeholder="품목·LOT 검색"
+        />
+      </Toolbar>
+
+      {(type === "ALL" || type === "RAW_MATERIAL") && (
+        <>
+          <h2>원자재 LOT 현재고</h2>
+          <QueryStatus query={rawQuery} empty={rawRows.length === 0} />
+          <TableWrap>
+            <Table>
+              <thead>
+                <tr>
+                  <th>LOT</th>
+                  <th>원자재</th>
+                  <th>현재/안전 재고</th>
+                  <th>단위</th>
+                  <th>유효기한</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rawRows.map((lot) => (
+                  <tr key={lot.materialLotId}>
+                    <td>{lot.materialLotNo}</td>
+                    <td>{lot.materialCode} {lot.materialName}</td>
+                    <td>{lot.currentQty} / {lot.safetyStockQty}</td>
+                    <td>{lot.unit}</td>
+                    <td>{lot.expiryDate}</td>
+                    <td><Badge $tone={toneForStatus(lot.status)}>{lot.statusLabel}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableWrap>
+        </>
+      )}
+
+      {(type === "ALL" || type === "FINISHED_PRODUCT") && (
+        <>
+          <h2>완제품 현재고</h2>
+          <QueryStatus query={productQuery} empty={productRows.length === 0} />
+          <TableWrap>
+            <Table>
+              <thead>
+                <tr>
+                  <th>LOT</th>
+                  <th>제품</th>
+                  <th>현재/안전 재고</th>
+                  <th>단위</th>
+                  <th>유효기한</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productRows.map((item) => (
+                  <tr key={item.inventoryId}>
+                    <td>{item.lotNo}</td>
+                    <td>{item.productCode} {item.productName}</td>
+                    <td>{formatNumber(item.currentQty)} / {formatNumber(item.safetyStockQty)}</td>
+                    <td>{item.unit}</td>
+                    <td>{item.expiryDate || "-"}</td>
+                    <td><Badge $tone={toneForStatus(item.status)}>{item.statusLabel}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableWrap>
+        </>
+      )}
+
+      <h2>최근 이동 이력</h2>
+      <QueryStatus query={movementQuery} empty={movementQuery.data?.length === 0} />
+      <TableWrap>
+        <Table>
+          <thead>
+            <tr>
+              <th>이동 번호</th>
+              <th>품목</th>
+              <th>유형</th>
+              <th>수량</th>
+              <th>처리자</th>
+              <th>시각</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(movementQuery.data || []).map((item) => (
+              <tr key={item.movementId}>
+                <td>{item.movementNo}</td>
+                <td>{item.itemName} · {item.lotNo}</td>
+                <td>{item.movementTypeLabel}</td>
+                <td>{item.quantity}</td>
+                <td>{item.handledByName}</td>
+                <td>{toKst(item.occurredAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </TableWrap>
+
+      {dialog === "raw-lot" && (
+        <Modal onClose={() => setDialog(null)}>
+          <h2>원자재 LOT 최초 입고</h2>
+          <p>새 원자재 LOT와 최초 입고 이동을 동시에 생성합니다.</p>
+          <ApiErrors queries={[activeMaterialsQuery]} />
+          {activeMaterialsQuery.isSuccess && activeMaterials.length === 0 && (
+            <EmptyState>사용 중인 원자재가 없습니다. 기준정보에서 먼저 등록해주세요.</EmptyState>
+          )}
+          <FormGrid onSubmit={receiveRawLot}>
+            <label>
+              원자재
+              <Select
+                value={rawLotForm.materialId}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, materialId: event.target.value })}
+                required
+              >
+                <option value="">원자재 선택</option>
+                {activeMaterials.map((material) => (
+                  <option key={material.materialId} value={material.materialId}>
+                    {material.materialCode} · {material.materialName} ({material.unit})
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label>
+              내부 LOT 번호
+              <input
+                maxLength="50"
+                value={rawLotForm.materialLotNo}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, materialLotNo: event.target.value })}
+                required
+              />
+            </label>
+            <label>
+              공급사
+              <input
+                maxLength="100"
+                value={rawLotForm.supplierName}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, supplierName: event.target.value })}
+                required
+              />
+            </label>
+            <label>
+              공급사 LOT 번호
+              <input
+                maxLength="50"
+                value={rawLotForm.supplierLotNo}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, supplierLotNo: event.target.value })}
+                required
+              />
+            </label>
+            <label>
+              제조일
+              <input
+                type="date"
+                value={rawLotForm.manufactureDate}
+                max={rawLotForm.expiryDate || undefined}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, manufactureDate: event.target.value })}
+                required
+              />
+            </label>
+            <label>
+              유통기한
+              <input
+                type="date"
+                value={rawLotForm.expiryDate}
+                min={rawLotForm.manufactureDate || undefined}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, expiryDate: event.target.value })}
+                required
+              />
+            </label>
+            <label>
+              입고일
+              <input
+                type="date"
+                value={rawLotForm.receivedDate}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, receivedDate: event.target.value })}
+                required
+              />
+            </label>
+            <label>
+              입고수량
+              <input
+                type="number"
+                min="0.001"
+                step="0.001"
+                value={rawLotForm.receivedQty}
+                onChange={(event) => setRawLotForm({ ...rawLotForm, receivedQty: event.target.value })}
+                required
+              />
+            </label>
+            <div>
+              <Button disabled={receiveRawLotMutation.isPending || activeMaterials.length === 0}>
+                {receiveRawLotMutation.isPending ? "저장 중..." : "입고 등록"}
+              </Button>{" "}
+              <Button type="button" $secondary onClick={() => setDialog(null)}>취소</Button>
+            </div>
+          </FormGrid>
+          {message && <p role="alert">{message}</p>}
+        </Modal>
+      )}
+
+      {dialog === "product-inventory" && (
+        <Modal onClose={() => setDialog(null)}>
+          <h2>완제품 최초 입고</h2>
+          <p>완료된 생산 LOT의 정상 생산수량을 완제품 현재고로 등록합니다.</p>
+          <ApiErrors queries={[completedLotsQuery, registeredProductInventoriesQuery]} />
+          {completedLotsQuery.isSuccess
+            && registeredProductInventoriesQuery.isSuccess
+            && eligibleProductionLots.length === 0
+            && <EmptyState>입고할 수 있는 완료 생산 LOT가 없습니다.</EmptyState>}
+          <FormGrid onSubmit={createProductInventory}>
+            <label>
+              완료 생산 LOT
+              <Select
+                value={productInventoryForm.productionLotId}
+                onChange={(event) => setProductInventoryForm({
+                  ...productInventoryForm,
+                  productionLotId: event.target.value,
+                })}
+                required
+              >
+                <option value="">생산 LOT 선택</option>
+                {eligibleProductionLots.map((lot) => (
+                  <option key={lot.productionLotId} value={lot.productionLotId}>
+                    {lot.lotNo} · {lot.productName} · 정상 {lot.goodQty}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label>
+              안전재고
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={productInventoryForm.safetyStockQty}
+                onChange={(event) => setProductInventoryForm({
+                  ...productInventoryForm,
+                  safetyStockQty: event.target.value,
+                })}
+                required
+              />
+            </label>
+            <label>
+              유통기한
+              <input
+                type="date"
+                value={productInventoryForm.expiryDate}
+                onChange={(event) => setProductInventoryForm({
+                  ...productInventoryForm,
+                  expiryDate: event.target.value,
+                })}
+              />
+            </label>
+            <div>
+              <Button
+                disabled={
+                  createProductInventoryMutation.isPending
+                  || eligibleProductionLots.length === 0
+                }
+              >
+                {createProductInventoryMutation.isPending ? "저장 중..." : "완제품 입고"}
+              </Button>{" "}
+              <Button type="button" $secondary onClick={() => setDialog(null)}>취소</Button>
+            </div>
+          </FormGrid>
+          {message && <p role="alert">{message}</p>}
+        </Modal>
+      )}
+
+      <StockMovementRegistration
+        isOpen={dialog === "movement"}
+        onClose={() => setDialog(null)}
+      />
+    </>
+  );
+}

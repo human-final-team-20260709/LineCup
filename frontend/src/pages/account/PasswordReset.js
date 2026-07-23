@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../../api/services';
+import { extractApiError } from '../../api/client';
 import { FiArrowLeft, FiLock, FiRefreshCw } from 'react-icons/fi';
 import AccountModal from './AccountModal';
 import {
@@ -21,11 +24,31 @@ import {
 
 function PasswordReset() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const verification = location.state;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const resetMutation = useMutation({ mutationFn: authApi.resetPassword });
 
-  const handleSubmit = (event) => {
+  if (!verification?.empNo || !verification?.email) {
+    return <Navigate to="/account/find/password" replace />;
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsModalOpen(true);
+    const data = new FormData(event.currentTarget);
+    setErrorMessage('');
+    try {
+      await resetMutation.mutateAsync({
+        empNo: verification.empNo,
+        email: verification.email,
+        password: String(data.get('password') || ''),
+        passwordConfirm: String(data.get('passwordConfirm') || ''),
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      setErrorMessage(extractApiError(error));
+    }
   };
 
   const handleComplete = () => {
@@ -81,11 +104,12 @@ function PasswordReset() {
           </Field>
 
           <ActionBar>
-            <Button type="submit">
-              비밀번호 변경
+            <Button type="submit" disabled={resetMutation.isPending}>
+              {resetMutation.isPending ? '변경 중...' : '비밀번호 변경'}
               <FiRefreshCw aria-hidden="true" />
             </Button>
           </ActionBar>
+          {errorMessage && <HelperText role="alert">{errorMessage}</HelperText>}
         </Form>
       </Card>
 

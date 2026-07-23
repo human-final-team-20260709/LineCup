@@ -1,6 +1,5 @@
 package com.human.linecup.repository;
 
-import com.human.linecup.entity.InventoryStatus;
 import com.human.linecup.entity.RawMaterialLot;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -46,22 +45,22 @@ public interface RawMaterialLotRepository extends JpaRepository<RawMaterialLot, 
               and (:expiryFrom is null or rml.expiryDate >= :expiryFrom)
               and (:expiryTo is null or rml.expiryDate <= :expiryTo)
               and (
-                   :inventoryStatus is null
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.EXPIRED
+                   :inventoryStatus = 'ALL'
+                   or (:inventoryStatus = 'EXPIRED'
                        and rml.expiryDate < :today)
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.OUT_OF_STOCK
+                   or (:inventoryStatus = 'OUT_OF_STOCK'
                        and rml.expiryDate >= :today and rml.currentQty = 0)
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.LOW
+                   or (:inventoryStatus = 'LOW'
                        and rml.expiryDate >= :today and rml.currentQty > 0
                        and rml.currentQty < rm.safetyStockQty)
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.NORMAL
+                   or (:inventoryStatus = 'NORMAL'
                        and rml.expiryDate >= :today and rml.currentQty > 0
                        and rml.currentQty >= rm.safetyStockQty)
               )
             """)
     Page<RawMaterialLot> search(
             @Param("keyword") String keyword,
-            @Param("inventoryStatus") InventoryStatus inventoryStatus,
+            @Param("inventoryStatus") String inventoryStatus,
             @Param("today") LocalDate today,
             @Param("expiryFrom") LocalDate expiryFrom,
             @Param("expiryTo") LocalDate expiryTo,

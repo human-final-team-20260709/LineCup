@@ -1,312 +1,57 @@
-import { useRef, useState } from 'react';
-import {
-  FiArrowDownCircle,
-  FiArrowUpCircle,
-  FiBox,
-  FiCalendar,
-  FiHash,
-  FiInfo,
-  FiUser,
-  FiX,
-} from 'react-icons/fi';
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FormGrid,
-  HelperText,
-  ModalActions,
-  ModalBody,
-  ModalCloseButton,
-  ModalDescription,
-  ModalHeader,
-  ModalOverlay,
-  ModalPanel,
-  ModalTitle,
-  MovementTypeContent,
-  MovementTypeGrid,
-  MovementTypeOption,
-  Notice,
-  PrimaryButton,
-  RequiredMark,
-  SecondaryButton,
-  Section,
-  SectionDescription,
-  SectionHeader,
-  SectionIcon,
-  SectionTitle,
-  Select,
-  StepBadge,
-  StepConnector,
-  StepContent,
-  StepItem,
-  StepLabel,
-  StepPanel,
-  StepProgress,
-  StepViewport,
-  TextArea,
-  TextInput,
-} from './StockMovementRegistrationCss';
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { materialApi } from "../../api/services";
+import { queryKeys } from "../../api/config";
+import { extractApiError } from "../../api/client";
+import { toUtcInstant } from "../../api/time";
+import { useAuth } from "../../context/AuthContext";
+import { Button, Card, FormGrid, Select, pageContent } from "../../components/OperationalUi";
+import { ApiErrors } from "../../components/ApiState";
 
-const steps = ['입출고 구분', '품목 및 LOT', '처리 정보'];
-
-function StockMovementRegistration({ isOpen, onClose }) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [slideDirection, setSlideDirection] = useState('forward');
-  const modalBodyRef = useRef(null);
-
-  if (!isOpen) {
-    return null;
-  }
-
-  const handleClose = () => {
-    setCurrentStep(0);
-    setSlideDirection('forward');
-    onClose();
+export default function StockMovementRegistration({ isOpen, onClose }) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [itemType, setItemType] = useState("RAW_MATERIAL");
+  const [message, setMessage] = useState("");
+  const rawQuery = useQuery({ queryKey: queryKeys.rawMaterialLots({ size: 100 }), queryFn: () => materialApi.rawMaterialLots({ size: 100 }), enabled: isOpen });
+  const productQuery = useQuery({ queryKey: queryKeys.productInventories({ size: 100 }), queryFn: () => materialApi.productInventories({ size: 100 }), enabled: isOpen });
+  const mutation = useMutation({
+    mutationFn: materialApi.createMovement,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["materials"] }),
+  });
+  if (!isOpen) return null;
+  const submit = async (event) => {
+    event.preventDefault(); const data = new FormData(event.currentTarget); setMessage("");
+    const targetId = Number(data.get("targetId"));
+    try {
+      await mutation.mutateAsync({
+        itemType,
+        movementType: data.get("movementType"),
+        rawMaterialLotId: itemType === "RAW_MATERIAL" ? targetId : null,
+        productInventoryId: itemType === "FINISHED_PRODUCT" ? targetId : null,
+        quantity: Number(data.get("quantity")),
+        handledById: user.userId,
+        occurredAt: data.get("occurredAt") ? toUtcInstant(data.get("occurredAt")) : null,
+        remarks: String(data.get("remarks") || "").trim() || null,
+      });
+      onClose();
+    } catch (error) { setMessage(extractApiError(error)); }
   };
-
-  const handleNext = () => {
-    modalBodyRef.current?.scrollTo({ top: 0 });
-    setSlideDirection('forward');
-    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
-  };
-
-  const handlePrevious = () => {
-    modalBodyRef.current?.scrollTo({ top: 0 });
-    setSlideDirection('backward');
-    setCurrentStep((step) => Math.max(step - 1, 0));
-  };
-
-  return (
-    <ModalOverlay onClick={handleClose}>
-      <ModalPanel
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="stock-movement-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <ModalHeader>
-          <div>
-            <ModalTitle id="stock-movement-title">입출고 등록</ModalTitle>
-            <ModalDescription>
-              자재 또는 완제품의 입고·출고 정보를 입력합니다.
-            </ModalDescription>
-          </div>
-          <ModalCloseButton
-            type="button"
-            aria-label="입출고 등록 창 닫기"
-            onClick={handleClose}
-          >
-            <FiX aria-hidden="true" />
-          </ModalCloseButton>
-        </ModalHeader>
-
-        <StepProgress aria-label="입출고 등록 진행 단계">
-          {steps.map((step, index) => (
-            <StepItem
-              key={step}
-              $active={currentStep === index}
-              $complete={currentStep > index}
-              aria-current={currentStep === index ? 'step' : undefined}
-            >
-              <StepBadge $active={currentStep === index} $complete={currentStep > index}>
-                {index + 1}
-              </StepBadge>
-              <StepLabel>{step}</StepLabel>
-              {index < steps.length - 1 && (
-                <StepConnector $complete={currentStep > index} aria-hidden="true" />
-              )}
-            </StepItem>
-          ))}
-        </StepProgress>
-
-        <ModalBody ref={modalBodyRef}>
-          <StepViewport>
-            <StepContent>
-              <StepPanel $active={currentStep === 0} $direction={slideDirection}>
-                <Section>
-                  <SectionHeader>
-                    <SectionIcon>
-                      <FiArrowDownCircle aria-hidden="true" />
-                    </SectionIcon>
-                    <div>
-                      <SectionTitle>입출고 구분</SectionTitle>
-                      <SectionDescription>처리할 재고 이동 유형을 선택하세요.</SectionDescription>
-                    </div>
-                  </SectionHeader>
-                  <MovementTypeGrid>
-                    <MovementTypeOption>
-                      <input type="radio" name="movement-type" value="입고" defaultChecked />
-                      <MovementTypeContent $tone="inbound">
-                        <FiArrowDownCircle aria-hidden="true" />
-                        <span>
-                          <strong>입고</strong>
-                          <small>구매 입고 또는 생산 완료 수량</small>
-                        </span>
-                      </MovementTypeContent>
-                    </MovementTypeOption>
-                    <MovementTypeOption>
-                      <input type="radio" name="movement-type" value="출고" />
-                      <MovementTypeContent $tone="outbound">
-                        <FiArrowUpCircle aria-hidden="true" />
-                        <span>
-                          <strong>출고</strong>
-                          <small>생산 투입 또는 제품 출하 수량</small>
-                        </span>
-                      </MovementTypeContent>
-                    </MovementTypeOption>
-                  </MovementTypeGrid>
-                </Section>
-              </StepPanel>
-
-              <StepPanel $active={currentStep === 1} $direction={slideDirection}>
-                <Section>
-                  <SectionHeader>
-                    <SectionIcon>
-                      <FiBox aria-hidden="true" />
-                    </SectionIcon>
-                    <div>
-                      <SectionTitle>품목 및 LOT 정보</SectionTitle>
-                      <SectionDescription>재고 이동 대상과 수량 기준을 입력합니다.</SectionDescription>
-                    </div>
-                  </SectionHeader>
-                  <FormGrid>
-                    <Field>
-                      <FieldLabel htmlFor="movement-item-type">
-                        품목 구분 <RequiredMark>*</RequiredMark>
-                      </FieldLabel>
-                      <Select id="movement-item-type" defaultValue="자재">
-                        <option>자재</option>
-                        <option>완제품</option>
-                      </Select>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="movement-item">
-                        대상 품목 <RequiredMark>*</RequiredMark>
-                      </FieldLabel>
-                      <Select id="movement-item" defaultValue="">
-                        <option value="" disabled>품목을 선택하세요</option>
-                        <option>면 블록</option>
-                        <option>분말 스프</option>
-                        <option>컵 용기</option>
-                        <option>매운 컵라면 110g</option>
-                      </Select>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="movement-lot">
-                        LOT 번호 <RequiredMark>*</RequiredMark>
-                      </FieldLabel>
-                      <FieldGroup>
-                        <FiHash aria-hidden="true" />
-                        <TextInput id="movement-lot" placeholder="예: MAT-L-9204" />
-                      </FieldGroup>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="movement-order">작업지시 번호</FieldLabel>
-                      <TextInput id="movement-order" placeholder="예: WO-2407-021" />
-                      <HelperText>생산 투입 또는 생산 완료 건인 경우 입력합니다.</HelperText>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="movement-quantity">
-                        수량 <RequiredMark>*</RequiredMark>
-                      </FieldLabel>
-                      <TextInput id="movement-quantity" inputMode="decimal" placeholder="0" />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="movement-unit">단위</FieldLabel>
-                      <Select id="movement-unit" defaultValue="EA">
-                        <option>EA</option>
-                        <option>g</option>
-                        <option>kg</option>
-                        <option>ml</option>
-                        <option>BOX</option>
-                      </Select>
-                    </Field>
-                  </FormGrid>
-                </Section>
-              </StepPanel>
-
-              <StepPanel $active={currentStep === 2} $direction={slideDirection}>
-                  <Section>
-                    <SectionHeader>
-                      <SectionIcon>
-                        <FiCalendar aria-hidden="true" />
-                      </SectionIcon>
-                      <div>
-                        <SectionTitle>처리 정보</SectionTitle>
-                        <SectionDescription>처리 시점과 재고 보관 위치를 입력합니다.</SectionDescription>
-                      </div>
-                    </SectionHeader>
-                    <FormGrid>
-                      <Field>
-                        <FieldLabel htmlFor="movement-date">
-                          처리 일자 <RequiredMark>*</RequiredMark>
-                        </FieldLabel>
-                        <TextInput id="movement-date" type="date" defaultValue="2026-07-13" />
-                      </Field>
-                      <Field>
-                        <FieldLabel htmlFor="movement-time">처리 시간</FieldLabel>
-                        <TextInput id="movement-time" type="time" defaultValue="09:00" />
-                      </Field>
-                      <Field>
-                        <FieldLabel htmlFor="movement-location">
-                          보관 위치 <RequiredMark>*</RequiredMark>
-                        </FieldLabel>
-                        <Select id="movement-location" defaultValue="">
-                          <option value="" disabled>보관 위치를 선택하세요</option>
-                          <option>원자재 창고 A</option>
-                          <option>원자재 창고 B</option>
-                          <option>생산 대기 구역</option>
-                          <option>완제품 창고</option>
-                        </Select>
-                      </Field>
-                      <Field>
-                        <FieldLabel htmlFor="movement-owner">담당자</FieldLabel>
-                        <FieldGroup>
-                          <FiUser aria-hidden="true" />
-                          <TextInput id="movement-owner" defaultValue="김민준" />
-                        </FieldGroup>
-                      </Field>
-                      <Field $wide>
-                        <FieldLabel htmlFor="movement-note">비고</FieldLabel>
-                        <TextArea
-                          id="movement-note"
-                          placeholder="입출고 사유 또는 확인 사항을 입력하세요."
-                        />
-                      </Field>
-                    </FormGrid>
-                  </Section>
-
-                  <Notice>
-                    <FiInfo aria-hidden="true" />
-                    <span>
-                      <strong>등록 전 확인</strong>
-                      입출고 유형, 대상 LOT, 수량 및 보관 위치가 실제 처리 내용과
-                      일치하는지 확인하세요.
-                    </span>
-                  </Notice>
-              </StepPanel>
-            </StepContent>
-          </StepViewport>
-        </ModalBody>
-
-        <ModalActions>
-          <SecondaryButton
-            type="button"
-            onClick={currentStep === 0 ? handleClose : handlePrevious}
-          >
-            {currentStep === 0 ? '취소' : '이전'}
-          </SecondaryButton>
-          <PrimaryButton
-            type="button"
-            onClick={currentStep < steps.length - 1 ? handleNext : undefined}
-          >
-            {currentStep < steps.length - 1 ? '다음' : '등록'}
-          </PrimaryButton>
-        </ModalActions>
-      </ModalPanel>
-    </ModalOverlay>
-  );
+  return <div role="presentation" onMouseDown={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.55)", zIndex: 1000, display: "grid", placeItems: "center", padding: 20 }}>
+    <Card role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()} style={{ width: "min(760px, 100%)", maxHeight: "90vh", overflow: "auto" }}>
+      <h2>재고 이동 등록</h2>
+      <p>이미 생성된 원자재 LOT 또는 완제품 재고의 추가 입고·출고·조정만 처리합니다. 신규 LOT는 원자재 LOT 입고 기능을 이용해주세요.</p>
+      <FormGrid onSubmit={submit}>
+        <label>품목 유형<Select value={itemType} onChange={(event) => setItemType(event.target.value)}><option value="RAW_MATERIAL">원자재</option><option value="FINISHED_PRODUCT">완제품</option></Select></label>
+        <label>이동 유형<Select name="movementType"><option value="INBOUND">입고</option><option value="OUTBOUND">출고</option><option value="ADJUSTMENT">조정</option></Select></label>
+        <label>대상 LOT/재고<Select name="targetId" required><option value="">대상 선택</option>{(itemType === "RAW_MATERIAL" ? pageContent(rawQuery.data) : pageContent(productQuery.data)).map((item) => <option key={itemType === "RAW_MATERIAL" ? item.materialLotId : item.inventoryId} value={itemType === "RAW_MATERIAL" ? item.materialLotId : item.inventoryId}>{itemType === "RAW_MATERIAL" ? item.materialLotNo : item.lotNo} · {itemType === "RAW_MATERIAL" ? item.materialName : item.productName}</option>)}</Select></label>
+        <label>수량<input name="quantity" type="number" min="0.001" step="0.001" required /></label>
+        <label>처리 시각<input name="occurredAt" type="datetime-local" /></label>
+        <label>비고<textarea name="remarks" rows="3" /></label>
+        <div><Button disabled={mutation.isPending}>{mutation.isPending ? "저장 중..." : "저장"}</Button> <Button type="button" $secondary onClick={onClose}>취소</Button></div>
+      </FormGrid>
+      {message && <p role="alert">{message}</p>}
+      <ApiErrors queries={[rawQuery, productQuery]} />
+    </Card>
+  </div>;
 }
-
-export default StockMovementRegistration;

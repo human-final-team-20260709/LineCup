@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCheckCircle, FiSend, FiX } from "react-icons/fi";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../../api/services";
+import { extractApiError } from "../../api/client";
 import {
   Button,
   CheckboxGrid,
@@ -22,7 +25,6 @@ import {
   RadioHeader,
   RadioGrid,
   SectionLabel,
-  Select,
   TopLink,
 } from "./SignupCss";
 
@@ -103,8 +105,9 @@ function Signup() {
   const [selectedRole, setSelectedRole] = useState("operator");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const signupMutation = useMutation({ mutationFn: authApi.signup });
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     const validationErrors = validateSignupForm(new FormData(form));
@@ -119,7 +122,22 @@ function Signup() {
     }
 
     setErrors({});
-    setIsModalOpen(true);
+    const data = new FormData(form);
+    try {
+      await signupMutation.mutateAsync({
+        empNo: String(data.get("userId") || "").trim(),
+        password: String(data.get("password") || ""),
+        passwordConfirm: String(data.get("passwordConfirm") || ""),
+        name: String(data.get("name") || "").trim(),
+        email: String(data.get("email") || "").trim(),
+        phone: String(data.get("phone") || "").trim(),
+        role: String(data.get("role") || "operator").toUpperCase(),
+        privacyAgreement: Boolean(data.get("privacyAgreement")),
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      setErrors({ form: extractApiError(error) });
+    }
   };
 
   const handleFieldChange = (event) => {
@@ -293,46 +311,6 @@ function Signup() {
                   {errors.phone || "입력 오류 없음"}
                 </ErrorText>
               </Field>
-              <Field>
-                <Label htmlFor="signup-assignment">소속 및 담당 영역</Label>
-                <Select
-                  id="signup-assignment"
-                  name="assignmentScope"
-                  defaultValue="production-line-01"
-                >
-                  <option value="production-line-01">
-                    생산운영팀 · LINE-01
-                  </option>
-                  <option value="production-line-02">
-                    생산운영팀 · LINE-02
-                  </option>
-                  <option value="quality-all">품질관리팀 · 전체 라인</option>
-                  <option value="equipment-all">설비관리팀 · 전체 라인</option>
-                  <option value="system-all">시스템운영팀 · 전체 범위</option>
-                </Select>
-              </Field>
-              <Field>
-                <Label htmlFor="signup-purpose">요청 사유</Label>
-                <Select
-                  id="signup-purpose"
-                  name="requestPurpose"
-                  defaultValue="production-record"
-                >
-                  <option value="production-record">
-                    작업지시 확인 및 생산실적 처리
-                  </option>
-                  <option value="quality-history">
-                    품질 검사 및 품질이력 조회
-                  </option>
-                  <option value="equipment-alarm">
-                    설비 상태 및 알람 모니터링
-                  </option>
-                  <option value="master-user-management">
-                    기준정보 및 사용자 관리
-                  </option>
-                  <option value="other">기타 업무</option>
-                </Select>
-              </Field>
             </FieldGrid>
 
             <SectionLabel>ROLE SELECTION</SectionLabel>
@@ -376,10 +354,11 @@ function Signup() {
               </ErrorText>
             </CheckboxGrid>
 
-            <Button type="submit">
-              회원가입 신청
+            <Button type="submit" disabled={signupMutation.isPending}>
+              {signupMutation.isPending ? "신청 중..." : "회원가입 신청"}
               <FiSend aria-hidden="true" />
             </Button>
+            {errors.form && <ErrorText role="alert" $visible>{errors.form}</ErrorText>}
           </Form>
         </FormCard>
       </FormLayout>

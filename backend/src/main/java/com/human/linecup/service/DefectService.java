@@ -9,6 +9,7 @@ import com.human.linecup.dto.response.DefectDashboardResponse;
 import com.human.linecup.dto.response.DefectDetailResponse;
 import com.human.linecup.dto.response.DefectHandlingHistoryResponse;
 import com.human.linecup.dto.response.DefectSummaryResponse;
+import com.human.linecup.dto.response.DefectTypeResponse;
 import com.human.linecup.entity.Defect;
 import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.DefectHandleMethod;
@@ -313,6 +314,13 @@ public class DefectService {
                 unhandledDefectCount,
                 recentDefects
         );
+    }
+
+    public List<DefectTypeResponse> getActiveDefectTypes() {
+        return defectTypeRepository.findAllByActiveTrueOrderByNameAsc()
+                .stream()
+                .map(type -> new DefectTypeResponse(type.getCode(), type.getName()))
+                .toList();
     }
 
     private Specification<Defect> createSearchSpecification(DefectSearchCondition condition) {

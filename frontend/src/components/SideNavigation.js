@@ -39,6 +39,7 @@ import {
   WorkerInfo,
   WorkerName,
 } from "./SideNavigationCss";
+import { useAuth } from "../context/AuthContext";
 
 const ALL_ROLES = ["admin", "supervisor", "operator"];
 const MANAGEMENT_ROLES = ["admin", "supervisor"];
@@ -52,12 +53,6 @@ const ROLE_LABELS = {
   admin: "관리자",
   supervisor: "지시자",
   operator: "작업자",
-};
-
-const DEFAULT_WORKER_INFO = {
-  name: "김민준",
-  employeeNumber: "EMP-2024001",
-  department: "생산 1팀",
 };
 
 const MENU_ITEMS = [
@@ -119,32 +114,22 @@ const MENU_ITEMS = [
   },
 ];
 
-const normalizeRole = (role) => ROLE_ALIASES[role] || role;
+const normalizeRole = (role) => (ROLE_ALIASES[role] || role || "").toLowerCase();
 
-const getStoredRole = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return (
-      window.sessionStorage.getItem("userRole") ||
-      window.localStorage.getItem("userRole")
-    );
-  } catch {
-    return null;
-  }
-};
-
-function SideNavigation({ onLogout, userRole, workerInfo }) {
+function SideNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
   const navigationId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
-  const currentUserRole = normalizeRole(userRole || getStoredRole()) || "admin";
-  const currentWorker = { ...DEFAULT_WORKER_INFO, ...workerInfo };
+  const currentUserRole = normalizeRole(user?.role) || "operator";
+  const currentWorker = {
+    name: user?.name || "-",
+    employeeNumber: user?.empNo || "-",
+    department: user?.roleLabel || ROLE_LABELS[currentUserRole] || "-",
+  };
 
   const visibleMenuItems = useMemo(
     () => MENU_ITEMS.filter(({ roles }) => roles.includes(currentUserRole)),
@@ -193,20 +178,7 @@ function SideNavigation({ onLogout, userRole, workerInfo }) {
     setLogoutError("");
 
     try {
-      const result = onLogout ? await onLogout() : true;
-
-      if (result === false) {
-        setLogoutError("로그아웃을 완료하지 못했습니다. 다시 시도해주세요.");
-        return;
-      }
-
-      try {
-        window.sessionStorage.removeItem("userRole");
-        window.localStorage.removeItem("userRole");
-      } catch {
-        // 저장소 사용이 제한된 환경에서도 로그아웃 이동은 계속 진행합니다.
-      }
-
+      logout();
       setIsOpen(false);
       navigate("/account/login", { replace: true });
     } catch {

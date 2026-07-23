@@ -22,6 +22,11 @@ public interface DefectRepository
 
     List<Defect> findTop5ByOrderByOccurredAtDescDefectIdDesc();
 
+    List<Defect> findByOccurredAtGreaterThanEqualAndOccurredAtLessThan(
+            Instant from,
+            Instant to
+    );
+
     @Query("""
             select coalesce(sum(d.quantity), 0)
             from Defect d

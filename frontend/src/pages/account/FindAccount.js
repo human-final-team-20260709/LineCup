@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiSend } from 'react-icons/fi';
 import AccountModal from './AccountModal';
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../../api/services';
+import { extractApiError } from '../../api/client';
 import {
   ActionBar,
   Button,
@@ -21,13 +24,8 @@ import {
   TopLink,
 } from './FindAccountCss';
 
-const accountRecords = [
-  { maskedUserId: 'li***.admin', name: '가입자 이름', email: 'name@factory.local' },
-  { maskedUserId: 'op******.01', name: '작업자', email: 'operator@factory.local' },
-];
-
 const initialFormValues = {
-  userId: '',
+  empNo: '',
   name: '',
   email: '',
 };
@@ -37,35 +35,35 @@ function FindAccount({ mode = 'id' }) {
   const [formValues, setFormValues] = useState(initialFormValues);
   const [foundAccounts, setFoundAccounts] = useState([]);
   const [modal, setModal] = useState(null);
+  const findMutation = useMutation({
+    mutationFn: (values) => isPasswordMode
+      ? authApi.verifyPasswordReset(values)
+      : authApi.findEmployeeNumber(values),
+  });
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    // TODO: 임시 계정 찾기 성공/실패 50% 처리 시작 - 백엔드 계정 조회 연동 시 삭제
-    const isSuccess = Math.random() >= 0.5;
-
-    if (!isSuccess) {
+    try {
+      const response = await findMutation.mutateAsync(
+        isPasswordMode
+          ? { empNo: formValues.empNo, name: formValues.name, email: formValues.email }
+          : { name: formValues.name, email: formValues.email },
+      );
+      if (isPasswordMode) {
+        navigate('/account/reset-password', {
+          state: { empNo: response.empNo, email: formValues.email },
+        });
+        return;
+      }
+      setFoundAccounts([{ maskedEmpNo: response.maskedEmpNo }]);
+    } catch (error) {
       setFoundAccounts([]);
       setModal({
         title: '계정 정보 확인 실패',
-        message: '입력한 정보와 일치하는 계정 정보를 찾을 수 없습니다.',
+        message: extractApiError(error, '입력한 정보와 일치하는 계정을 찾을 수 없습니다.'),
         tone: 'error',
       });
-      return;
     }
-
-    if (isPasswordMode) {
-      const resetUserId = formValues.userId || 'line.admin';
-      navigate(
-        `/account/reset-password?userId=${encodeURIComponent(
-          resetUserId
-        )}`
-      );
-      return;
-    }
-
-    setFoundAccounts(accountRecords);
-    // TODO: 임시 계정 찾기 성공/실패 50% 처리 끝
   };
 
   const handleChange = (event) => {
@@ -106,8 +104,8 @@ function FindAccount({ mode = 'id' }) {
                   <Label htmlFor="find-user-id">사원 번호</Label>
                   <Input
                     id="find-user-id"
-                    name="userId"
-                    value={formValues.userId}
+                    name="empNo"
+                    value={formValues.empNo}
                     onChange={handleChange}
                     placeholder="사원 번호를 입력하세요"
                   />
@@ -137,8 +135,8 @@ function FindAccount({ mode = 'id' }) {
             </FieldGrid>
 
             <ActionBar>
-              <Button type="submit">
-                {isPasswordMode ? '비밀번호 재설정' : '사원 번호 찾기'}
+              <Button type="submit" disabled={findMutation.isPending}>
+                {findMutation.isPending ? '확인 중...' : isPasswordMode ? '비밀번호 재설정' : '사원 번호 찾기'}
                 <FiSend aria-hidden="true" />
               </Button>
             </ActionBar>
@@ -147,7 +145,7 @@ function FindAccount({ mode = 'id' }) {
               <ResultArea>
                 <Label htmlFor="found-user-id">조회된 사원 번호</Label>
                 <ResultValue id="found-user-id">
-                  {foundAccounts[0].maskedUserId}
+                  {foundAccounts[0].maskedEmpNo}
                 </ResultValue>
                 <ResultText>가입 정보와 일치하는 사원 번호입니다.</ResultText>
               </ResultArea>

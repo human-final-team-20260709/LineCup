@@ -1,6 +1,5 @@
 package com.human.linecup.repository;
 
-import com.human.linecup.entity.InventoryStatus;
 import com.human.linecup.entity.ProductInventory;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -52,22 +51,22 @@ public interface ProductInventoryRepository extends JpaRepository<ProductInvento
               and (:expiryFrom is null or pi.expiryDate >= :expiryFrom)
               and (:expiryTo is null or pi.expiryDate <= :expiryTo)
               and (
-                   :inventoryStatus is null
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.EXPIRED
+                   :inventoryStatus = 'ALL'
+                   or (:inventoryStatus = 'EXPIRED'
                        and pi.expiryDate is not null and pi.expiryDate < :today)
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.OUT_OF_STOCK
+                   or (:inventoryStatus = 'OUT_OF_STOCK'
                        and (pi.expiryDate is null or pi.expiryDate >= :today) and pi.currentQty = 0)
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.LOW
+                   or (:inventoryStatus = 'LOW'
                        and (pi.expiryDate is null or pi.expiryDate >= :today)
                        and pi.currentQty > 0 and pi.currentQty < pi.safetyStockQty)
-                   or (:inventoryStatus = com.human.linecup.entity.InventoryStatus.NORMAL
+                   or (:inventoryStatus = 'NORMAL'
                        and (pi.expiryDate is null or pi.expiryDate >= :today)
                        and pi.currentQty > 0 and pi.currentQty >= pi.safetyStockQty)
               )
             """)
     Page<ProductInventory> search(
             @Param("keyword") String keyword,
-            @Param("inventoryStatus") InventoryStatus inventoryStatus,
+            @Param("inventoryStatus") String inventoryStatus,
             @Param("today") LocalDate today,
             @Param("expiryFrom") LocalDate expiryFrom,
             @Param("expiryTo") LocalDate expiryTo,
