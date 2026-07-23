@@ -99,7 +99,7 @@ public class RawMaterialLotService {
         validateExpiryRange(expiryFrom, expiryTo);
         return rawMaterialLotRepository.search(
                         normalizeKeyword(keyword),
-                        status,
+                        status == null ? "ALL" : status.name(),
                         LocalDate.now(),
                         expiryFrom,
                         expiryTo,

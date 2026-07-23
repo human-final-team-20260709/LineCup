@@ -39,7 +39,11 @@ export const workerApi = {
 
 export const referenceApi = {
   products: (params) => get("/products", params),
+  createProduct: (body) => post("/products", body),
+  updateProduct: (id, body) => put(`/products/${id}`, body),
   rawMaterials: (params) => get("/raw-materials", params),
+  createRawMaterial: (body) => post("/raw-materials", body),
+  updateRawMaterial: (id, body) => put(`/raw-materials/${id}`, body),
   processes: () => get("/manufacturing-processes"),
   equipments: (params) => get("/equipments", params),
 };
@@ -103,7 +107,9 @@ export const materialApi = {
   addUsage: (id, body) => post(`/production-lots/${id}/materials`, body),
   rawMaterialLots: (params) => get("/raw-material-lots", params),
   rawMaterialLot: (id) => get(`/raw-material-lots/${id}`),
+  receiveRawMaterialLot: (body) => post("/raw-material-lots", body),
   productInventories: (params) => get("/product-inventories", params),
+  createProductInventory: (body) => post("/product-inventories", body),
   inventoryMovements: (params) => get("/inventory-movements", params),
   recentMovements: (params) => get("/inventory-movements/recent", params),
   createMovement: (body) => post("/inventory-movements", body),

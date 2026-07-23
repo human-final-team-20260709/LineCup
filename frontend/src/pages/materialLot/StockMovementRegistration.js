@@ -40,6 +40,7 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
   return <div role="presentation" onMouseDown={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.55)", zIndex: 1000, display: "grid", placeItems: "center", padding: 20 }}>
     <Card role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()} style={{ width: "min(760px, 100%)", maxHeight: "90vh", overflow: "auto" }}>
       <h2>재고 이동 등록</h2>
+      <p>이미 생성된 원자재 LOT 또는 완제품 재고의 추가 입고·출고·조정만 처리합니다. 신규 LOT는 원자재 LOT 입고 기능을 이용해주세요.</p>
       <FormGrid onSubmit={submit}>
         <label>품목 유형<Select value={itemType} onChange={(event) => setItemType(event.target.value)}><option value="RAW_MATERIAL">원자재</option><option value="FINISHED_PRODUCT">완제품</option></Select></label>
         <label>이동 유형<Select name="movementType"><option value="INBOUND">입고</option><option value="OUTBOUND">출고</option><option value="ADJUSTMENT">조정</option></Select></label>

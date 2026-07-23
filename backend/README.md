@@ -40,15 +40,17 @@ com.human.linecup
 
 L2 상태 조회는 `mes.l2.stale-after`(기본 30초) 동안 하트비트가 없으면 저장값과 별개로 `STOPPED`/`DISCONNECTED` 상태를 반환한다.
 
-## 조회 전용 기준정보 API
+## 기준정보 API
 
 | 경로 | 설명 |
 | --- | --- |
 | `GET /api/products`, `GET /api/products/{productId}` | 제품 검색·상세 |
+| `POST /api/products`, `PUT /api/products/{productId}` | 제품 등록·수정 |
 | `GET /api/raw-materials`, `GET /api/raw-materials/{materialId}` | 원자재 검색·상세 |
+| `POST /api/raw-materials`, `PUT /api/raw-materials/{materialId}` | 원자재 등록·수정 |
 | `GET /api/manufacturing-processes?activeOnly=true`, `GET /api/manufacturing-processes/{processId}` | 공정 목록·상세 |
 
-기준정보 생성·수정 서비스는 내부에 존재하지만 위 컨트롤러에서는 조회만 공개한다.
+제품과 원자재는 삭제하지 않고 `INACTIVE` 상태로 변경하여 과거 BOM·작업지시 참조를 보존한다.
 
 ## 논리 ERD
 

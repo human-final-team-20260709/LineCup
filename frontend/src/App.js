@@ -49,6 +49,7 @@ const productionNavItems = [
 ];
 
 const materialNavItems = [
+  { to: "/materials/reference", label: "기준정보" },
   { to: "/materials/bom", label: "BOM 관리" },
   { to: "/materials/lots", label: "LOT 관리" },
   { to: "/materials/inventory", label: "재고 관리" },
@@ -214,11 +215,19 @@ function App() {
               </SectionPage>
             }
           />
-          <Route path="/materials" element={<Navigate to="/materials/bom" replace />} />
+          <Route path="/materials" element={<Navigate to="/materials/reference" replace />} />
+          <Route
+            path="/materials/reference"
+            element={
+              <SectionPage label="자재 관리 화면 이동" navItems={materialNavItems}>
+                <MaterialLotPage activeTab="reference" />
+              </SectionPage>
+            }
+          />
           <Route
             path="/materials/bom"
             element={
-              <SectionPage label="자재 LOT 화면 이동" navItems={materialNavItems}>
+              <SectionPage label="자재 관리 화면 이동" navItems={materialNavItems}>
                 <MaterialLotPage activeTab="bom" />
               </SectionPage>
             }
@@ -226,7 +235,7 @@ function App() {
           <Route
             path="/materials/lots"
             element={
-              <SectionPage label="자재 LOT 화면 이동" navItems={materialNavItems}>
+              <SectionPage label="자재 관리 화면 이동" navItems={materialNavItems}>
                 <MaterialLotPage activeTab="lot" />
               </SectionPage>
             }
@@ -234,7 +243,7 @@ function App() {
           <Route
             path="/materials/inventory"
             element={
-              <SectionPage label="자재 LOT 화면 이동" navItems={materialNavItems}>
+              <SectionPage label="자재 관리 화면 이동" navItems={materialNavItems}>
                 <MaterialLotPage activeTab="inventory" />
               </SectionPage>
             }

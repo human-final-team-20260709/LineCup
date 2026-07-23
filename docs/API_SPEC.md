@@ -213,4 +213,74 @@ Page 응답 예시:
 - 완제품 재고: `/product-inventories`
 - 재고 이동: `/inventory-movements`
 
+제품 기준정보는 다음 계약을 사용한다.
+
+| Method | Path | 성공 응답 | 설명 |
+| --- | --- | --- | --- |
+| `GET` | `/api/products` | `200 OK` | 제품 검색·페이징 |
+| `GET` | `/api/products/{productId}` | `200 OK` | 제품 상세 |
+| `POST` | `/api/products` | `201 Created` | 제품 등록 |
+| `PUT` | `/api/products/{productId}` | `200 OK` | 제품 수정 |
+
+```json
+{
+  "productCode": "FG-CUP-SPICY-065",
+  "productName": "매운맛 컵라면 65g",
+  "category": "컵라면",
+  "unit": "EA",
+  "status": "ACTIVE"
+}
+```
+
+원자재 기준정보는 다음 계약을 사용한다.
+
+| Method | Path | 성공 응답 | 설명 |
+| --- | --- | --- | --- |
+| `GET` | `/api/raw-materials` | `200 OK` | 원자재 검색·페이징 |
+| `GET` | `/api/raw-materials/{materialId}` | `200 OK` | 원자재 상세 |
+| `POST` | `/api/raw-materials` | `201 Created` | 원자재 등록 |
+| `PUT` | `/api/raw-materials/{materialId}` | `200 OK` | 원자재 수정 |
+
+```json
+{
+  "materialCode": "RM-FLOUR-001",
+  "materialName": "밀가루",
+  "unit": "kg",
+  "safetyStockQty": 100.000,
+  "status": "ACTIVE"
+}
+```
+
+제품과 원자재는 삭제하지 않고 상태를 `INACTIVE`로 변경한다. 기준정보 조회는 polling하지 않으며 등록·수정 성공 후 관련 제품·원자재·BOM 쿼리를 무효화한다.
+이미 사용 중인 제품 코드 또는 원자재 코드를 등록·수정하면 `409 ProblemDetail`을 반환한다.
+
+원자재 LOT 최초 입고는 `POST /api/raw-material-lots`를 사용한다.
+내부 LOT 번호 또는 동일 공급사의 공급사 LOT 번호가 중복되면 `409 ProblemDetail`을 반환한다.
+
+```json
+{
+  "materialLotNo": "RMLOT-20260723-001",
+  "materialId": 1,
+  "supplierName": "대한제분",
+  "supplierLotNo": "SUP-20260723-01",
+  "manufactureDate": "2026-07-20",
+  "expiryDate": "2027-07-20",
+  "receivedQty": 500.000,
+  "receivedDate": "2026-07-23",
+  "handledById": 1
+}
+```
+
+완료 생산 LOT의 완제품 최초 입고는 `POST /api/product-inventories`를 사용한다.
+미완료·정상수량 0인 생산 LOT 또는 이미 입고된 생산 LOT는 `409 ProblemDetail`을 반환한다.
+
+```json
+{
+  "productionLotId": 1,
+  "safetyStockQty": 100,
+  "expiryDate": "2027-01-23",
+  "handledById": 1
+}
+```
+
 재고 이동 요청은 `itemType`, `movementType`, `rawMaterialLotId` 또는 `productInventoryId`, `quantity`, `handledById`, `occurredAt`, `remarks`만 전송한다. 원자재 LOT ID와 완제품 재고 ID 중 정확히 하나만 지정한다.
