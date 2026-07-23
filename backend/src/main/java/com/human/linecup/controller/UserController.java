@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -47,7 +48,10 @@ public class UserController {
         PageRequest pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(Sort.Direction.DESC, "createdAt")
+                Sort.by(
+                        Sort.Order.desc("createdAt"),
+                        Sort.Order.desc("userId")
+                )
         );
         return userService.searchUsers(keyword, userRole, pageable);
     }
@@ -92,8 +96,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable @Positive Long userId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable @Positive Long userId) {
         userService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
     }
 }

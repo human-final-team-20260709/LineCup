@@ -10,6 +10,9 @@ public record CommunicationLogResponse(
         String directionLabel,
         Long deviceId,
         Long collectorId,
+        String sourceType,
+        String sourceCode,
+        String sourceName,
         boolean success,
         String failReason,
         Instant occurredAt

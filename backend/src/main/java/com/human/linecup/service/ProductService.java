@@ -4,6 +4,7 @@ import com.human.linecup.dto.request.ProductRequest;
 import com.human.linecup.dto.response.ProductResponse;
 import com.human.linecup.entity.Bom;
 import com.human.linecup.entity.Product;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.repository.BomRepository;
 import com.human.linecup.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -121,7 +122,7 @@ public class ProductService {
         productRepository.findByProductCode(productCode)
                 .filter(product -> !product.getProductId().equals(currentProductId))
                 .ifPresent(product -> {
-                    throw new IllegalArgumentException("이미 사용 중인 제품 코드입니다: " + productCode);
+                    throw new BusinessConflictException("이미 사용 중인 제품 코드입니다: " + productCode);
                 });
     }
 

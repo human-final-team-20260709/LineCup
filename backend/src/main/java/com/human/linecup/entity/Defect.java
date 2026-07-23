@@ -99,7 +99,7 @@ public class Defect {
     public void changeStatus(DefectStatus status) {
         DefectStatus next = Objects.requireNonNull(status, "불량 처리 상태는 필수입니다.");
         if (this.status == DefectStatus.COMPLETED && next != DefectStatus.COMPLETED) {
-            throw new IllegalStateException("처리 완료된 불량은 다시 열 수 없습니다.");
+            throw new BusinessConflictException("처리 완료된 불량은 다시 열 수 없습니다.");
         }
         this.status = next;
     }

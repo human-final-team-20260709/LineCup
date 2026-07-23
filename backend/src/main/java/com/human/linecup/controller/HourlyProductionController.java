@@ -1,16 +1,14 @@
 package com.human.linecup.controller;
 
-import com.human.linecup.dto.request.HourlyProductionRequest;
 import com.human.linecup.dto.response.HourlyProductionResponse;
 import com.human.linecup.service.HourlyProductionService;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,26 +17,22 @@ import java.util.List;
 
 @Validated
 @RestController
+@RequestMapping("/api/hourly-productions")
 @RequiredArgsConstructor
 public class HourlyProductionController {
 
     private final HourlyProductionService hourlyProductionService;
 
-    @PostMapping("/api/l2/hourly-productions")
-    public HourlyProductionResponse saveHourlyProduction(
-            @Valid @RequestBody HourlyProductionRequest request
+    @GetMapping("/{hourlyProductionId}")
+    public HourlyProductionResponse getHourlyProduction(
+            @PathVariable @Positive Long hourlyProductionId
     ) {
-        return hourlyProductionService.saveHourlyProduction(request);
-    }
-
-    @GetMapping("/api/hourly-productions/{hourlyProductionId}")
-    public HourlyProductionResponse getHourlyProduction(@PathVariable Long hourlyProductionId) {
         return hourlyProductionService.getHourlyProduction(hourlyProductionId);
     }
 
-    @GetMapping("/api/hourly-productions")
+    @GetMapping
     public List<HourlyProductionResponse> getHourlyProductions(
-            @RequestParam(required = false) Long workOrderId,
+            @RequestParam(required = false) @Positive Long workOrderId,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false)

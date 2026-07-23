@@ -84,8 +84,8 @@ public class RawMaterialLot {
         if (manufactureDate == null || expiryDate == null || expiryDate.isBefore(manufactureDate)) {
             throw new IllegalArgumentException("유통기한은 제조일 이후여야 합니다.");
         }
-        if (receivedQty == null || receivedQty.signum() < 0) {
-            throw new IllegalArgumentException("입고 수량은 0 이상이어야 합니다.");
+        if (receivedQty == null || receivedQty.signum() <= 0) {
+            throw new IllegalArgumentException("입고 수량은 0보다 커야 합니다.");
         }
         RawMaterialLot lot = new RawMaterialLot();
         lot.materialLotNo = requireText(materialLotNo, "원자재 LOT 번호");
@@ -95,7 +95,8 @@ public class RawMaterialLot {
         lot.manufactureDate = manufactureDate;
         lot.expiryDate = expiryDate;
         lot.receivedQty = receivedQty;
-        lot.currentQty = receivedQty;
+        // 실제 현재고 반영은 InventoryMovement INBOUND 기록과 같은 트랜잭션에서 수행한다.
+        lot.currentQty = BigDecimal.ZERO;
         lot.receivedDate = Objects.requireNonNull(receivedDate, "입고일은 필수입니다.");
         return lot;
     }

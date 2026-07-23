@@ -16,6 +16,7 @@ import com.human.linecup.dto.response.UserResponse;
 import com.human.linecup.dto.response.UserSummaryResponse;
 import com.human.linecup.entity.ApprovalStatus;
 import com.human.linecup.entity.User;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.UserRole;
 import com.human.linecup.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKeyFactory;
@@ -64,10 +67,10 @@ public class UserService {
         String empNo = requireText(request.empNo(), "사원 번호");
         String email = normalizeEmail(request.email());
         if (userRepository.existsByEmpNo(empNo)) {
-            throw new IllegalStateException("이미 사용 중인 사원 번호입니다.");
+            throw new BusinessConflictException("이미 사용 중인 사원 번호입니다.");
         }
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalStateException("이미 사용 중인 이메일입니다.");
+            throw new BusinessConflictException("이미 사용 중인 이메일입니다.");
         }
 
         User user = User.createPending(
@@ -83,7 +86,7 @@ public class UserService {
             User saved = userRepository.saveAndFlush(user);
             return toSignupResponse(saved);
         } catch (DataIntegrityViolationException exception) {
-            throw new IllegalStateException("이미 등록된 사원 번호 또는 이메일입니다.", exception);
+            throw new BusinessConflictException("이미 등록된 사원 번호 또는 이메일입니다.", exception);
         }
     }
 
@@ -91,16 +94,22 @@ public class UserService {
     public LoginResponse login(LoginRequest request) {
         Objects.requireNonNull(request, "로그인 요청은 필수입니다.");
         User user = userRepository.findByEmpNo(requireText(request.empNo(), "사원 번호"))
-                .orElseThrow(() -> new IllegalArgumentException("사원 번호 또는 비밀번호가 일치하지 않습니다."));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "사원 번호 또는 비밀번호가 일치하지 않습니다."
+                ));
 
         if (!matchesPassword(request.password(), user.getPassword())) {
-            throw new IllegalArgumentException("사원 번호 또는 비밀번호가 일치하지 않습니다.");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "사원 번호 또는 비밀번호가 일치하지 않습니다."
+            );
         }
         if (user.getApprovalStatus() != ApprovalStatus.APPROVED) {
-            throw new IllegalStateException("가입 승인이 완료되지 않은 계정입니다.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "가입 승인이 완료되지 않은 계정입니다.");
         }
         if (!user.isActive()) {
-            throw new IllegalStateException("비활성화된 계정입니다.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "비활성화된 계정입니다.");
         }
 
         user.recordAccess(Instant.now());

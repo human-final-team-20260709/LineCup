@@ -123,7 +123,7 @@ public class ProductionProcessProgress {
         requireStatus(ProcessProgressStatus.IN_PROGRESS, "진행 중인 공정만 완료할 수 있습니다.");
         Instant effectiveAt = completedAt == null ? Instant.now() : completedAt;
         if (startedAt == null || effectiveAt.isBefore(startedAt)) {
-            throw new IllegalStateException("시작된 공정만 정상 시각으로 완료할 수 있습니다.");
+            throw new BusinessConflictException("시작된 공정만 정상 시각으로 완료할 수 있습니다.");
         }
         status = ProcessProgressStatus.COMPLETED;
         this.completedAt = effectiveAt;
@@ -131,7 +131,7 @@ public class ProductionProcessProgress {
 
     private void requireStatus(ProcessProgressStatus required, String message) {
         if (status != required) {
-            throw new IllegalStateException(message);
+            throw new BusinessConflictException(message);
         }
     }
 

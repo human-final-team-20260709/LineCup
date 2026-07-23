@@ -3,6 +3,7 @@ package com.human.linecup.service;
 import com.human.linecup.dto.request.RawMaterialRequest;
 import com.human.linecup.dto.response.RawMaterialResponse;
 import com.human.linecup.entity.RawMaterial;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.repository.RawMaterialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -75,7 +76,7 @@ public class RawMaterialService {
         rawMaterialRepository.findByMaterialCode(materialCode)
                 .filter(material -> !material.getMaterialId().equals(currentMaterialId))
                 .ifPresent(material -> {
-                    throw new IllegalArgumentException("이미 사용 중인 원자재 코드입니다: " + materialCode);
+                    throw new BusinessConflictException("이미 사용 중인 원자재 코드입니다: " + materialCode);
                 });
     }
 

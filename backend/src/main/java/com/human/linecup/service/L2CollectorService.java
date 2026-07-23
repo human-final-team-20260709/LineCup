@@ -7,6 +7,7 @@ import com.human.linecup.entity.ConnectionStatus;
 import com.human.linecup.entity.L2Collector;
 import com.human.linecup.repository.L2CollectorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -14,6 +15,8 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -33,6 +36,9 @@ public class L2CollectorService {
     private final L1DeviceService l1DeviceService;
     private final CommunicationLogService communicationLogService;
     private final PlatformTransactionManager transactionManager;
+
+    @Value("${mes.l2.stale-after:30s}")
+    private Duration staleAfter;
 
     public List<L2StatusResponse> getAll() {
         return l2CollectorRepository.findAll().stream().map(this::toResponse).toList();
@@ -94,17 +100,25 @@ public class L2CollectorService {
     }
 
     private L2StatusResponse toResponse(L2Collector collector) {
+        Instant lastSentAt = collector.getLastSentAt();
+        boolean stale = lastSentAt == null || lastSentAt.isBefore(Instant.now().minus(staleAfter));
+        L2Collector.CollectorStatus effectiveStatus = stale
+                ? L2Collector.CollectorStatus.STOPPED
+                : collector.getStatus();
+        ConnectionStatus effectiveBackendStatus = stale
+                ? ConnectionStatus.DISCONNECTED
+                : collector.getBackendConnectionStatus();
         return new L2StatusResponse(
                 collector.getCollectorId(),
                 collector.getCollectorCode(),
                 collector.getName(),
-                collector.getStatus(),
-                collector.getStatus().getLabel(),
-                collector.getConnectedL1Count(),
+                effectiveStatus,
+                effectiveStatus.getLabel(),
+                stale ? 0 : collector.getConnectedL1Count(),
                 L2EquipmentCatalog.EQUIPMENT_CODES.size(),
-                collector.getBackendConnectionStatus(),
-                collector.getBackendConnectionStatus().getLabel(),
-                collector.getLastSentAt()
+                effectiveBackendStatus,
+                effectiveBackendStatus.getLabel(),
+                lastSentAt
         );
     }
 }

@@ -1,9 +1,14 @@
 package com.human.linecup.controller;
 
+import com.human.linecup.entity.BusinessConflictException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponseException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,13 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-@RestControllerAdvice(assignableTypes = {
-        AuthController.class,
-        UserController.class,
-        WorkerProfileController.class,
-        ProductionResultController.class,
-        HourlyProductionController.class
-})
+@Slf4j
+@RestControllerAdvice
 public class ControllerExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -47,6 +47,7 @@ public class ControllerExceptionHandler {
             ConstraintViolationException.class,
             MethodArgumentTypeMismatchException.class,
             HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ProblemDetail> handleBadRequest(Exception exception) {
@@ -58,9 +59,38 @@ public class ControllerExceptionHandler {
         return response(HttpStatus.NOT_FOUND, "리소스를 찾을 수 없음", exception.getMessage());
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ProblemDetail> handleConflict(IllegalStateException exception) {
+    @ExceptionHandler(BusinessConflictException.class)
+    public ResponseEntity<ProblemDetail> handleConflict(BusinessConflictException exception) {
         return response(HttpStatus.CONFLICT, "요청 상태 충돌", exception.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDetail> handleDataIntegrity(DataIntegrityViolationException exception) {
+        return response(HttpStatus.CONFLICT, "데이터 상태 충돌", "참조 중이거나 이미 존재하는 데이터입니다.");
+    }
+
+    @ExceptionHandler(ErrorResponseException.class)
+    public ResponseEntity<ProblemDetail> handleErrorResponse(ErrorResponseException exception) {
+        HttpStatus status = HttpStatus.resolve(exception.getStatusCode().value());
+        HttpStatus effectiveStatus = status == null ? HttpStatus.INTERNAL_SERVER_ERROR : status;
+        String title = switch (effectiveStatus) {
+            case UNAUTHORIZED -> "인증 실패";
+            case FORBIDDEN -> "접근 거부";
+            case NOT_FOUND -> "리소스를 찾을 수 없음";
+            default -> "요청 처리 실패";
+        };
+        String detail = exception.getBody().getDetail();
+        return response(effectiveStatus, title, detail);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleUnexpected(Exception exception) {
+        log.error("처리되지 않은 서버 오류", exception);
+        return response(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "서버 내부 오류",
+                "요청을 처리하는 중 내부 오류가 발생했습니다."
+        );
     }
 
     private ResponseEntity<ProblemDetail> response(HttpStatus status, String title, String detail) {

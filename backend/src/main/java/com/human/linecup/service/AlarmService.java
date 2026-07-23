@@ -6,6 +6,7 @@ import com.human.linecup.dto.request.AlarmSearchRequest;
 import com.human.linecup.dto.response.AlarmDetailResponse;
 import com.human.linecup.dto.response.AlarmSummaryResponse;
 import com.human.linecup.entity.Alarm;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.AlarmStatus;
 import com.human.linecup.entity.Equipment;
 import com.human.linecup.entity.ManufacturingProcess;
@@ -136,24 +137,6 @@ public class AlarmService {
         return toDetail(alarm);
     }
 
-    public Page<AlarmSummaryResponse> getAlarmsByPeriod(
-            Instant startAt,
-            Instant endAt,
-            Pageable pageable
-    ) {
-        if (startAt == null || endAt == null) {
-            throw new IllegalArgumentException("조회 시작 시각과 종료 시각은 필수입니다.");
-        }
-        validatePeriod(startAt, endAt);
-
-        return alarmRepository.findByOccurredAtBetweenOrderByOccurredAtDescAlarmIdDesc(
-                        startAt,
-                        endAt,
-                        pageableOrDefault(pageable)
-                )
-                .map(this::toSummary);
-    }
-
     @Transactional
     public AlarmDetailResponse updateHandling(Long alarmId, AlarmHandlingRequest request) {
         Objects.requireNonNull(request, "알람 처리 요청은 필수입니다.");
@@ -225,7 +208,7 @@ public class AlarmService {
                 ));
             }
             if (condition.endAt() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                predicates.add(criteriaBuilder.lessThan(
                         root.get("occurredAt"),
                         condition.endAt()
                 ));
@@ -259,7 +242,7 @@ public class AlarmService {
             AlarmStatus nextStatus
     ) {
         if (alarm.getStatus() == AlarmStatus.RESOLVED && nextStatus != AlarmStatus.RESOLVED) {
-            throw new IllegalStateException("처리 완료된 알람은 다시 미처리 상태로 열 수 없습니다.");
+            throw new BusinessConflictException("처리 완료된 알람은 다시 미처리 상태로 열 수 없습니다.");
         }
 
         if (nextStatus == AlarmStatus.PENDING_CONFIRMATION
@@ -395,8 +378,11 @@ public class AlarmService {
     }
 
     private void validatePeriod(Instant startAt, Instant endAt) {
-        if (startAt != null && endAt != null && startAt.isAfter(endAt)) {
-            throw new IllegalArgumentException("조회 시작 시각은 종료 시각보다 늦을 수 없습니다.");
+        if ((startAt == null) != (endAt == null)) {
+            throw new IllegalArgumentException("조회 시작 시각과 종료 시각은 함께 입력해야 합니다.");
+        }
+        if (startAt != null && !endAt.isAfter(startAt)) {
+            throw new IllegalArgumentException("조회 종료 시각은 시작 시각보다 이후여야 합니다.");
         }
     }
 

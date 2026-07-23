@@ -2,6 +2,8 @@ package com.human.linecup.service;
 
 import com.human.linecup.dto.request.InventoryMovementRequest;
 import com.human.linecup.dto.response.InventoryMovementResponse;
+import com.human.linecup.entity.ApprovalStatus;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.InventoryMovement;
 import com.human.linecup.entity.InventoryMovement.InventoryItemType;
 import com.human.linecup.entity.InventoryMovement.InventoryMovementType;
@@ -48,6 +50,9 @@ public class InventoryMovementService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "담당자를 찾을 수 없습니다: " + request.handledById()
                 ));
+        if (handledBy.getApprovalStatus() != ApprovalStatus.APPROVED || !handledBy.isActive()) {
+            throw new BusinessConflictException("승인된 활성 사용자만 재고 이동을 처리할 수 있습니다.");
+        }
         String movementNo = generateMovementNo();
         Instant occurredAt = request.occurredAt() == null ? Instant.now() : request.occurredAt();
 
@@ -131,7 +136,10 @@ public class InventoryMovementService {
             Instant occurredTo,
             Pageable pageable
     ) {
-        if (occurredFrom != null && occurredTo != null && !occurredTo.isAfter(occurredFrom)) {
+        if ((occurredFrom == null) != (occurredTo == null)) {
+            throw new IllegalArgumentException("조회 시작 시각과 종료 시각은 함께 입력해야 합니다.");
+        }
+        if (occurredFrom != null && !occurredTo.isAfter(occurredFrom)) {
             throw new IllegalArgumentException("조회 종료 시각은 시작 시각보다 늦어야 합니다.");
         }
         return inventoryMovementRepository.search(

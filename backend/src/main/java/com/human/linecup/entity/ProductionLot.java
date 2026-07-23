@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,10 @@ import java.util.Objects;
 @Entity
 @Table(
         name = "production_lot",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_production_lot_work_order",
+                columnNames = "work_order_id"
+        ),
         check = {
                 @CheckConstraint(
                         name = "ck_production_lot_quantities_nonnegative",
@@ -111,7 +116,7 @@ public class ProductionLot {
 
     private void requireStatus(ProductionLotStatus required, String message) {
         if (status != required) {
-            throw new IllegalStateException(message);
+            throw new BusinessConflictException(message);
         }
     }
 

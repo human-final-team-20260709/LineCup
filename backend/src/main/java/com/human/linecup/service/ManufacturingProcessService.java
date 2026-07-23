@@ -3,6 +3,7 @@ package com.human.linecup.service;
 import com.human.linecup.dto.request.ManufacturingProcessRequest;
 import com.human.linecup.dto.response.ManufacturingProcessResponse;
 import com.human.linecup.entity.ManufacturingProcess;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.repository.ManufacturingProcessRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class ManufacturingProcessService {
     @Transactional
     public ManufacturingProcessResponse create(ManufacturingProcessRequest request) {
         if (manufacturingProcessRepository.existsByProcessCode(request.processCode())) {
-            throw new IllegalArgumentException("이미 사용 중인 공정 코드입니다: " + request.processCode());
+            throw new BusinessConflictException("이미 사용 중인 공정 코드입니다: " + request.processCode());
         }
         ManufacturingProcess process = ManufacturingProcess.create(
                 request.processCode(),

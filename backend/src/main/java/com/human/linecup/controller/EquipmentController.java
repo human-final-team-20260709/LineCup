@@ -9,6 +9,7 @@ import com.human.linecup.dto.response.EquipmentResponse;
 import com.human.linecup.entity.Equipment.EquipmentStatus;
 import com.human.linecup.service.EquipmentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +23,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.net.URI;
 import java.util.List;
 
 /**
- * 설비 마스터 CRUD, 가동 상태 전환, 작업자 배정을 다룬다.
+ * 설비 마스터 등록·수정·조회, 가동 상태 전환, 작업자 배정을 다룬다.
  * 실제 비즈니스 로직/검증은 EquipmentService에 있고 이 계층은 HTTP 매핑과 상태코드만 책임진다.
  */
 @RestController
 @RequestMapping("/api/equipments")
 @RequiredArgsConstructor
+@Validated
 public class EquipmentController {
 
     private final EquipmentService equipmentService;
@@ -44,54 +48,59 @@ public class EquipmentController {
     }
 
     @PutMapping("/{equipmentId}")
-    public ResponseEntity<EquipmentResponse> update(
-            @PathVariable Long equipmentId,
+    public EquipmentResponse update(
+            @PathVariable @Positive Long equipmentId,
             @Valid @RequestBody EquipmentSaveRequest request
     ) {
-        return ResponseEntity.ok(equipmentService.updateEquipment(equipmentId, request));
+        return equipmentService.updateEquipment(equipmentId, request);
     }
 
     @PatchMapping("/{equipmentId}/status")
-    public ResponseEntity<EquipmentResponse> updateStatus(
-            @PathVariable Long equipmentId,
+    public EquipmentResponse updateStatus(
+            @PathVariable @Positive Long equipmentId,
             @Valid @RequestBody EquipmentStatusUpdateRequest request
     ) {
-        return ResponseEntity.ok(equipmentService.updateStatus(equipmentId, request));
+        return equipmentService.updateStatus(equipmentId, request);
     }
 
     @GetMapping
-    public ResponseEntity<List<EquipmentResponse>> getAll(
+    public List<EquipmentResponse> getAll(
             @RequestParam(required = false) EquipmentStatus status
     ) {
-        return ResponseEntity.ok(equipmentService.getEquipments(status));
+        return equipmentService.getEquipments(status);
     }
 
     @GetMapping("/{equipmentId}")
-    public ResponseEntity<EquipmentResponse> getOne(@PathVariable Long equipmentId) {
-        return ResponseEntity.ok(equipmentService.getEquipmentResponse(equipmentId));
+    public EquipmentResponse getOne(@PathVariable @Positive Long equipmentId) {
+        return equipmentService.getEquipmentResponse(equipmentId);
     }
 
     @GetMapping("/{equipmentId}/detail")
-    public ResponseEntity<EquipmentDetailResponse> getDetail(@PathVariable Long equipmentId) {
-        return ResponseEntity.ok(equipmentService.getEquipmentDetail(equipmentId));
+    public EquipmentDetailResponse getDetail(@PathVariable @Positive Long equipmentId) {
+        return equipmentService.getEquipmentDetail(equipmentId);
     }
 
     @PostMapping("/{equipmentId}/assignment")
     public ResponseEntity<EquipmentAssignmentResponse> assignWorker(
-            @PathVariable Long equipmentId,
+            @PathVariable @Positive Long equipmentId,
             @Valid @RequestBody EquipmentAssignRequest request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(equipmentService.assignWorker(equipmentId, request));
+        EquipmentAssignmentResponse response = equipmentService.assignWorker(equipmentId, request);
+        return ResponseEntity.created(URI.create(
+                "/api/equipments/" + equipmentId + "/assignments"
+        )).body(response);
     }
 
     @DeleteMapping("/{equipmentId}/assignment")
-    public ResponseEntity<Void> unassignWorker(@PathVariable Long equipmentId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unassignWorker(@PathVariable @Positive Long equipmentId) {
         equipmentService.unassignWorker(equipmentId);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{equipmentId}/assignments")
-    public ResponseEntity<List<EquipmentAssignmentResponse>> getAssignmentHistory(@PathVariable Long equipmentId) {
-        return ResponseEntity.ok(equipmentService.getAssignmentHistory(equipmentId));
+    public List<EquipmentAssignmentResponse> getAssignmentHistory(
+            @PathVariable @Positive Long equipmentId
+    ) {
+        return equipmentService.getAssignmentHistory(equipmentId);
     }
 }

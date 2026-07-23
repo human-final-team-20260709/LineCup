@@ -7,6 +7,7 @@ import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.User;
 import com.human.linecup.entity.UserRole;
 import com.human.linecup.entity.WorkerProfile;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.WorkerSkill;
 import com.human.linecup.repository.ManufacturingProcessRepository;
 import com.human.linecup.repository.UserRepository;
@@ -36,7 +37,7 @@ public class WorkerProfileService {
     @Transactional
     public WorkerProfileResponse create(WorkerProfileRequest request) {
         if (workerProfileRepository.existsByUserUserId(request.userId())) {
-            throw new IllegalArgumentException("이미 작업자 프로필이 등록된 사용자입니다.");
+            throw new BusinessConflictException("이미 작업자 프로필이 등록된 사용자입니다.");
         }
         User user = findOperator(request.userId());
         ManufacturingProcess process = findProcess(request.primaryProcessId());
@@ -103,7 +104,7 @@ public class WorkerProfileService {
                 workerProfileId,
                 skillName
         )) {
-            throw new IllegalArgumentException("이미 등록된 기능입니다: " + skillName);
+            throw new BusinessConflictException("이미 등록된 기능입니다: " + skillName);
         }
         workerSkillRepository.save(WorkerSkill.create(profile, skillName));
         return toResponse(profile, findSkills(workerProfileId));

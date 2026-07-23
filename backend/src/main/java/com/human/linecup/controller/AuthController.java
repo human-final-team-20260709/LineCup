@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,7 +32,8 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.signup(request));
+        SignupResponse response = userService.signup(request);
+        return ResponseEntity.created(URI.create("/api/users/" + response.userId())).body(response);
     }
 
     @PostMapping("/login")
@@ -52,8 +56,8 @@ public class AuthController {
     }
 
     @PatchMapping("/password-reset")
-    public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         userService.resetPassword(request);
-        return ResponseEntity.noContent().build();
     }
 }

@@ -1,12 +1,16 @@
 package com.human.linecup.service;
 
 import com.human.linecup.dto.request.ProductInventoryRequest;
+import com.human.linecup.dto.request.InventoryMovementRequest;
 import com.human.linecup.dto.response.ProductInventoryResponse;
 import com.human.linecup.entity.InventoryStatus;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.Product;
 import com.human.linecup.entity.ProductInventory;
 import com.human.linecup.entity.ProductionLot;
 import com.human.linecup.entity.ProductionLot.ProductionLotStatus;
+import com.human.linecup.entity.InventoryMovement.InventoryItemType;
+import com.human.linecup.entity.InventoryMovement.InventoryMovementType;
 import com.human.linecup.repository.ProductInventoryRepository;
 import com.human.linecup.repository.ProductionLotRepository;
 import java.util.NoSuchElementException;
@@ -17,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -25,28 +31,41 @@ public class ProductInventoryService {
 
     private final ProductInventoryRepository productInventoryRepository;
     private final ProductionLotRepository productionLotRepository;
+    private final InventoryMovementService inventoryMovementService;
 
     @Transactional
     public ProductInventoryResponse createInventory(ProductInventoryRequest request) {
         if (productInventoryRepository.existsByProductionLotProductionLotId(request.productionLotId())) {
-            throw new IllegalArgumentException("해당 생산 LOT의 완제품 재고가 이미 등록되어 있습니다.");
+            throw new BusinessConflictException("해당 생산 LOT의 완제품 재고가 이미 등록되어 있습니다.");
         }
         ProductionLot lot = productionLotRepository.findById(request.productionLotId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "생산 LOT를 찾을 수 없습니다: " + request.productionLotId()
                 ));
         if (lot.getStatus() != ProductionLotStatus.COMPLETED) {
-            throw new IllegalStateException("완료된 생산 LOT만 완제품 재고로 등록할 수 있습니다.");
+            throw new BusinessConflictException("완료된 생산 LOT만 완제품 재고로 등록할 수 있습니다.");
         }
-        validateMaximumQty(request.currentQty(), lot);
-
+        if (lot.getGoodQty() <= 0) {
+            throw new BusinessConflictException("정상 생산 수량이 있는 LOT만 완제품 재고로 등록할 수 있습니다.");
+        }
         ProductInventory inventory = ProductInventory.create(
                 lot,
-                request.currentQty(),
+                0,
                 request.safetyStockQty(),
                 request.expiryDate()
         );
-        return toResponse(productInventoryRepository.save(inventory));
+        ProductInventory saved = productInventoryRepository.saveAndFlush(inventory);
+        inventoryMovementService.registerMovement(new InventoryMovementRequest(
+                InventoryItemType.FINISHED_PRODUCT,
+                InventoryMovementType.INBOUND,
+                null,
+                saved.getInventoryId(),
+                BigDecimal.valueOf(lot.getGoodQty()),
+                request.handledById(),
+                Instant.now(),
+                "생산 LOT 완제품 최초 입고"
+        ));
+        return toResponse(saved);
     }
 
     public ProductInventoryResponse getInventory(Long inventoryId) {
@@ -81,28 +100,11 @@ public class ProductInventoryService {
                 .map(this::toResponse);
     }
 
-    @Transactional
-    public ProductInventoryResponse adjustCurrentQty(Long inventoryId, int currentQty) {
-        ProductInventory inventory = productInventoryRepository.findByIdForUpdate(inventoryId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "완제품 재고를 찾을 수 없습니다: " + inventoryId
-                ));
-        validateMaximumQty(currentQty, inventory.getProductionLot());
-        inventory.adjustCurrentQty(currentQty);
-        return toResponse(inventory);
-    }
-
     private ProductInventory findInventory(Long inventoryId) {
         return productInventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new NoSuchElementException(
                         "완제품 재고를 찾을 수 없습니다: " + inventoryId
                 ));
-    }
-
-    private void validateMaximumQty(int currentQty, ProductionLot lot) {
-        if (currentQty > lot.getGoodQty()) {
-            throw new IllegalArgumentException("완제품 재고는 생산 LOT의 정상 수량을 초과할 수 없습니다.");
-        }
     }
 
     private ProductInventoryResponse toResponse(ProductInventory inventory) {

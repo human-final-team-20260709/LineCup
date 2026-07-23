@@ -14,7 +14,6 @@ public record ProductionResultResponse(
         Long productId,
         String productCode,
         String productName,
-        String processName,
         int targetQty,
         int productionQty,
         int goodQty,

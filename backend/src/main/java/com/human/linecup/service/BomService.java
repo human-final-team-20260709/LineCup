@@ -5,6 +5,7 @@ import com.human.linecup.dto.request.BomRequest.BomItemRequest;
 import com.human.linecup.dto.response.BomItemResponse;
 import com.human.linecup.dto.response.BomResponse;
 import com.human.linecup.entity.Bom;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.Bom.BomStatus;
 import com.human.linecup.entity.BomItem;
 import com.human.linecup.entity.ManufacturingProcess;
@@ -118,12 +119,12 @@ public class BomService {
         bomRepository.findByBomCode(request.bomCode())
                 .filter(found -> !found.getBomId().equals(currentBomId))
                 .ifPresent(found -> {
-                    throw new IllegalArgumentException("이미 사용 중인 BOM 코드입니다: " + request.bomCode());
+                    throw new BusinessConflictException("이미 사용 중인 BOM 코드입니다: " + request.bomCode());
                 });
         bomRepository.findByProductProductIdAndVersion(request.productId(), request.version())
                 .filter(found -> !found.getBomId().equals(currentBomId))
                 .ifPresent(found -> {
-                    throw new IllegalArgumentException("해당 제품에 이미 같은 BOM 버전이 있습니다.");
+                    throw new BusinessConflictException("해당 제품에 이미 같은 BOM 버전이 있습니다.");
                 });
     }
 

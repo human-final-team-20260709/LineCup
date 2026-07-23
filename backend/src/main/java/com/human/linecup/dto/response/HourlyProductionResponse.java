@@ -1,5 +1,6 @@
 package com.human.linecup.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.human.linecup.entity.HourlyProductionCloseReason;
 
 import java.time.Instant;
@@ -13,7 +14,7 @@ public record HourlyProductionResponse(
         int productionQty,
         int goodQty,
         int defectQty,
-        boolean partial,
+        @JsonProperty("isPartial") boolean partial,
         HourlyProductionCloseReason closeReason,
         Instant receivedAt
 ) {

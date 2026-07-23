@@ -7,10 +7,13 @@ import com.human.linecup.dto.response.AlarmDetailResponse;
 import com.human.linecup.dto.response.AlarmSummaryResponse;
 import com.human.linecup.service.AlarmService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,15 +21,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
+import java.net.URI;
+
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @RestController
 @RequestMapping("/api/alarms")
 @RequiredArgsConstructor
+@Validated
 public class AlarmController {
 
     private final AlarmService alarmService;
@@ -34,23 +38,16 @@ public class AlarmController {
     @GetMapping
     public Page<AlarmSummaryResponse> getAlarms(
             @Valid @ModelAttribute AlarmSearchRequest request,
-            Pageable pageable
+            @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
     ) {
         return alarmService.getAlarms(request, pageable);
     }
 
     @GetMapping("/current")
-    public Page<AlarmSummaryResponse> getCurrentAlarms(Pageable pageable) {
-        return alarmService.getCurrentAlarms(pageable);
-    }
-
-    @GetMapping("/period")
-    public Page<AlarmSummaryResponse> getAlarmsByPeriod(
-            @RequestParam Instant startAt,
-            @RequestParam Instant endAt,
-            Pageable pageable
+    public Page<AlarmSummaryResponse> getCurrentAlarms(
+            @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
     ) {
-        return alarmService.getAlarmsByPeriod(startAt, endAt, pageable);
+        return alarmService.getCurrentAlarms(pageable);
     }
 
     @GetMapping("/number/{alarmNo}")
@@ -59,21 +56,21 @@ public class AlarmController {
     }
 
     @GetMapping("/{alarmId}")
-    public AlarmDetailResponse getAlarm(@PathVariable Long alarmId) {
+    public AlarmDetailResponse getAlarm(@PathVariable @Positive Long alarmId) {
         return alarmService.getAlarm(alarmId);
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public AlarmDetailResponse createAlarm(
+    public ResponseEntity<AlarmDetailResponse> createAlarm(
             @Valid @RequestBody AlarmCreateRequest request
     ) {
-        return alarmService.createAlarm(request);
+        AlarmDetailResponse response = alarmService.createAlarm(request);
+        return ResponseEntity.created(URI.create("/api/alarms/" + response.summary().alarmId())).body(response);
     }
 
     @PatchMapping("/{alarmId}/handling")
     public AlarmDetailResponse updateHandling(
-            @PathVariable Long alarmId,
+            @PathVariable @Positive Long alarmId,
             @Valid @RequestBody AlarmHandlingRequest request
     ) {
         return alarmService.updateHandling(alarmId, request);
