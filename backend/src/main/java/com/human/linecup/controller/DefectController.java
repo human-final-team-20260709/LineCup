@@ -7,12 +7,15 @@ import com.human.linecup.dto.request.UpdateDefectHandlingRequest;
 import com.human.linecup.dto.response.DefectDashboardResponse;
 import com.human.linecup.dto.response.DefectDetailResponse;
 import com.human.linecup.dto.response.DefectSummaryResponse;
+import com.human.linecup.dto.response.DefectStatisticsResponse;
 import com.human.linecup.service.DefectService;
+import com.human.linecup.service.DefectStatisticsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -22,9 +25,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.annotation.Validated;
 
 import java.net.URI;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/quality/defects")
@@ -33,6 +38,7 @@ import java.net.URI;
 public class DefectController {
 
     private final DefectService defectService;
+    private final DefectStatisticsService defectStatisticsService;
 
     @GetMapping
     public Page<DefectSummaryResponse> getDefects(
@@ -45,6 +51,14 @@ public class DefectController {
     @GetMapping("/dashboard")
     public DefectDashboardResponse getDashboard() {
         return defectService.getDashboard();
+    }
+
+    @GetMapping("/statistics")
+    public DefectStatisticsResponse getStatistics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to
+    ) {
+        return defectStatisticsService.getStatistics(from, to);
     }
 
     @GetMapping("/number/{defectNo}")

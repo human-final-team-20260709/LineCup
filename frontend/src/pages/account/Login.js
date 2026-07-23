@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { extractApiError } from '../../api/client';
 import { FiArrowRight, FiLock, FiSearch, FiUserPlus } from 'react-icons/fi';
 import AccountModal from './AccountModal';
 import {
@@ -23,25 +25,29 @@ import {
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [modal, setModal] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    // TODO: 임시 로그인 성공/실패 50% 처리 시작 - 백엔드 로그인 연동 시 삭제
-    const isSuccess = Math.random() >= 0.5;
-
-    if (isSuccess) {
+    const formData = new FormData(event.currentTarget);
+    setIsSubmitting(true);
+    try {
+      await login({
+        empNo: String(formData.get('empNo') || '').trim(),
+        password: String(formData.get('password') || ''),
+      });
       navigate('/dashboard');
-      return;
+    } catch (error) {
+      setModal({
+        title: '로그인 실패',
+        message: extractApiError(error, '사원 번호 또는 비밀번호를 확인해주세요.'),
+        tone: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setModal({
-      title: '로그인 실패',
-      message: '사원 번호 또는 비밀번호가 일치하지 않습니다.',
-      tone: 'error',
-    });
-    // TODO: 임시 로그인 성공/실패 50% 처리 끝
   };
 
   return (
@@ -136,7 +142,8 @@ function Login() {
                 </Label>
                 <Input
                   id="login-user-id"
-                  name="userId"
+                  name="empNo"
+                  required
                   placeholder="사원 번호를 입력하세요"
                   autoComplete="username"
                   style={{ minHeight: '56px', fontSize: '18px' }}
@@ -152,13 +159,14 @@ function Login() {
                   type="password"
                   placeholder="비밀번호를 입력하세요"
                   autoComplete="current-password"
+                  required
                   style={{ minHeight: '56px', fontSize: '18px' }}
                 />
               </Field>
             </FieldGrid>
 
-            <Button type="submit" style={{ minHeight: '60px', fontSize: '19px' }}>
-              로그인
+            <Button type="submit" disabled={isSubmitting} style={{ minHeight: '60px', fontSize: '19px' }}>
+              {isSubmitting ? '로그인 중...' : '로그인'}
               <FiArrowRight aria-hidden="true" />
             </Button>
 

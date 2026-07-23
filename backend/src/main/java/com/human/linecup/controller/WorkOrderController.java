@@ -74,6 +74,13 @@ public class WorkOrderController {
         return workOrderService.getDashboardSummary();
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<WorkOrderDetailResponse> getActiveWorkOrder() {
+        return workOrderService.getActiveWorkOrderForFrontend()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
     // 특정 작업자가 배정된 작업지시 전체 조회
     @GetMapping("/by-worker/{userId}")
     public List<WorkOrderSummaryResponse> getWorkOrdersByWorker(@PathVariable @Positive Long userId) {

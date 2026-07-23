@@ -356,6 +356,18 @@ public class WorkOrderService {
         ));
     }
 
+    public Optional<WorkOrderDetailResponse> getActiveWorkOrderForFrontend() {
+        List<WorkOrder> activeOrders = workOrderRepository.findByStatusInOrderByRegisteredAtAsc(
+                EnumSet.of(WorkOrder.Status.IN_PROGRESS, WorkOrder.Status.HOLD)
+        );
+        if (activeOrders.size() > 1) {
+            throw new BusinessConflictException("동시에 둘 이상의 활성 작업지시가 존재합니다.");
+        }
+        return activeOrders.stream()
+                .findFirst()
+                .map(workOrder -> getDetail(workOrder.getWorkOrderId()));
+    }
+
     private void validateSingleActiveWorkOrder(Long workOrderId, WorkOrder.Action action) {
         if (action != WorkOrder.Action.START && action != WorkOrder.Action.RESUME) {
             return;

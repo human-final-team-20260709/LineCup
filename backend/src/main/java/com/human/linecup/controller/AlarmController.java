@@ -4,14 +4,17 @@ import com.human.linecup.dto.request.AlarmCreateRequest;
 import com.human.linecup.dto.request.AlarmHandlingRequest;
 import com.human.linecup.dto.request.AlarmSearchRequest;
 import com.human.linecup.dto.response.AlarmDetailResponse;
+import com.human.linecup.dto.response.AlarmStatisticsResponse;
 import com.human.linecup.dto.response.AlarmSummaryResponse;
 import com.human.linecup.service.AlarmService;
+import com.human.linecup.service.AlarmStatisticsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +24,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.time.Instant;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
@@ -34,6 +39,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class AlarmController {
 
     private final AlarmService alarmService;
+    private final AlarmStatisticsService alarmStatisticsService;
 
     @GetMapping
     public Page<AlarmSummaryResponse> getAlarms(
@@ -48,6 +54,14 @@ public class AlarmController {
             @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
     ) {
         return alarmService.getCurrentAlarms(pageable);
+    }
+
+    @GetMapping("/statistics")
+    public AlarmStatisticsResponse getStatistics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to
+    ) {
+        return alarmStatisticsService.getStatistics(from, to);
     }
 
     @GetMapping("/number/{alarmNo}")
