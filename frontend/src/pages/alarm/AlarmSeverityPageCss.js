@@ -1,20 +1,33 @@
-.alarm-severity-page {
+import styled from 'styled-components';
+
+function cx(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
+function withClass(Tag, baseClass) {
+  return styled(Tag).attrs(({ className }) => ({
+    className: cx(baseClass, className),
+  }))``;
+}
+
+export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })`
+& {
   min-height: 100vh;
   padding: 32px;
   background: #0b1326;
   color: #dae2fd;
 }
 
-.alarm-severity-page button,
-.alarm-severity-page input {
+& button,
+& input {
   font: inherit;
 }
 
-.alarm-severity-page button {
+& button {
   border: 0;
 }
 
-.alarm-severity-page .alarm-page-header {
+& .alarm-page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -22,11 +35,11 @@
   margin-bottom: 16px;
 }
 
-.alarm-severity-page .alarm-title-block {
+& .alarm-title-block {
   max-width: 760px;
 }
 
-.alarm-severity-page .alarm-title-block h1 {
+& .alarm-title-block h1 {
   margin: 4px 0 8px;
   font-size: 24px;
   font-weight: 600;
@@ -34,15 +47,15 @@
   letter-spacing: 0;
 }
 
-.alarm-severity-page .alarm-title-block p {
+& .alarm-title-block p {
   margin: 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-severity-page .alarm-eyebrow,
-.alarm-severity-page .alarm-panel-label {
+& .alarm-eyebrow,
+& .alarm-panel-label {
   color: #4be277;
   font-size: 11px;
   font-weight: 700;
@@ -51,7 +64,7 @@
   text-transform: uppercase;
 }
 
-.alarm-severity-page .alarm-severity-top-controls {
+& .alarm-severity-top-controls {
   display: grid;
   grid-template-columns: auto minmax(320px, 1fr);
   gap: 12px;
@@ -59,7 +72,7 @@
   margin-bottom: 16px;
 }
 
-.alarm-severity-page .alarm-state-switch {
+& .alarm-state-switch {
   display: inline-flex;
   padding: 3px;
   border: 1px solid #334155;
@@ -67,7 +80,7 @@
   background: #060e20;
 }
 
-.alarm-severity-page .alarm-state-switch__button {
+& .alarm-state-switch__button {
   min-width: 92px;
   min-height: 30px;
   padding: 0 12px;
@@ -79,12 +92,12 @@
   cursor: pointer;
 }
 
-.alarm-severity-page .alarm-state-switch__button.is-active {
+& .alarm-state-switch__button.is-active {
   background: #22c55e;
   color: #003915;
 }
 
-.alarm-severity-page .alarm-field {
+& .alarm-field {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -96,7 +109,7 @@
   color: #869585;
 }
 
-.alarm-severity-page .alarm-field input {
+& .alarm-field input {
   width: 100%;
   border: 0;
   outline: 0;
@@ -105,22 +118,22 @@
   font-size: 14px;
 }
 
-.alarm-severity-page .alarm-field input::placeholder {
+& .alarm-field input::placeholder {
   color: #869585;
 }
 
-.alarm-severity-page .alarm-field:focus-within {
+& .alarm-field:focus-within {
   border-color: #4be277;
 }
 
-.alarm-severity-page .alarm-severity-grid {
+& .alarm-severity-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.alarm-severity-page .alarm-severity-card {
+& .alarm-severity-card {
   display: grid;
   gap: 12px;
   min-height: 260px;
@@ -133,50 +146,50 @@
   cursor: pointer;
 }
 
-.alarm-severity-page .alarm-severity-card--info.is-active {
+& .alarm-severity-card--info.is-active {
   border-color: #8bd5ff;
   background: rgba(56, 189, 248, 0.14);
 }
 
-.alarm-severity-page .alarm-severity-card--warning.is-active {
+& .alarm-severity-card--warning.is-active {
   border-color: #ffb95f;
   background: rgba(255, 185, 95, 0.14);
 }
 
-.alarm-severity-page .alarm-severity-card--critical.is-active {
+& .alarm-severity-card--critical.is-active {
   border-color: #ffb4ab;
   background: rgba(255, 138, 131, 0.16);
 }
 
-.alarm-severity-page .alarm-severity-card h2,
-.alarm-severity-page .alarm-definition-panel h2 {
+& .alarm-severity-card h2,
+& .alarm-definition-panel h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-severity-page .alarm-severity-card p,
-.alarm-severity-page .alarm-definition-panel p {
+& .alarm-severity-card p,
+& .alarm-definition-panel p {
   margin: 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-severity-page .alarm-severity-card-top {
+& .alarm-severity-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.alarm-severity-page .alarm-severity-card-top svg,
-.alarm-severity-page .alarm-definition-list svg {
+& .alarm-severity-card-top svg,
+& .alarm-definition-list svg {
   color: #4be277;
 }
 
-.alarm-severity-page .alarm-definition-list {
+& .alarm-definition-list {
   display: grid;
   gap: 6px;
   margin: 0;
@@ -184,7 +197,7 @@
   list-style: none;
 }
 
-.alarm-severity-page .alarm-definition-list li {
+& .alarm-definition-list li {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -193,7 +206,7 @@
   line-height: 18px;
 }
 
-.alarm-severity-page .alarm-card-metric {
+& .alarm-card-metric {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -202,63 +215,63 @@
   border-top: 1px solid #334155;
 }
 
-.alarm-severity-page .alarm-card-metric strong {
+& .alarm-card-metric strong {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 28px;
   font-weight: 600;
   line-height: 32px;
 }
 
-.alarm-severity-page .alarm-card-metric span {
+& .alarm-card-metric span {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-severity-page .alarm-severity-main-grid {
+& .alarm-severity-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
-.alarm-severity-page .alarm-definition-panel,
-.alarm-severity-page .alarm-panel {
+& .alarm-definition-panel,
+& .alarm-panel {
   border: 1px solid #334155;
   border-radius: 4px;
   background: #171f33;
 }
 
-.alarm-severity-page .alarm-definition-panel {
+& .alarm-definition-panel {
   align-self: start;
   padding: 16px;
 }
 
-.alarm-severity-page .alarm-definition-panel--info {
+& .alarm-definition-panel--info {
   border-color: rgba(56, 189, 248, 0.32);
 }
 
-.alarm-severity-page .alarm-definition-panel--warning {
+& .alarm-definition-panel--warning {
   border-color: rgba(255, 185, 95, 0.34);
 }
 
-.alarm-severity-page .alarm-definition-panel--critical {
+& .alarm-definition-panel--critical {
   border-color: rgba(255, 138, 131, 0.42);
 }
 
-.alarm-severity-page .alarm-definition-panel h2 {
+& .alarm-definition-panel h2 {
   margin: 4px 0 12px;
 }
 
-.alarm-severity-page .alarm-definition-panel p {
+& .alarm-definition-panel p {
   margin: 0 0 16px;
 }
 
-.alarm-severity-page .alarm-rule-box {
+& .alarm-rule-box {
   display: grid;
   gap: 8px;
 }
 
-.alarm-severity-page .alarm-rule-item {
+& .alarm-rule-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -272,14 +285,14 @@
   line-height: 18px;
 }
 
-.alarm-severity-page .alarm-rule-item span {
+& .alarm-rule-item span {
   width: 8px;
   height: 8px;
   border-radius: 999px;
   background: #4be277;
 }
 
-.alarm-severity-page .alarm-panel-header {
+& .alarm-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -288,69 +301,69 @@
   border-bottom: 1px solid #334155;
 }
 
-.alarm-severity-page .alarm-panel-header h2 {
+& .alarm-panel-header h2 {
   margin: 4px 0 0;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-severity-page .alarm-panel-meta,
-.alarm-severity-page .alarm-mono {
+& .alarm-panel-meta,
+& .alarm-mono {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-severity-page .alarm-panel-meta {
+& .alarm-panel-meta {
   color: #bccbb9;
 }
 
-.alarm-severity-page .alarm-table-frame {
+& .alarm-table-frame {
   overflow-x: visible;
 }
 
-.alarm-severity-page .alarm-table {
+& .alarm-table {
   width: 100%;
   min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-.alarm-severity-page .alarm-table th:nth-child(1),
-.alarm-severity-page .alarm-table td:nth-child(1) {
+& .alarm-table th:nth-child(1),
+& .alarm-table td:nth-child(1) {
   width: 172px;
 }
 
-.alarm-severity-page .alarm-table th:nth-child(2),
-.alarm-severity-page .alarm-table td:nth-child(2) {
+& .alarm-table th:nth-child(2),
+& .alarm-table td:nth-child(2) {
   width: 180px;
 }
 
-.alarm-severity-page .alarm-table th:nth-child(3),
-.alarm-severity-page .alarm-table td:nth-child(3) {
+& .alarm-table th:nth-child(3),
+& .alarm-table td:nth-child(3) {
   width: 140px;
 }
 
-.alarm-severity-page .alarm-table th:nth-child(5),
-.alarm-severity-page .alarm-table td:nth-child(5) {
+& .alarm-table th:nth-child(5),
+& .alarm-table td:nth-child(5) {
   width: 120px;
 }
 
-.alarm-severity-page .alarm-table th:nth-child(6),
-.alarm-severity-page .alarm-table td:nth-child(6) {
+& .alarm-table th:nth-child(6),
+& .alarm-table td:nth-child(6) {
   width: 108px;
 }
 
-.alarm-severity-page .alarm-table th,
-.alarm-severity-page .alarm-table td {
+& .alarm-table th,
+& .alarm-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #2d3449;
   text-align: left;
   vertical-align: middle;
 }
 
-.alarm-severity-page .alarm-table th {
+& .alarm-table th {
   color: #bccbb9;
   font-size: 11px;
   font-weight: 700;
@@ -359,44 +372,44 @@
   text-transform: uppercase;
 }
 
-.alarm-severity-page .alarm-table td {
+& .alarm-table td {
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
   overflow-wrap: anywhere;
 }
 
-.alarm-severity-page .alarm-table tbody tr:nth-child(even) {
+& .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
 }
 
-.alarm-severity-page .alarm-clickable-row {
+& .alarm-clickable-row {
   cursor: pointer;
 }
 
-.alarm-severity-page .alarm-clickable-row:hover {
+& .alarm-clickable-row:hover {
   background: rgba(75, 226, 119, 0.06);
 }
 
-.alarm-severity-page .alarm-clickable-row:focus {
+& .alarm-clickable-row:focus {
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
 }
 
-.alarm-severity-page .alarm-time-cell {
+& .alarm-time-cell {
   display: grid;
   gap: 2px;
 }
 
-.alarm-severity-page .alarm-time-cell span:last-child {
+& .alarm-time-cell span:last-child {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-severity-page .alarm-severity-chip,
-.alarm-severity-page .alarm-status-pill {
+& .alarm-severity-chip,
+& .alarm-status-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -413,31 +426,31 @@
   line-height: 16px;
 }
 
-.alarm-severity-page .alarm-status-pill {
+& .alarm-status-pill {
   background: #131b2e;
   font-family: inherit;
   font-weight: 600;
 }
 
-.alarm-severity-page .alarm-severity-chip--info {
+& .alarm-severity-chip--info {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
   color: #8bd5ff;
 }
 
-.alarm-severity-page .alarm-severity-chip--warning {
+& .alarm-severity-chip--warning {
   border-color: rgba(255, 185, 95, 0.34);
   background: rgba(255, 185, 95, 0.14);
   color: #ffb95f;
 }
 
-.alarm-severity-page .alarm-severity-chip--critical {
+& .alarm-severity-chip--critical {
   border-color: rgba(255, 138, 131, 0.42);
   background: rgba(255, 138, 131, 0.16);
   color: #ffb4ab;
 }
 
-.alarm-severity-page .alarm-empty-state {
+& .alarm-empty-state {
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -447,21 +460,61 @@
   text-align: center;
 }
 
-.alarm-severity-page .alarm-empty-state svg {
+& .alarm-empty-state svg {
   width: 36px;
   height: 36px;
   color: #4be277;
 }
 
-.alarm-severity-page .alarm-empty-state strong {
+& .alarm-empty-state strong {
   color: #dae2fd;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-severity-page .alarm-empty-state span {
+& .alarm-empty-state span {
   max-width: 420px;
   font-size: 14px;
   line-height: 20px;
 }
+
+`;
+export const PageHeader = withClass('section', 'alarm-page-header');
+export const TitleBlock = withClass('div', 'alarm-title-block');
+export const Eyebrow = withClass('span', 'alarm-eyebrow');
+export const TopControls = withClass('section', 'alarm-severity-top-controls');
+export const StateSwitch = withClass('div', 'alarm-state-switch');
+export const SearchBox = withClass('label', 'alarm-field alarm-search-box');
+export const SeverityGrid = withClass('section', 'alarm-severity-grid');
+export const SeverityTop = withClass('div', 'alarm-severity-card-top');
+export const DefinitionList = withClass('ul', 'alarm-definition-list');
+export const CardMetric = withClass('div', 'alarm-card-metric');
+export const MainGrid = withClass('section', 'alarm-severity-main-grid');
+export const PanelLabel = withClass('span', 'alarm-panel-label');
+export const Panel = withClass('article', 'alarm-panel');
+export const PanelHeader = withClass('div', 'alarm-panel-header');
+export const PanelMeta = withClass('span', 'alarm-panel-meta');
+export const TableFrame = withClass('div', 'alarm-table-frame');
+export const SeverityTable = withClass('table', 'alarm-table');
+export const TimeCell = withClass('div', 'alarm-time-cell');
+export const MonoText = withClass('span', 'alarm-mono');
+export const StatusPill = withClass('span', 'alarm-status-pill');
+export const EmptyState = withClass('div', 'alarm-empty-state');
+
+export const SwitchButton = styled.button.attrs(({ $active, className }) => ({
+  className: cx('alarm-state-switch__button', $active && 'is-active', className),
+}))``;
+
+export const SeverityCard = styled.button.attrs(({ $severity, $active, className }) => ({
+  className: cx(
+    'alarm-severity-card',
+    $severity && `alarm-severity-card--${$severity}`,
+    $active && 'is-active',
+    className
+  ),
+}))``;
+
+export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
+  className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
+}))``;

@@ -1,6 +1,42 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import './AlarmDetailPage.css';
+import {
+  PageShell,
+  PageHeader,
+  TitleBlock,
+  Eyebrow,
+  StateSwitch,
+  DetailLayout,
+  HeroHeader,
+  HeroDescription,
+  HeroMetaGrid,
+  MetaItem,
+  InfoPanel,
+  InfoGrid,
+  InfoItem,
+  TimelinePanel,
+  Timeline,
+  ActionPanel,
+  RelatedPanel,
+  PanelHeader,
+  PanelLabel,
+  PanelMeta,
+  FormGrid,
+  Field,
+  TextAreaField,
+  ButtonRow,
+  PrimaryButton,
+  TableFrame,
+  RelatedTable,
+  TimeCell,
+  MonoText,
+  StatusPill,
+  EmptyState,
+  SwitchButton,
+  HeroPanel,
+  TimelineItem,
+  SeverityChip
+} from './AlarmDetailPageCss';
 import {
   FiCheckCircle,
   FiClock,
@@ -427,61 +463,4 @@ function AlarmDetailPage() {
   );
 }
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-function withClass(Tag, baseClass) {
-  return function ClassComponent({ className, ...props }) {
-    return <Tag className={cx(baseClass, className)} {...props} />;
-  };
-}
-
-const PageShell = withClass('main', 'alarm-detail-page');
-const PageHeader = withClass('section', 'alarm-page-header');
-const TitleBlock = withClass('div', 'alarm-title-block');
-const Eyebrow = withClass('span', 'alarm-eyebrow');
-const StateSwitch = withClass('div', 'alarm-state-switch');
-const DetailLayout = withClass('section', 'alarm-detail-layout');
-const HeroHeader = withClass('div', 'alarm-hero-header');
-const HeroDescription = withClass('p', 'alarm-hero-description');
-const HeroMetaGrid = withClass('div', 'alarm-hero-meta-grid');
-const MetaItem = withClass('div', 'alarm-meta-item');
-const InfoPanel = withClass('article', 'alarm-info-panel');
-const InfoGrid = withClass('dl', 'alarm-info-grid');
-const InfoItem = withClass('div', 'alarm-info-item');
-const TimelinePanel = withClass('article', 'alarm-timeline-panel');
-const Timeline = withClass('div', 'alarm-timeline');
-const ActionPanel = withClass('article', 'alarm-action-panel');
-const RelatedPanel = withClass('article', 'alarm-action-panel alarm-related-panel');
-const PanelHeader = withClass('div', 'alarm-panel-header');
-const PanelLabel = withClass('span', 'alarm-panel-label');
-const PanelMeta = withClass('span', 'alarm-panel-meta');
-const FormGrid = withClass('div', 'alarm-form-grid');
-const Field = withClass('label', 'alarm-form-field');
-const TextAreaField = withClass('label', 'alarm-form-field alarm-textarea-field');
-const ButtonRow = withClass('div', 'alarm-button-row');
-const PrimaryButton = withClass('button', 'alarm-button alarm-button--primary');
-const TableFrame = withClass('div', 'alarm-table-frame');
-const RelatedTable = withClass('table', 'alarm-table');
-const TimeCell = withClass('div', 'alarm-time-cell');
-const MonoText = withClass('span', 'alarm-mono');
-const StatusPill = withClass('span', 'alarm-status-pill alarm-status-pill--warning');
-const EmptyState = withClass('div', 'alarm-empty-state');
-
-const SwitchButton = ({ $active, className, ...props }) => (
-  <button className={cx('alarm-state-switch__button', $active && 'is-active', className)} {...props} />
-);
-
-const HeroPanel = ({ $severity, className, ...props }) => (
-  <article className={cx('alarm-hero-panel', $severity && `alarm-hero-panel--${$severity}`, className)} {...props} />
-);
-
-const TimelineItem = ({ $active, className, ...props }) => (
-  <div className={cx('alarm-timeline-item', $active && 'is-active', className)} {...props} />
-);
-
-const SeverityChip = ({ $severity, className, ...props }) => (
-  <span className={cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className)} {...props} />
-);
 export default AlarmDetailPage;

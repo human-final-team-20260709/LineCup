@@ -1,6 +1,37 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './CurrentAlarmPage.css';
+import {
+  PageShell,
+  PageHeader,
+  TitleBlock,
+  Eyebrow,
+  StateSwitch,
+  MetricGrid,
+  MetricHeader,
+  Toolbar,
+  SearchBox,
+  SelectGroup,
+  MainGrid,
+  Panel,
+  PanelHeader,
+  PanelLabel,
+  PanelMeta,
+  TableFrame,
+  AlarmTable,
+  EquipmentCell,
+  TimeStack,
+  MonoText,
+  StatusPill,
+  QueueList,
+  QueueItem,
+  Divider,
+  EventList,
+  EmptyState,
+  SidePanel,
+  SwitchButton,
+  MetricCard,
+  SeverityChip
+} from './CurrentAlarmPageCss';
 import CommonPagination from '../../components/CommonPagination';
 import {
   FiAlertTriangle,
@@ -365,53 +396,4 @@ function CurrentAlarmPage() {
   );
 }
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-function withClass(Tag, baseClass) {
-  return function ClassComponent({ className, ...props }) {
-    return <Tag className={cx(baseClass, className)} {...props} />;
-  };
-}
-
-const PageShell = withClass('main', 'current-alarm-page');
-const PageHeader = withClass('section', 'alarm-page-header');
-const TitleBlock = withClass('div', 'alarm-title-block');
-const Eyebrow = withClass('span', 'alarm-eyebrow');
-const StateSwitch = withClass('div', 'alarm-state-switch');
-const MetricGrid = withClass('section', 'alarm-metric-grid');
-const MetricHeader = withClass('div', 'alarm-metric-header');
-const Toolbar = withClass('section', 'alarm-toolbar');
-const SearchBox = withClass('label', 'alarm-field alarm-search-box');
-const SelectGroup = withClass('label', 'alarm-field alarm-select-group');
-const MainGrid = withClass('section', 'alarm-main-grid');
-const Panel = withClass('article', 'alarm-panel');
-const PanelHeader = withClass('div', 'alarm-panel-header');
-const PanelLabel = withClass('span', 'alarm-panel-label');
-const PanelMeta = withClass('span', 'alarm-panel-meta');
-const TableFrame = withClass('div', 'alarm-table-frame');
-const AlarmTable = withClass('table', 'alarm-table');
-const EquipmentCell = withClass('div', 'alarm-equipment-cell');
-const TimeStack = withClass('div', 'alarm-time-stack');
-const MonoText = withClass('span', 'alarm-mono');
-const StatusPill = withClass('span', 'alarm-status-pill');
-const QueueList = withClass('div', 'alarm-queue-list');
-const QueueItem = withClass('div', 'alarm-queue-item');
-const Divider = withClass('div', 'alarm-divider');
-const EventList = withClass('ul', 'alarm-event-list');
-const EmptyState = withClass('div', 'alarm-empty-state');
-const SidePanel = withClass('article', 'alarm-panel alarm-current-side-panel');
-
-const SwitchButton = ({ $active, className, ...props }) => (
-  <button className={cx('alarm-state-switch__button', $active && 'is-active', className)} {...props} />
-);
-
-const MetricCard = ({ $tone, className, ...props }) => (
-  <article className={cx('alarm-current-metric-card', $tone && `alarm-current-metric-card--${$tone}`, className)} {...props} />
-);
-
-const SeverityChip = ({ $severity, className, ...props }) => (
-  <span className={cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className)} {...props} />
-);
 export default CurrentAlarmPage;

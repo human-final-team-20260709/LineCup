@@ -1,22 +1,35 @@
-.alarm-detail-page {
+import styled from 'styled-components';
+
+function cx(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
+function withClass(Tag, baseClass) {
+  return styled(Tag).attrs(({ className }) => ({
+    className: cx(baseClass, className),
+  }))``;
+}
+
+export const PageShell = styled.main.attrs({ className: 'alarm-detail-page' })`
+& {
   min-height: 100vh;
   padding: 32px;
   background: #0b1326;
   color: #dae2fd;
 }
 
-.alarm-detail-page button,
-.alarm-detail-page input,
-.alarm-detail-page select,
-.alarm-detail-page textarea {
+& button,
+& input,
+& select,
+& textarea {
   font: inherit;
 }
 
-.alarm-detail-page button {
+& button {
   border: 0;
 }
 
-.alarm-detail-page .alarm-page-header {
+& .alarm-page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -24,11 +37,11 @@
   margin-bottom: 16px;
 }
 
-.alarm-detail-page .alarm-title-block {
+& .alarm-title-block {
   max-width: 760px;
 }
 
-.alarm-detail-page .alarm-title-block h1 {
+& .alarm-title-block h1 {
   margin: 4px 0 8px;
   font-size: 24px;
   font-weight: 600;
@@ -36,15 +49,15 @@
   letter-spacing: 0;
 }
 
-.alarm-detail-page .alarm-title-block p {
+& .alarm-title-block p {
   margin: 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-eyebrow,
-.alarm-detail-page .alarm-panel-label {
+& .alarm-eyebrow,
+& .alarm-panel-label {
   color: #4be277;
   font-size: 11px;
   font-weight: 700;
@@ -53,7 +66,7 @@
   text-transform: uppercase;
 }
 
-.alarm-detail-page .alarm-state-switch {
+& .alarm-state-switch {
   display: inline-flex;
   padding: 3px;
   margin-bottom: 16px;
@@ -62,7 +75,7 @@
   background: #060e20;
 }
 
-.alarm-detail-page .alarm-state-switch__button {
+& .alarm-state-switch__button {
   min-width: 92px;
   min-height: 30px;
   padding: 0 12px;
@@ -74,70 +87,70 @@
   cursor: pointer;
 }
 
-.alarm-detail-page .alarm-state-switch__button.is-active {
+& .alarm-state-switch__button.is-active {
   background: #22c55e;
   color: #003915;
 }
 
-.alarm-detail-page .alarm-detail-layout {
+& .alarm-detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) 360px;
   gap: 16px;
 }
 
-.alarm-detail-page .alarm-hero-panel,
-.alarm-detail-page .alarm-info-panel,
-.alarm-detail-page .alarm-timeline-panel,
-.alarm-detail-page .alarm-action-panel {
+& .alarm-hero-panel,
+& .alarm-info-panel,
+& .alarm-timeline-panel,
+& .alarm-action-panel {
   border: 1px solid #334155;
   border-radius: 4px;
   background: #171f33;
 }
 
-.alarm-detail-page .alarm-hero-panel {
+& .alarm-hero-panel {
   padding: 16px;
 }
 
-.alarm-detail-page .alarm-hero-panel--critical {
+& .alarm-hero-panel--critical {
   border-color: rgba(255, 138, 131, 0.42);
 }
 
-.alarm-detail-page .alarm-hero-header {
+& .alarm-hero-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.alarm-detail-page .alarm-hero-header h2 {
+& .alarm-hero-header h2 {
   margin: 4px 0 0;
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
 }
 
-.alarm-detail-page .alarm-hero-description {
+& .alarm-hero-description {
   margin: 16px 0 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-hero-meta-grid {
+& .alarm-hero-meta-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 16px;
 }
 
-.alarm-detail-page .alarm-meta-item {
+& .alarm-meta-item {
   padding: 12px;
   border: 1px solid #2d3449;
   border-radius: 4px;
   background: #060e20;
 }
 
-.alarm-detail-page .alarm-meta-item span {
+& .alarm-meta-item span {
   display: block;
   color: #869585;
   font-size: 11px;
@@ -147,7 +160,7 @@
   text-transform: uppercase;
 }
 
-.alarm-detail-page .alarm-meta-item strong {
+& .alarm-meta-item strong {
   display: block;
   margin-top: 6px;
   color: #dae2fd;
@@ -155,18 +168,18 @@
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-info-panel,
-.alarm-detail-page .alarm-timeline-panel {
+& .alarm-info-panel,
+& .alarm-timeline-panel {
   padding: 16px;
 }
 
-.alarm-detail-page .alarm-info-grid {
+& .alarm-info-grid {
   display: grid;
   gap: 12px;
   margin: 12px 0 0;
 }
 
-.alarm-detail-page .alarm-info-item {
+& .alarm-info-item {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 10px;
@@ -178,41 +191,41 @@
   background: #060e20;
 }
 
-.alarm-detail-page .alarm-info-item svg {
+& .alarm-info-item svg {
   margin-top: 2px;
   color: #4be277;
 }
 
-.alarm-detail-page .alarm-info-item dt {
+& .alarm-info-item dt {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-detail-page .alarm-info-item dd {
+& .alarm-info-item dd {
   margin: 2px 0 0;
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-timeline-panel {
+& .alarm-timeline-panel {
   align-self: start;
 }
 
-.alarm-detail-page .alarm-timeline-panel h2 {
+& .alarm-timeline-panel h2 {
   margin: 4px 0 16px;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-detail-page .alarm-timeline {
+& .alarm-timeline {
   display: grid;
   gap: 10px;
 }
 
-.alarm-detail-page .alarm-timeline-item {
+& .alarm-timeline-item {
   display: grid;
   gap: 3px;
   padding: 12px;
@@ -222,29 +235,29 @@
   background: #060e20;
 }
 
-.alarm-detail-page .alarm-timeline-item.is-active {
+& .alarm-timeline-item.is-active {
   border-color: #334155;
   border-left-color: #4be277;
   background: #131b2e;
 }
 
-.alarm-detail-page .alarm-timeline-item strong {
+& .alarm-timeline-item strong {
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-timeline-item span:last-child {
+& .alarm-timeline-item span:last-child {
   color: #bccbb9;
   font-size: 13px;
   line-height: 18px;
 }
 
-.alarm-detail-page .alarm-related-panel {
+& .alarm-related-panel {
   grid-column: 1 / -1;
 }
 
-.alarm-detail-page .alarm-panel-header {
+& .alarm-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -253,46 +266,46 @@
   border-bottom: 1px solid #334155;
 }
 
-.alarm-detail-page .alarm-panel-header h2 {
+& .alarm-panel-header h2 {
   margin: 4px 0 0;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-detail-page .alarm-panel-meta,
-.alarm-detail-page .alarm-mono {
+& .alarm-panel-meta,
+& .alarm-mono {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-detail-page .alarm-panel-meta {
+& .alarm-panel-meta {
   color: #bccbb9;
 }
 
-.alarm-detail-page .alarm-form-grid {
+& .alarm-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 16px;
 }
 
-.alarm-detail-page .alarm-form-field {
+& .alarm-form-field {
   display: grid;
   gap: 6px;
 }
 
-.alarm-detail-page .alarm-form-field span {
+& .alarm-form-field span {
   color: #bccbb9;
   font-size: 12px;
   font-weight: 700;
   line-height: 16px;
 }
 
-.alarm-detail-page .alarm-form-field input,
-.alarm-detail-page .alarm-form-field select,
-.alarm-detail-page .alarm-form-field textarea {
+& .alarm-form-field input,
+& .alarm-form-field select,
+& .alarm-form-field textarea {
   border: 1px solid #334155;
   border-radius: 4px;
   outline: 0;
@@ -301,46 +314,46 @@
   font-size: 14px;
 }
 
-.alarm-detail-page .alarm-form-field input,
-.alarm-detail-page .alarm-form-field select {
+& .alarm-form-field input,
+& .alarm-form-field select {
   height: 40px;
   padding: 0 10px;
 }
 
-.alarm-detail-page .alarm-form-field select {
+& .alarm-form-field select {
   color-scheme: dark;
 }
 
-.alarm-detail-page .alarm-form-field select option {
+& .alarm-form-field select option {
   background: #131b2e;
   color: #dae2fd;
 }
 
-.alarm-detail-page .alarm-form-field textarea {
+& .alarm-form-field textarea {
   min-height: 120px;
   padding: 10px;
   resize: vertical;
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-form-field input:focus,
-.alarm-detail-page .alarm-form-field select:focus,
-.alarm-detail-page .alarm-form-field textarea:focus {
+& .alarm-form-field input:focus,
+& .alarm-form-field select:focus,
+& .alarm-form-field textarea:focus {
   border-color: #4be277;
 }
 
-.alarm-detail-page .alarm-textarea-field {
+& .alarm-textarea-field {
   grid-column: 1 / -1;
 }
 
-.alarm-detail-page .alarm-button-row {
+& .alarm-button-row {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding: 0 16px 16px;
 }
 
-.alarm-detail-page .alarm-button {
+& .alarm-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -355,33 +368,33 @@
   cursor: pointer;
 }
 
-.alarm-detail-page .alarm-button--primary {
+& .alarm-button--primary {
   background: #31394d;
 }
 
-.alarm-detail-page .alarm-button:hover {
+& .alarm-button:hover {
   border-color: #4be277;
 }
 
-.alarm-detail-page .alarm-table-frame {
+& .alarm-table-frame {
   overflow-x: auto;
 }
 
-.alarm-detail-page .alarm-table {
+& .alarm-table {
   width: 100%;
   min-width: 820px;
   border-collapse: collapse;
 }
 
-.alarm-detail-page .alarm-table th,
-.alarm-detail-page .alarm-table td {
+& .alarm-table th,
+& .alarm-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #2d3449;
   text-align: left;
   vertical-align: middle;
 }
 
-.alarm-detail-page .alarm-table th {
+& .alarm-table th {
   color: #bccbb9;
   font-size: 11px;
   font-weight: 700;
@@ -390,43 +403,43 @@
   text-transform: uppercase;
 }
 
-.alarm-detail-page .alarm-table td {
+& .alarm-table td {
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
 }
 
-.alarm-detail-page .alarm-table tbody tr:nth-child(even) {
+& .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
 }
 
-.alarm-detail-page .alarm-clickable-row {
+& .alarm-clickable-row {
   cursor: pointer;
 }
 
-.alarm-detail-page .alarm-clickable-row:hover {
+& .alarm-clickable-row:hover {
   background: rgba(75, 226, 119, 0.06);
 }
 
-.alarm-detail-page .alarm-clickable-row:focus {
+& .alarm-clickable-row:focus {
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
 }
 
-.alarm-detail-page .alarm-time-cell {
+& .alarm-time-cell {
   display: grid;
   gap: 2px;
 }
 
-.alarm-detail-page .alarm-time-cell span:last-child {
+& .alarm-time-cell span:last-child {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.alarm-detail-page .alarm-severity-chip,
-.alarm-detail-page .alarm-status-pill {
+& .alarm-severity-chip,
+& .alarm-status-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -443,20 +456,20 @@
   line-height: 16px;
 }
 
-.alarm-detail-page .alarm-severity-chip--warning,
-.alarm-detail-page .alarm-status-pill--warning {
+& .alarm-severity-chip--warning,
+& .alarm-status-pill--warning {
   border-color: rgba(255, 185, 95, 0.34);
   background: rgba(255, 185, 95, 0.14);
   color: #ffb95f;
 }
 
-.alarm-detail-page .alarm-severity-chip--critical {
+& .alarm-severity-chip--critical {
   border-color: rgba(255, 138, 131, 0.42);
   background: rgba(255, 138, 131, 0.16);
   color: #ffb4ab;
 }
 
-.alarm-detail-page .alarm-empty-state {
+& .alarm-empty-state {
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -469,21 +482,69 @@
   text-align: center;
 }
 
-.alarm-detail-page .alarm-empty-state svg {
+& .alarm-empty-state svg {
   width: 36px;
   height: 36px;
   color: #4be277;
 }
 
-.alarm-detail-page .alarm-empty-state strong {
+& .alarm-empty-state strong {
   color: #dae2fd;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.alarm-detail-page .alarm-empty-state span {
+& .alarm-empty-state span {
   max-width: 420px;
   font-size: 14px;
   line-height: 20px;
 }
+
+`;
+export const PageHeader = withClass('section', 'alarm-page-header');
+export const TitleBlock = withClass('div', 'alarm-title-block');
+export const Eyebrow = withClass('span', 'alarm-eyebrow');
+export const StateSwitch = withClass('div', 'alarm-state-switch');
+export const DetailLayout = withClass('section', 'alarm-detail-layout');
+export const HeroHeader = withClass('div', 'alarm-hero-header');
+export const HeroDescription = withClass('p', 'alarm-hero-description');
+export const HeroMetaGrid = withClass('div', 'alarm-hero-meta-grid');
+export const MetaItem = withClass('div', 'alarm-meta-item');
+export const InfoPanel = withClass('article', 'alarm-info-panel');
+export const InfoGrid = withClass('dl', 'alarm-info-grid');
+export const InfoItem = withClass('div', 'alarm-info-item');
+export const TimelinePanel = withClass('article', 'alarm-timeline-panel');
+export const Timeline = withClass('div', 'alarm-timeline');
+export const ActionPanel = withClass('article', 'alarm-action-panel');
+export const RelatedPanel = withClass('article', 'alarm-action-panel alarm-related-panel');
+export const PanelHeader = withClass('div', 'alarm-panel-header');
+export const PanelLabel = withClass('span', 'alarm-panel-label');
+export const PanelMeta = withClass('span', 'alarm-panel-meta');
+export const FormGrid = withClass('div', 'alarm-form-grid');
+export const Field = withClass('label', 'alarm-form-field');
+export const TextAreaField = withClass('label', 'alarm-form-field alarm-textarea-field');
+export const ButtonRow = withClass('div', 'alarm-button-row');
+export const PrimaryButton = withClass('button', 'alarm-button alarm-button--primary');
+export const TableFrame = withClass('div', 'alarm-table-frame');
+export const RelatedTable = withClass('table', 'alarm-table');
+export const TimeCell = withClass('div', 'alarm-time-cell');
+export const MonoText = withClass('span', 'alarm-mono');
+export const StatusPill = withClass('span', 'alarm-status-pill alarm-status-pill--warning');
+export const EmptyState = withClass('div', 'alarm-empty-state');
+
+export const SwitchButton = styled.button.attrs(({ $active, className }) => ({
+  className: cx('alarm-state-switch__button', $active && 'is-active', className),
+}))``;
+
+export const HeroPanel = styled.article.attrs(({ $severity, className }) => ({
+  className: cx('alarm-hero-panel', $severity && `alarm-hero-panel--${$severity}`, className),
+}))``;
+
+export const TimelineItem = styled.div.attrs(({ $active, className }) => ({
+  className: cx('alarm-timeline-item', $active && 'is-active', className),
+}))``;
+
+export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
+  className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
+}))``;

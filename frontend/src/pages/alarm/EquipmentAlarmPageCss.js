@@ -1,21 +1,40 @@
-.equipment-alarm-page {
+import styled from 'styled-components';
+
+function cx(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
+function withClass(Tag, baseClass) {
+  return styled(Tag).attrs(({ className }) => ({
+    className: cx(baseClass, className),
+  }))``;
+}
+
+const healthClassMap = {
+  '\uC815\uC0C1': 'normal',
+  '\uC8FC\uC758': 'warning',
+  '\uC704\uD5D8': 'danger',
+};
+
+export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' })`
+& {
   min-height: 100vh;
   padding: 32px;
   background: #0b1326;
   color: #dae2fd;
 }
 
-.equipment-alarm-page button,
-.equipment-alarm-page input,
-.equipment-alarm-page select {
+& button,
+& input,
+& select {
   font: inherit;
 }
 
-.equipment-alarm-page button {
+& button {
   border: 0;
 }
 
-.equipment-alarm-page .alarm-page-header {
+& .alarm-page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -23,11 +42,11 @@
   margin-bottom: 16px;
 }
 
-.equipment-alarm-page .alarm-title-block {
+& .alarm-title-block {
   max-width: 760px;
 }
 
-.equipment-alarm-page .alarm-title-block h1 {
+& .alarm-title-block h1 {
   margin: 4px 0 8px;
   font-size: 24px;
   font-weight: 600;
@@ -35,15 +54,15 @@
   letter-spacing: 0;
 }
 
-.equipment-alarm-page .alarm-title-block p {
+& .alarm-title-block p {
   margin: 0;
   color: #bccbb9;
   font-size: 14px;
   line-height: 20px;
 }
 
-.equipment-alarm-page .alarm-eyebrow,
-.equipment-alarm-page .alarm-panel-label {
+& .alarm-eyebrow,
+& .alarm-panel-label {
   color: #4be277;
   font-size: 11px;
   font-weight: 700;
@@ -52,7 +71,7 @@
   text-transform: uppercase;
 }
 
-.equipment-alarm-page .alarm-state-switch {
+& .alarm-state-switch {
   display: inline-flex;
   padding: 3px;
   margin-bottom: 16px;
@@ -61,7 +80,7 @@
   background: #060e20;
 }
 
-.equipment-alarm-page .alarm-state-switch__button {
+& .alarm-state-switch__button {
   min-width: 92px;
   min-height: 30px;
   padding: 0 12px;
@@ -73,19 +92,19 @@
   cursor: pointer;
 }
 
-.equipment-alarm-page .alarm-state-switch__button.is-active {
+& .alarm-state-switch__button.is-active {
   background: #22c55e;
   color: #003915;
 }
 
-.equipment-alarm-page .alarm-filter-bar {
+& .alarm-filter-bar {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) 180px 180px;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.equipment-alarm-page .alarm-field {
+& .alarm-field {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -97,8 +116,8 @@
   color: #869585;
 }
 
-.equipment-alarm-page .alarm-field input,
-.equipment-alarm-page .alarm-field select {
+& .alarm-field input,
+& .alarm-field select {
   width: 100%;
   min-width: 0;
   border: 0;
@@ -108,32 +127,32 @@
   font-size: 14px;
 }
 
-.equipment-alarm-page .alarm-field select {
+& .alarm-field select {
   color-scheme: dark;
 }
 
-.equipment-alarm-page .alarm-field select option {
+& .alarm-field select option {
   background: #131b2e;
   color: #dae2fd;
 }
 
-.equipment-alarm-page .alarm-field:focus-within {
+& .alarm-field:focus-within {
   border-color: #4be277;
 }
 
-.equipment-alarm-page .equipment-content-grid {
+& .equipment-content-grid {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
   gap: 16px;
 }
 
-.equipment-alarm-page .equipment-column {
+& .equipment-column {
   display: grid;
   align-content: start;
   gap: 12px;
 }
 
-.equipment-alarm-page .equipment-card {
+& .equipment-card {
   display: grid;
   gap: 12px;
   width: 100%;
@@ -146,20 +165,20 @@
   cursor: pointer;
 }
 
-.equipment-alarm-page .equipment-card.is-active {
+& .equipment-card.is-active {
   border-color: #4be277;
   background: rgba(75, 226, 119, 0.08);
 }
 
-.equipment-alarm-page .equipment-card-top-line,
-.equipment-alarm-page .equipment-meta {
+& .equipment-card-top-line,
+& .equipment-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.equipment-alarm-page .equipment-title {
+& .equipment-title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -168,30 +187,30 @@
   line-height: 22px;
 }
 
-.equipment-alarm-page .equipment-title svg {
+& .equipment-title svg {
   color: #4be277;
 }
 
-.equipment-alarm-page .equipment-meta {
+& .equipment-meta {
   color: #bccbb9;
   font-size: 12px;
   line-height: 16px;
 }
 
-.equipment-alarm-page .equipment-count-row {
+& .equipment-count-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
-.equipment-alarm-page .equipment-count-item {
+& .equipment-count-item {
   padding: 8px;
   border: 1px solid #2d3449;
   border-radius: 4px;
   background: #060e20;
 }
 
-.equipment-alarm-page .equipment-count-item strong {
+& .equipment-count-item strong {
   display: block;
   color: #dae2fd;
   font-family: "JetBrains Mono", Consolas, monospace;
@@ -199,13 +218,13 @@
   line-height: 24px;
 }
 
-.equipment-alarm-page .equipment-count-item span {
+& .equipment-count-item span {
   color: #869585;
   font-size: 11px;
   line-height: 16px;
 }
 
-.equipment-alarm-page .equipment-recent-alarm {
+& .equipment-recent-alarm {
   display: grid;
   gap: 4px;
   color: #bccbb9;
@@ -213,13 +232,13 @@
   line-height: 18px;
 }
 
-.equipment-alarm-page .alarm-panel {
+& .alarm-panel {
   border: 1px solid #334155;
   border-radius: 4px;
   background: #171f33;
 }
 
-.equipment-alarm-page .alarm-panel-header {
+& .alarm-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -228,59 +247,59 @@
   border-bottom: 1px solid #334155;
 }
 
-.equipment-alarm-page .alarm-panel-header h2 {
+& .alarm-panel-header h2 {
   margin: 4px 0 0;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.equipment-alarm-page .alarm-panel-meta,
-.equipment-alarm-page .alarm-mono {
+& .alarm-panel-meta,
+& .alarm-mono {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
 }
 
-.equipment-alarm-page .alarm-panel-meta {
+& .alarm-panel-meta {
   color: #bccbb9;
 }
 
-.equipment-alarm-page .equipment-detail-grid {
+& .equipment-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 16px;
   padding: 16px;
 }
 
-.equipment-alarm-page .equipment-frequency-panel {
+& .equipment-frequency-panel {
   padding: 16px;
   border: 1px solid #2d3449;
   border-radius: 4px;
   background: #131b2e;
 }
 
-.equipment-alarm-page .equipment-frequency-panel h3 {
+& .equipment-frequency-panel h3 {
   margin: 4px 0 14px;
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
 }
 
-.equipment-alarm-page .equipment-rank-list,
-.equipment-alarm-page .equipment-split-grid {
+& .equipment-rank-list,
+& .equipment-split-grid {
   display: grid;
   gap: 10px;
 }
 
-.equipment-alarm-page .equipment-rank-item {
+& .equipment-rank-item {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
 }
 
-.equipment-alarm-page .equipment-rank-number {
+& .equipment-rank-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -295,54 +314,54 @@
   font-weight: 700;
 }
 
-.equipment-alarm-page .equipment-rank-body {
+& .equipment-rank-body {
   display: grid;
   gap: 8px;
 }
 
-.equipment-alarm-page .equipment-rank-body div {
+& .equipment-rank-body div {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.equipment-alarm-page .equipment-rank-body strong {
+& .equipment-rank-body strong {
   color: #dae2fd;
   font-size: 13px;
   line-height: 18px;
 }
 
-.equipment-alarm-page .alarm-progress-track {
+& .alarm-progress-track {
   height: 8px;
   border-radius: 999px;
   background: #060e20;
   overflow: hidden;
 }
 
-.equipment-alarm-page .alarm-progress-fill {
+& .alarm-progress-fill {
   height: 100%;
   border-radius: inherit;
   background: #4be277;
 }
 
-.equipment-alarm-page .alarm-progress-fill--38 {
+& .alarm-progress-fill--38 {
   width: 38%;
 }
 
-.equipment-alarm-page .alarm-progress-fill--63 {
+& .alarm-progress-fill--63 {
   width: 63%;
 }
 
-.equipment-alarm-page .alarm-progress-fill--75 {
+& .alarm-progress-fill--75 {
   width: 75%;
 }
 
-.equipment-alarm-page .alarm-progress-fill--100 {
+& .alarm-progress-fill--100 {
   width: 100%;
 }
 
-.equipment-alarm-page .equipment-split-item {
+& .equipment-split-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -353,38 +372,38 @@
   background: #060e20;
 }
 
-.equipment-alarm-page .equipment-split-item strong {
+& .equipment-split-item strong {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 20px;
   line-height: 28px;
 }
 
-.equipment-alarm-page .equipment-sub-panel {
+& .equipment-sub-panel {
   margin: 0 16px 16px;
   border: 1px solid #2d3449;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.equipment-alarm-page .alarm-table-frame {
+& .alarm-table-frame {
   overflow-x: auto;
 }
 
-.equipment-alarm-page .alarm-table {
+& .alarm-table {
   width: 100%;
   min-width: 760px;
   border-collapse: collapse;
 }
 
-.equipment-alarm-page .alarm-table th,
-.equipment-alarm-page .alarm-table td {
+& .alarm-table th,
+& .alarm-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #2d3449;
   text-align: left;
   vertical-align: middle;
 }
 
-.equipment-alarm-page .alarm-table th {
+& .alarm-table th {
   color: #bccbb9;
   font-size: 11px;
   font-weight: 700;
@@ -393,43 +412,43 @@
   text-transform: uppercase;
 }
 
-.equipment-alarm-page .alarm-table td {
+& .alarm-table td {
   color: #dae2fd;
   font-size: 14px;
   line-height: 20px;
 }
 
-.equipment-alarm-page .alarm-table tbody tr:nth-child(even) {
+& .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
 }
 
-.equipment-alarm-page .alarm-clickable-row {
+& .alarm-clickable-row {
   cursor: pointer;
 }
 
-.equipment-alarm-page .alarm-clickable-row:hover {
+& .alarm-clickable-row:hover {
   background: rgba(75, 226, 119, 0.06);
 }
 
-.equipment-alarm-page .alarm-clickable-row:focus {
+& .alarm-clickable-row:focus {
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
 }
 
-.equipment-alarm-page .alarm-time-stack {
+& .alarm-time-stack {
   display: grid;
   gap: 2px;
 }
 
-.equipment-alarm-page .alarm-time-stack span:last-child {
+& .alarm-time-stack span:last-child {
   color: #869585;
   font-size: 12px;
   line-height: 16px;
 }
 
-.equipment-alarm-page .alarm-severity-chip,
-.equipment-alarm-page .equipment-health-chip {
+& .alarm-severity-chip,
+& .equipment-health-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -446,33 +465,33 @@
   line-height: 16px;
 }
 
-.equipment-alarm-page .alarm-severity-chip--info {
+& .alarm-severity-chip--info {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
   color: #8bd5ff;
 }
 
-.equipment-alarm-page .alarm-severity-chip--warning,
-.equipment-alarm-page .equipment-health-chip--warning {
+& .alarm-severity-chip--warning,
+& .equipment-health-chip--warning {
   border-color: rgba(255, 185, 95, 0.34);
   background: rgba(255, 185, 95, 0.14);
   color: #ffb95f;
 }
 
-.equipment-alarm-page .alarm-severity-chip--critical,
-.equipment-alarm-page .equipment-health-chip--danger {
+& .alarm-severity-chip--critical,
+& .equipment-health-chip--danger {
   border-color: rgba(255, 138, 131, 0.42);
   background: rgba(255, 138, 131, 0.16);
   color: #ffb4ab;
 }
 
-.equipment-alarm-page .equipment-health-chip--normal {
+& .equipment-health-chip--normal {
   border-color: rgba(75, 226, 119, 0.28);
   background: rgba(75, 226, 119, 0.12);
   color: #4be277;
 }
 
-.equipment-alarm-page .alarm-empty-state {
+& .alarm-empty-state {
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -485,21 +504,82 @@
   text-align: center;
 }
 
-.equipment-alarm-page .alarm-empty-state svg {
+& .alarm-empty-state svg {
   width: 36px;
   height: 36px;
   color: #4be277;
 }
 
-.equipment-alarm-page .alarm-empty-state strong {
+& .alarm-empty-state strong {
   color: #dae2fd;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.equipment-alarm-page .alarm-empty-state span {
+& .alarm-empty-state span {
   max-width: 420px;
   font-size: 14px;
   line-height: 20px;
 }
+
+`;
+export const PageHeader = withClass('section', 'alarm-page-header');
+export const TitleBlock = withClass('div', 'alarm-title-block');
+export const Eyebrow = withClass('span', 'alarm-eyebrow');
+export const StateSwitch = withClass('div', 'alarm-state-switch');
+export const FilterBar = withClass('section', 'alarm-filter-bar');
+export const SearchBox = withClass('label', 'alarm-field alarm-search-box');
+export const SelectBox = withClass('label', 'alarm-field alarm-select-box');
+export const ContentGrid = withClass('section', 'equipment-content-grid');
+export const EquipmentColumn = withClass('div', 'equipment-column');
+export const CardTopLine = withClass('div', 'equipment-card-top-line');
+export const EquipmentTitle = withClass('div', 'equipment-title');
+export const EquipmentMeta = withClass('div', 'equipment-meta');
+export const AlarmCountRow = withClass('div', 'equipment-count-row');
+export const CountItem = withClass('div', 'equipment-count-item');
+export const RecentAlarm = withClass('div', 'equipment-recent-alarm');
+export const Panel = withClass('article', 'alarm-panel');
+export const PanelHeader = withClass('div', 'alarm-panel-header');
+export const PanelLabel = withClass('span', 'alarm-panel-label');
+export const PanelMeta = withClass('span', 'alarm-panel-meta');
+export const DetailGrid = withClass('div', 'equipment-detail-grid');
+export const FrequencyPanel = withClass('section', 'equipment-frequency-panel');
+export const TrendCard = withClass('section', 'equipment-frequency-panel');
+export const RankList = withClass('div', 'equipment-rank-list');
+export const RankItem = withClass('div', 'equipment-rank-item');
+export const RankNumber = withClass('span', 'equipment-rank-number');
+export const RankBody = withClass('div', 'equipment-rank-body');
+export const ProgressTrack = withClass('div', 'alarm-progress-track');
+export const SplitGrid = withClass('div', 'equipment-split-grid');
+export const SplitItem = withClass('div', 'equipment-split-item');
+export const SubPanel = withClass('section', 'equipment-sub-panel');
+export const TableFrame = withClass('div', 'alarm-table-frame');
+export const AlarmTable = withClass('table', 'alarm-table');
+export const TimeStack = withClass('div', 'alarm-time-stack');
+export const MonoText = withClass('span', 'alarm-mono');
+export const EmptyState = withClass('div', 'alarm-empty-state');
+
+export const SwitchButton = styled.button.attrs(({ $active, className }) => ({
+  className: cx('alarm-state-switch__button', $active && 'is-active', className),
+}))``;
+
+export const EquipmentCard = styled.button.attrs(({ $active, className }) => ({
+  className: cx('equipment-card', $active && 'is-active', className),
+}))``;
+
+export const ProgressFill = styled.div.attrs(({ $value, className }) => ({
+  className: cx('alarm-progress-fill', `alarm-progress-fill--${Math.round($value || 0)}`, className),
+}))``;
+
+export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
+  className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
+}))``;
+
+export const HealthChip = styled.span.attrs(({ $health, className }) => ({
+  className: cx(
+    'equipment-health-chip',
+    $health && `equipment-health-chip--${healthClassMap[$health] || 'unknown'}`,
+    className
+  ),
+}))``;

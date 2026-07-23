@@ -1,6 +1,32 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './AlarmSeverityPage.css';
+import {
+  PageShell,
+  PageHeader,
+  TitleBlock,
+  Eyebrow,
+  TopControls,
+  StateSwitch,
+  SearchBox,
+  SeverityGrid,
+  SeverityTop,
+  DefinitionList,
+  CardMetric,
+  MainGrid,
+  PanelLabel,
+  Panel,
+  PanelHeader,
+  PanelMeta,
+  TableFrame,
+  SeverityTable,
+  TimeCell,
+  MonoText,
+  StatusPill,
+  EmptyState,
+  SwitchButton,
+  SeverityCard,
+  SeverityChip
+} from './AlarmSeverityPageCss';
 import { FiAlertTriangle, FiCheckCircle, FiInfo, FiSearch, FiZap } from 'react-icons/fi';
 
 const severityDefinitions = [
@@ -235,48 +261,4 @@ function AlarmSeverityPage() {
   );
 }
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-function withClass(Tag, baseClass) {
-  return function ClassComponent({ className, ...props }) {
-    return <Tag className={cx(baseClass, className)} {...props} />;
-  };
-}
-
-const PageShell = withClass('main', 'alarm-severity-page');
-const PageHeader = withClass('section', 'alarm-page-header');
-const TitleBlock = withClass('div', 'alarm-title-block');
-const Eyebrow = withClass('span', 'alarm-eyebrow');
-const TopControls = withClass('section', 'alarm-severity-top-controls');
-const StateSwitch = withClass('div', 'alarm-state-switch');
-const SearchBox = withClass('label', 'alarm-field alarm-search-box');
-const SeverityGrid = withClass('section', 'alarm-severity-grid');
-const SeverityTop = withClass('div', 'alarm-severity-card-top');
-const DefinitionList = withClass('ul', 'alarm-definition-list');
-const CardMetric = withClass('div', 'alarm-card-metric');
-const MainGrid = withClass('section', 'alarm-severity-main-grid');
-const PanelLabel = withClass('span', 'alarm-panel-label');
-const Panel = withClass('article', 'alarm-panel');
-const PanelHeader = withClass('div', 'alarm-panel-header');
-const PanelMeta = withClass('span', 'alarm-panel-meta');
-const TableFrame = withClass('div', 'alarm-table-frame');
-const SeverityTable = withClass('table', 'alarm-table');
-const TimeCell = withClass('div', 'alarm-time-cell');
-const MonoText = withClass('span', 'alarm-mono');
-const StatusPill = withClass('span', 'alarm-status-pill');
-const EmptyState = withClass('div', 'alarm-empty-state');
-
-const SwitchButton = ({ $active, className, ...props }) => (
-  <button className={cx('alarm-state-switch__button', $active && 'is-active', className)} {...props} />
-);
-
-const SeverityCard = ({ $severity, $active, className, ...props }) => (
-  <button className={cx('alarm-severity-card', $severity && `alarm-severity-card--${$severity}`, $active && 'is-active', className)} {...props} />
-);
-
-const SeverityChip = ({ $severity, className, ...props }) => (
-  <span className={cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className)} {...props} />
-);
 export default AlarmSeverityPage;

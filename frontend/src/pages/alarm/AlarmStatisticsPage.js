@@ -1,5 +1,40 @@
 import { useMemo, useState } from 'react';
-import './AlarmStatisticsPage.css';
+import {
+  PageShell,
+  PageHeader,
+  TitleBlock,
+  Eyebrow,
+  ControlRow,
+  StateSwitch,
+  FilterField,
+  MetricGrid,
+  MetricCard,
+  MetricLabel,
+  DashboardGrid,
+  Panel,
+  PanelHeader,
+  PanelLabel,
+  PanelMeta,
+  BarChart,
+  BarColumn,
+  BarTrack,
+  RatioWrap,
+  LegendList,
+  HorizontalList,
+  HorizontalItem,
+  ProgressTrack,
+  TableFrame,
+  RankTable,
+  RankBadge,
+  MonoText,
+  EmptyState,
+  SwitchButton,
+  BarFill,
+  DonutChart,
+  LegendItem,
+  ProgressFill,
+  SeverityChip
+} from './AlarmStatisticsPageCss';
 import { FiBarChart2, FiCalendar, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
 
 const dailyCounts = [
@@ -240,66 +275,4 @@ function AlarmStatisticsPage() {
   );
 }
 
-function cx(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-function withClass(Tag, baseClass) {
-  return function ClassComponent({ className, ...props }) {
-    return <Tag className={cx(baseClass, className)} {...props} />;
-  };
-}
-
-const PageShell = withClass('main', 'alarm-statistics-page');
-const PageHeader = withClass('section', 'alarm-page-header');
-const TitleBlock = withClass('div', 'alarm-title-block');
-const Eyebrow = withClass('span', 'alarm-eyebrow');
-const ControlRow = withClass('section', 'alarm-control-row');
-const StateSwitch = withClass('div', 'alarm-state-switch');
-const FilterField = withClass('label', 'alarm-field alarm-stat-filter-field');
-const MetricGrid = withClass('section', 'alarm-stat-metric-grid');
-const MetricCard = withClass('article', 'alarm-stat-metric-card');
-const MetricLabel = withClass('div', 'alarm-stat-metric-label');
-const DashboardGrid = withClass('section', 'alarm-stat-dashboard-grid');
-const Panel = withClass('article', 'alarm-panel');
-const PanelHeader = withClass('div', 'alarm-panel-header');
-const PanelLabel = withClass('span', 'alarm-panel-label');
-const PanelMeta = withClass('span', 'alarm-panel-meta');
-const BarChart = withClass('div', 'alarm-bar-chart');
-const BarColumn = withClass('div', 'alarm-bar-column');
-const BarTrack = withClass('div', 'alarm-bar-track');
-const RatioWrap = withClass('div', 'alarm-ratio-wrap');
-const LegendList = withClass('div', 'alarm-legend-list');
-const HorizontalList = withClass('div', 'alarm-horizontal-list');
-const HorizontalItem = withClass('div', 'alarm-horizontal-item');
-const ProgressTrack = withClass('div', 'alarm-progress-track');
-const TableFrame = withClass('div', 'alarm-table-frame');
-const RankTable = withClass('table', 'alarm-table');
-const RankBadge = withClass('span', 'alarm-rank-badge');
-const MonoText = withClass('span', 'alarm-mono');
-const EmptyState = withClass('div', 'alarm-empty-state');
-
-const SwitchButton = ({ $active, className, ...props }) => (
-  <button className={cx('alarm-state-switch__button', $active && 'is-active', className)} {...props} />
-);
-
-const BarFill = ({ $value, className, ...props }) => (
-  <div className={cx('alarm-bar-fill', `alarm-bar-fill--${Math.round($value || 0)}`, className)} {...props} />
-);
-
-const DonutChart = ({ $critical, $warning, className, ...props }) => (
-  <div className={cx('alarm-donut-chart', $critical + $warning > 0 && 'has-data', className)} {...props} />
-);
-
-const LegendItem = ({ $severity, className, ...props }) => (
-  <div className={cx('alarm-legend-item', $severity && `alarm-legend-item--${$severity}`, className)} {...props} />
-);
-
-const ProgressFill = ({ $value, className, ...props }) => (
-  <div className={cx('alarm-progress-fill', `alarm-progress-fill--${Math.round($value || 0)}`, className)} {...props} />
-);
-
-const SeverityChip = ({ $severity, className, ...props }) => (
-  <span className={cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className)} {...props} />
-);
 export default AlarmStatisticsPage;
