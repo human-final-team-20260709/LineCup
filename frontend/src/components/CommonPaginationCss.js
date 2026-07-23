@@ -2,9 +2,10 @@ import styled from 'styled-components';
 
 export const PaginationRoot = styled.nav`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
   margin-top: auto;
   padding: 14px 16px;
   border-top: 1px solid #334155;
@@ -28,7 +29,9 @@ export const PaginationControls = styled.div`
   align-items: center;
   justify-content: center;
   gap: 6px;
+  max-width: 100%;
   overflow-x: auto;
+  padding: 2px;
 `;
 
 export const PageButton = styled.button`
@@ -59,5 +62,10 @@ export const PageButton = styled.button`
   &:disabled {
     cursor: not-allowed;
     opacity: 0.42;
+  }
+
+  @media (max-width: 560px) {
+    min-width: 38px;
+    min-height: 36px;
   }
 `;

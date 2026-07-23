@@ -18,12 +18,16 @@ const colors = {
 };
 
 export const AuthShell = styled.main`
-  min-height: 100%;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
   background: ${colors.background};
   color: ${colors.text};
   padding: 32px;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
+  display: grid;
+  place-items: center;
 
   @media (max-width: 768px) {
     padding: 16px;
@@ -31,15 +35,17 @@ export const AuthShell = styled.main`
 `;
 
 export const LoginLayout = styled.section`
+  width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+  gap: 24px;
   align-items: stretch;
-  max-width: 1180px;
+  max-width: 1080px;
   margin: 0 auto;
 
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
+    max-width: 680px;
   }
 `;
 
@@ -47,11 +53,15 @@ export const PageIntro = styled.div`
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surfaceLow};
-  padding: 24px;
+  padding: clamp(28px, 4vw, 40px);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 360px;
+  justify-content: center;
+  min-height: 420px;
+
+  @media (max-width: 860px) {
+    min-height: auto;
+  }
 `;
 
 export const SectionLabel = styled.span`
@@ -65,17 +75,39 @@ export const SectionLabel = styled.span`
 `;
 
 export const PageTitle = styled.h1`
-  margin: 16px 0 8px;
-  font-size: clamp(32px, 6vw, 48px);
+  margin: 16px 0 10px;
+  font-size: clamp(36px, 5vw, 52px);
   font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
 `;
 
 export const MutedText = styled.p`
-  margin: 8px 0 0;
+  max-width: 620px;
+  margin: 6px 0 0;
   color: ${colors.textMuted};
+  font-size: 16px;
+  line-height: 26px;
+`;
+
+export const FeatureList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+`;
+
+export const FeatureChip = styled.span`
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid ${colors.border};
+  border-radius: 4px;
+  background: ${colors.surface};
+  color: ${colors.text};
+  padding: 8px 12px;
   font-size: 14px;
+  font-weight: 700;
   line-height: 20px;
 `;
 
@@ -122,7 +154,7 @@ export const AuthCard = styled.section`
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surface};
-  padding: 24px;
+  padding: clamp(28px, 4vw, 40px);
 `;
 
 export const CardHeader = styled.div`
@@ -134,9 +166,9 @@ export const CardHeader = styled.div`
 
   h2 {
     margin: 4px 0 0;
-    font-size: 24px;
+    font-size: clamp(24px, 3vw, 30px);
     font-weight: 600;
-    line-height: 32px;
+    line-height: 1.3;
   }
 `;
 
@@ -165,7 +197,7 @@ export const Label = styled.label`
 
 export const Input = styled.input`
   width: 100%;
-  min-height: 44px;
+  min-height: 50px;
   box-sizing: border-box;
   border: 1px solid ${colors.border};
   border-radius: 4px;
@@ -181,11 +213,12 @@ export const Input = styled.input`
 
   &:focus {
     border-color: ${colors.primary};
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
   }
 `;
 
 export const Button = styled.button`
-  min-height: 46px;
+  min-height: 50px;
   border: 1px solid ${colors.primary};
   border-radius: 4px;
   background: ${colors.primary};
@@ -202,6 +235,16 @@ export const Button = styled.button`
   &:hover {
     background: #6bff8f;
   }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
 `;
 
 export const HelperLinkGroup = styled.nav`
@@ -215,7 +258,7 @@ export const HelperLinkGroup = styled.nav`
 `;
 
 export const ActionLink = styled(Link)`
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surfaceHigh};
@@ -231,6 +274,12 @@ export const ActionLink = styled(Link)`
 
   &:hover {
     border-color: ${colors.primary};
+    background: ${colors.surfaceHighest};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
   }
 `;
 
