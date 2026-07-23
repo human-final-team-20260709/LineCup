@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.net.URI;
+
+import static org.springframework.data.domain.Sort.Direction.DESC;
 import java.util.List;
 
 @RestController
@@ -35,11 +37,13 @@ public class InventoryMovementController {
     private final InventoryMovementService inventoryMovementService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public InventoryMovementResponse registerMovement(
+    public ResponseEntity<InventoryMovementResponse> registerMovement(
             @Valid @RequestBody InventoryMovementRequest request
     ) {
-        return inventoryMovementService.registerMovement(request);
+        InventoryMovementResponse response = inventoryMovementService.registerMovement(request);
+        return ResponseEntity.created(URI.create(
+                "/api/inventory-movements/" + response.movementId()
+        )).body(response);
     }
 
     @GetMapping
@@ -51,7 +55,11 @@ public class InventoryMovementController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant occurredFrom,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant occurredTo,
-            @PageableDefault(size = 20) Pageable pageable
+            @PageableDefault(
+                    size = 20,
+                    sort = {"occurredAt", "movementId"},
+                    direction = DESC
+            ) Pageable pageable
     ) {
         return inventoryMovementService.searchMovements(
                 keyword,

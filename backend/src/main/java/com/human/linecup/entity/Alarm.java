@@ -90,7 +90,7 @@ public class Alarm {
     ) {
         AlarmStatus next = Objects.requireNonNull(status, "알람 상태는 필수입니다.");
         if (this.status == AlarmStatus.RESOLVED && next != AlarmStatus.RESOLVED) {
-            throw new IllegalStateException("처리 완료된 알람은 다시 열 수 없습니다.");
+            throw new BusinessConflictException("처리 완료된 알람은 다시 열 수 없습니다.");
         }
         if (next == AlarmStatus.RESOLVED) {
             if (handler == null || handlingContent == null || handlingContent.isBlank()) {

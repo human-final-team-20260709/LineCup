@@ -20,6 +20,8 @@ public interface ProductionLotRepository extends JpaRepository<ProductionLot, Lo
 
     boolean existsByLotNo(String lotNo);
 
+    boolean existsByWorkOrderWorkOrderId(Long workOrderId);
+
     @EntityGraph(attributePaths = {"workOrder", "workOrder.product"})
     List<ProductionLot> findByWorkOrderWorkOrderIdOrderByStartedAtDesc(Long workOrderId);
 

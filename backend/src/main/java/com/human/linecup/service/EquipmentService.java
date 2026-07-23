@@ -7,10 +7,13 @@ import com.human.linecup.dto.response.EquipmentAssignmentResponse;
 import com.human.linecup.dto.response.EquipmentDetailResponse;
 import com.human.linecup.dto.response.EquipmentResponse;
 import com.human.linecup.entity.Equipment;
+import com.human.linecup.entity.ApprovalStatus;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.Equipment.EquipmentStatus;
 import com.human.linecup.entity.EquipmentAssignment;
 import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.User;
+import com.human.linecup.entity.UserRole;
 import com.human.linecup.repository.EquipmentAssignmentRepository;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.ManufacturingProcessRepository;
@@ -46,10 +49,10 @@ public class EquipmentService {
     @Transactional
     public EquipmentResponse createEquipment(EquipmentSaveRequest request) {
         if (equipmentRepository.existsByEquipmentCode(request.equipmentCode())) {
-            throw new IllegalArgumentException("이미 존재하는 설비 코드입니다: " + request.equipmentCode());
+            throw new BusinessConflictException("이미 존재하는 설비 코드입니다: " + request.equipmentCode());
         }
         if (equipmentRepository.existsByEquipmentName(request.equipmentName())) {
-            throw new IllegalArgumentException("이미 존재하는 설비명입니다: " + request.equipmentName());
+            throw new BusinessConflictException("이미 존재하는 설비명입니다: " + request.equipmentName());
         }
 
         ManufacturingProcess process = getProcess(request.processId());
@@ -70,11 +73,11 @@ public class EquipmentService {
 
         if (!equipment.getEquipmentCode().equals(request.equipmentCode())
                 && equipmentRepository.existsByEquipmentCode(request.equipmentCode())) {
-            throw new IllegalArgumentException("이미 존재하는 설비 코드입니다: " + request.equipmentCode());
+            throw new BusinessConflictException("이미 존재하는 설비 코드입니다: " + request.equipmentCode());
         }
         if (!equipment.getEquipmentName().equals(request.equipmentName())
                 && equipmentRepository.existsByEquipmentName(request.equipmentName())) {
-            throw new IllegalArgumentException("이미 존재하는 설비명입니다: " + request.equipmentName());
+            throw new BusinessConflictException("이미 존재하는 설비명입니다: " + request.equipmentName());
         }
 
         ManufacturingProcess process = getProcess(request.processId());
@@ -134,6 +137,11 @@ public class EquipmentService {
         Equipment equipment = getEquipmentForUpdate(equipmentId);
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 사용자입니다: " + request.userId()));
+        if (user.getApprovalStatus() != ApprovalStatus.APPROVED
+                || !user.isActive()
+                || user.getRole() != UserRole.OPERATOR) {
+            throw new BusinessConflictException("승인된 활성 작업자만 설비에 배정할 수 있습니다.");
+        }
 
         Instant now = Instant.now();
         findActiveAssignment(equipmentId).ifPresent(current -> current.end(now));
@@ -147,7 +155,9 @@ public class EquipmentService {
     public void unassignWorker(Long equipmentId) {
         getEquipmentForUpdate(equipmentId);
         EquipmentAssignment assignment = findActiveAssignment(equipmentId)
-                .orElseThrow(() -> new IllegalStateException("현재 배정된 작업자가 없습니다. equipmentId=" + equipmentId));
+                .orElseThrow(() -> new BusinessConflictException(
+                        "현재 배정된 작업자가 없습니다. equipmentId=" + equipmentId
+                ));
         assignment.end(Instant.now());
     }
 

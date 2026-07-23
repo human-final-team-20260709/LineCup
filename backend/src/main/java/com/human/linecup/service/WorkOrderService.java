@@ -14,10 +14,13 @@ import com.human.linecup.dto.response.WorkOrderDetailResponse;
 import com.human.linecup.dto.response.WorkOrderStatusHistoryResponse;
 import com.human.linecup.dto.response.WorkOrderSummaryResponse;
 import com.human.linecup.entity.Equipment;
+import com.human.linecup.entity.ApprovalStatus;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.Product;
 import com.human.linecup.entity.ProductionProcessProgress;
 import com.human.linecup.entity.User;
+import com.human.linecup.entity.UserRole;
 import com.human.linecup.entity.WorkOrder;
 import com.human.linecup.entity.WorkOrderEquipment;
 import com.human.linecup.entity.WorkOrderStatusHistory;
@@ -107,6 +110,7 @@ public class WorkOrderService {
         User supervisor = userRepository.findById(request.supervisorUserId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "지시자를 찾을 수 없습니다. (supervisorUserId=" + request.supervisorUserId() + ")"));
+        requireAssignableUser(supervisor, UserRole.SUPERVISOR, "지시자");
 
         String workOrderNo = generateWorkOrderNo(request.plannedStartDate());
         WorkOrder workOrder = WorkOrder.create(
@@ -122,7 +126,7 @@ public class WorkOrderService {
         try {
             workOrder = workOrderRepository.saveAndFlush(workOrder);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException(
+            throw new BusinessConflictException(
                     "이미 사용 중인 작업지시 번호입니다. (workOrderNo=" + workOrderNo + ")", e);
         }
 
@@ -134,6 +138,7 @@ public class WorkOrderService {
 
         assignWorkers(workOrder, request.workerUserIds());
         assignEquipments(workOrder, request.equipmentIds());
+        productionLotService.createPendingForWorkOrder(workOrder);
 
         return toSummary(workOrder);
     }
@@ -155,6 +160,7 @@ public class WorkOrderService {
             User worker = userRepository.findById(userId)
                     .orElseThrow(() -> new NoSuchElementException(
                             "작업자를 찾을 수 없습니다. (userId=" + userId + ")"));
+            requireAssignableUser(worker, UserRole.OPERATOR, "작업자");
             workOrderWorkerRepository.save(WorkOrderWorker.create(workOrder, worker));
         }
     }
@@ -199,8 +205,14 @@ public class WorkOrderService {
     public Page<WorkOrderSummaryResponse> search(WorkOrder.Status status, String keyword, Pageable pageable) {
         Pageable effectivePageable = pageable.getSort().isSorted()
                 ? pageable
-                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
-                        Sort.by(Sort.Direction.DESC, "registeredAt"));
+                : PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(
+                                Sort.Order.desc("registeredAt"),
+                                Sort.Order.desc("workOrderId")
+                        )
+                );
 
         Specification<WorkOrder> spec = fetchDetailsSpecification().and(filterSpecification(status, keyword));
         return workOrderRepository.findAll(spec, effectivePageable).map(this::toSummary);
@@ -289,6 +301,7 @@ public class WorkOrderService {
         User changedBy = userRepository.findById(request.changedByUserId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "처리자를 찾을 수 없습니다. (userId=" + request.changedByUserId() + ")"));
+        requireApprovedActiveUser(changedBy, "처리자");
 
         Instant now = Instant.now();
         validateSingleActiveWorkOrder(workOrderId, request.action());
@@ -354,7 +367,7 @@ public class WorkOrderService {
                 .stream()
                 .anyMatch(order -> !order.getWorkOrderId().equals(workOrderId));
         if (anotherActiveOrderExists) {
-            throw new IllegalStateException("이미 진행 중이거나 보류된 작업지시가 있습니다.");
+            throw new BusinessConflictException("이미 진행 중이거나 보류된 작업지시가 있습니다.");
         }
     }
 
@@ -371,15 +384,8 @@ public class WorkOrderService {
         User supervisor = userRepository.findById(request.supervisorUserId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "지시자를 찾을 수 없습니다. (supervisorUserId=" + request.supervisorUserId() + ")"));
+        requireAssignableUser(supervisor, UserRole.SUPERVISOR, "지시자");
         workOrder.changeSupervisor(supervisor);
-        return toSummary(workOrder);
-    }
-
-    // 생산 실적 집계(다른 도메인)에서 작업지시 합계를 갱신할 때 호출한다.
-    @Transactional
-    public WorkOrderSummaryResponse updateQuantities(Long workOrderId, int currentQty, int goodQty, int defectQty) {
-        WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
-        workOrder.updateQuantities(currentQty, goodQty, defectQty);
         return toSummary(workOrder);
     }
 
@@ -389,11 +395,12 @@ public class WorkOrderService {
     public UserResponse addWorker(Long workOrderId, Long userId) {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
         if (workOrderWorkerRepository.existsByWorkOrder_WorkOrderIdAndUser_UserId(workOrderId, userId)) {
-            throw new IllegalStateException("이미 배정된 작업자입니다. (userId=" + userId + ")");
+            throw new BusinessConflictException("이미 배정된 작업자입니다. (userId=" + userId + ")");
         }
         User worker = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException(
                         "작업자를 찾을 수 없습니다. (userId=" + userId + ")"));
+        requireAssignableUser(worker, UserRole.OPERATOR, "작업자");
         workOrderWorkerRepository.save(WorkOrderWorker.create(workOrder, worker));
         return toUserResponse(worker);
     }
@@ -420,7 +427,7 @@ public class WorkOrderService {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
         workOrderWorkerRepository.deleteByWorkOrder_WorkOrderId(workOrderId);
         workOrderWorkerRepository.flush();
-        assignWorkers(workOrder, request == null ? List.of() : request.ids());
+        assignWorkers(workOrder, request.ids());
         return getWorkers(workOrderId);
     }
 
@@ -428,7 +435,7 @@ public class WorkOrderService {
     public List<EquipmentResponse> replaceEquipments(Long workOrderId, IdListRequest request) {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
         if (workOrder.getStatus() != WorkOrder.Status.PENDING) {
-            throw new IllegalStateException("대기 중인 작업지시의 설비만 변경할 수 있습니다.");
+            throw new BusinessConflictException("대기 중인 작업지시의 설비만 변경할 수 있습니다.");
         }
         workOrderEquipmentRepository.deleteByWorkOrder_WorkOrderId(workOrderId);
         workOrderEquipmentRepository.flush();
@@ -457,14 +464,35 @@ public class WorkOrderService {
         long hold = workOrderRepository.countByStatus(WorkOrder.Status.HOLD);
         long done = workOrderRepository.countByStatus(WorkOrder.Status.DONE);
 
-        double averageProgressRate = total == 0
+        List<WorkOrder> activeOrders = workOrderRepository.findByStatusInOrderByRegisteredAtAsc(
+                EnumSet.of(WorkOrder.Status.IN_PROGRESS, WorkOrder.Status.HOLD)
+        );
+        double averageProgressRate = activeOrders.isEmpty()
                 ? 0.0
-                : Math.round(workOrderRepository.findAll().stream()
+                : Math.round(activeOrders.stream()
                         .mapToDouble(WorkOrder::getProgressRate)
                         .average()
                         .orElse(0.0) * 10) / 10.0;
 
         return new WorkOrderDashboardSummaryResponse(total, pending, inProgress, hold, done, averageProgressRate);
+    }
+
+    private void requireAssignableUser(User user, UserRole requiredRole, String roleName) {
+        requireApprovedActiveUser(user, roleName);
+        if (user.getRole() != requiredRole) {
+            throw new BusinessConflictException(
+                    roleName + " 역할의 사용자만 배정할 수 있습니다. (userId=" + user.getUserId() + ")"
+            );
+        }
+    }
+
+    private void requireApprovedActiveUser(User user, String roleName) {
+        if (user.getApprovalStatus() != ApprovalStatus.APPROVED || !user.isActive()) {
+            throw new BusinessConflictException(
+                    "승인된 활성 " + roleName + "만 배정하거나 처리할 수 있습니다. (userId="
+                            + user.getUserId() + ")"
+            );
+        }
     }
 
     // ===== 응답 DTO 매핑 =====

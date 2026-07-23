@@ -38,7 +38,7 @@ public class ProductionResultService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "존재하지 않는 생산 실적입니다: " + normalizedResultNo
                 ));
-        return toResponse(result, null);
+        return toResponse(result);
     }
 
     public ProductionResultResponse getProductionResultByLot(Long productionLotId) {
@@ -50,7 +50,7 @@ public class ProductionResultService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "생산 LOT에 연결된 생산 실적이 없습니다: " + productionLotId
                 ));
-        return toResponse(result, null);
+        return toResponse(result);
     }
 
     public List<ProductionResultResponse> getProductionResults(Instant from, Instant to) {
@@ -135,11 +135,11 @@ public class ProductionResultService {
 
     private List<ProductionResultResponse> toResponses(List<ProductionResult> results) {
         return results.stream()
-                .map(result -> toResponse(result, null))
+                .map(this::toResponse)
                 .toList();
     }
 
-    private ProductionResultResponse toResponse(ProductionResult result, String processName) {
+    private ProductionResultResponse toResponse(ProductionResult result) {
         WorkOrder workOrder = result.getWorkOrder();
         Product product = workOrder.getProduct();
         Instant occurredAt = result.getLastAggregatedAt() == null
@@ -156,7 +156,6 @@ public class ProductionResultService {
                 product.getProductId(),
                 product.getProductCode(),
                 product.getProductName(),
-                processName,
                 result.getTargetQty(),
                 result.getProductionQty(),
                 result.getGoodQty(),

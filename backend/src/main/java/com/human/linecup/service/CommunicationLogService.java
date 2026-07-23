@@ -41,23 +41,25 @@ public class CommunicationLogService {
     }
 
     public Page<CommunicationLogResponse> getRecentLogs(Pageable pageable) {
-        return communicationLogRepository.findAllByOrderByOccurredAtDesc(pageable).map(this::toResponse);
+        return communicationLogRepository.findAllByOrderByOccurredAtDescLogIdDesc(pageable).map(this::toResponse);
     }
 
     public Page<CommunicationLogResponse> getLogsByDevice(Long deviceId, Pageable pageable) {
         return communicationLogRepository
-                .findAllByDevice_DeviceIdOrderByOccurredAtDesc(deviceId, pageable)
+                .findAllByDevice_DeviceIdOrderByOccurredAtDescLogIdDesc(deviceId, pageable)
                 .map(this::toResponse);
     }
 
     public Page<CommunicationLogResponse> getLogsByCollector(Long collectorId, Pageable pageable) {
         return communicationLogRepository
-                .findAllByCollector_CollectorIdOrderByOccurredAtDesc(collectorId, pageable)
+                .findAllByCollector_CollectorIdOrderByOccurredAtDescLogIdDesc(collectorId, pageable)
                 .map(this::toResponse);
     }
 
     public Page<CommunicationLogResponse> getLogsBySuccess(boolean success, Pageable pageable) {
-        return communicationLogRepository.findAllBySuccessOrderByOccurredAtDesc(success, pageable).map(this::toResponse);
+        return communicationLogRepository
+                .findAllBySuccessOrderByOccurredAtDescLogIdDesc(success, pageable)
+                .map(this::toResponse);
     }
 
     public Page<CommunicationLogResponse> getLogsBetween(Instant from, Instant to, Pageable pageable) {
@@ -65,21 +67,34 @@ public class CommunicationLogService {
             throw new IllegalArgumentException("조회 시작 시각은 종료 시각보다 이전이어야 합니다.");
         }
         return communicationLogRepository
-                .findAllByOccurredAtBetweenOrderByOccurredAtDesc(from, to, pageable)
+                .findAllByOccurredAtGreaterThanEqualAndOccurredAtLessThanOrderByOccurredAtDescLogIdDesc(
+                        from,
+                        to,
+                        pageable
+                )
                 .map(this::toResponse);
     }
 
     public long getFailureCount(Instant from, Instant to) {
-        return communicationLogRepository.countBySuccessFalseAndOccurredAtBetween(from, to);
+        if (!from.isBefore(to)) {
+            throw new IllegalArgumentException("조회 시작 시각은 종료 시각보다 이전이어야 합니다.");
+        }
+        return communicationLogRepository
+                .countBySuccessFalseAndOccurredAtGreaterThanEqualAndOccurredAtLessThan(from, to);
     }
 
     private CommunicationLogResponse toResponse(CommunicationLog log) {
+        L1Device device = log.getDevice();
+        L2Collector collector = log.getCollector();
         return new CommunicationLogResponse(
                 log.getLogId(),
                 log.getDirection(),
                 log.getDirection().getLabel(),
-                log.getDevice() == null ? null : log.getDevice().getDeviceId(),
-                log.getCollector() == null ? null : log.getCollector().getCollectorId(),
+                device == null ? null : device.getDeviceId(),
+                collector == null ? null : collector.getCollectorId(),
+                device == null ? "L2_COLLECTOR" : "L1_DEVICE",
+                device == null ? collector.getCollectorCode() : device.getEquipment().getEquipmentCode(),
+                device == null ? collector.getName() : device.getEquipment().getEquipmentName(),
                 log.isSuccess(),
                 log.getFailReason(),
                 log.getOccurredAt()

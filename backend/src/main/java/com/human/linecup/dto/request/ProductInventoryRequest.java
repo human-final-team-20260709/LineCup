@@ -8,8 +8,8 @@ import java.time.LocalDate;
 
 public record ProductInventoryRequest(
         @NotNull @Positive Long productionLotId,
-        @NotNull @PositiveOrZero Integer currentQty,
         @NotNull @PositiveOrZero Integer safetyStockQty,
-        LocalDate expiryDate
+        LocalDate expiryDate,
+        @NotNull @Positive Long handledById
 ) {
 }

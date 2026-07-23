@@ -2,12 +2,13 @@ package com.human.linecup.controller;
 
 import com.human.linecup.dto.response.L1DeviceResponse;
 import com.human.linecup.service.L1DeviceService;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
@@ -19,17 +20,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/l1-devices")
 @RequiredArgsConstructor
+@Validated
 public class L1DeviceController {
 
     private final L1DeviceService l1DeviceService;
 
     @GetMapping
-    public ResponseEntity<List<L1DeviceResponse>> getAll() {
-        return ResponseEntity.ok(l1DeviceService.getAll());
+    public List<L1DeviceResponse> getAll() {
+        return l1DeviceService.getAll();
     }
 
     @GetMapping("/equipments/{equipmentId}")
-    public ResponseEntity<L1DeviceResponse> getByEquipmentId(@PathVariable Long equipmentId) {
-        return ResponseEntity.ok(l1DeviceService.getByEquipmentId(equipmentId));
+    public L1DeviceResponse getByEquipmentId(
+            @PathVariable @Positive Long equipmentId
+    ) {
+        return l1DeviceService.getByEquipmentId(equipmentId);
     }
 }

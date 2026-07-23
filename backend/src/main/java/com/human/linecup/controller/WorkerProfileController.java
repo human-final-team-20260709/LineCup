@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.net.URI;
 
 @Validated
 @RestController
@@ -37,7 +40,10 @@ public class WorkerProfileController {
     public ResponseEntity<WorkerProfileResponse> create(
             @Valid @RequestBody WorkerProfileRequest request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(workerProfileService.create(request));
+        WorkerProfileResponse response = workerProfileService.create(request);
+        return ResponseEntity.created(URI.create(
+                "/api/worker-profiles/" + response.workerProfileId()
+        )).body(response);
     }
 
     @PutMapping("/{workerProfileId}")
@@ -67,7 +73,10 @@ public class WorkerProfileController {
         PageRequest pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(Sort.Direction.ASC, "user.name")
+                Sort.by(
+                        Sort.Order.asc("user.name"),
+                        Sort.Order.asc("workerProfileId")
+                )
         );
         return workerProfileService.search(keyword, pageable);
     }
@@ -89,8 +98,8 @@ public class WorkerProfileController {
     }
 
     @DeleteMapping("/{workerProfileId}")
-    public ResponseEntity<Void> delete(@PathVariable @Positive Long workerProfileId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable @Positive Long workerProfileId) {
         workerProfileService.delete(workerProfileId);
-        return ResponseEntity.noContent().build();
     }
 }

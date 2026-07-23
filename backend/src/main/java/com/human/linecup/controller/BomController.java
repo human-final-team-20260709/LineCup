@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.net.URI;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
@@ -36,9 +38,9 @@ public class BomController {
     private final BomService bomService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public BomResponse createBom(@Valid @RequestBody BomRequest request) {
-        return bomService.createBom(request);
+    public ResponseEntity<BomResponse> createBom(@Valid @RequestBody BomRequest request) {
+        BomResponse response = bomService.createBom(request);
+        return ResponseEntity.created(URI.create("/api/boms/" + response.bomId())).body(response);
     }
 
     @GetMapping

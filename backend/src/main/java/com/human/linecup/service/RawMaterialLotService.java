@@ -1,10 +1,14 @@
 package com.human.linecup.service;
 
 import com.human.linecup.dto.request.RawMaterialLotRequest;
+import com.human.linecup.dto.request.InventoryMovementRequest;
 import com.human.linecup.dto.response.RawMaterialLotResponse;
 import com.human.linecup.entity.InventoryStatus;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.RawMaterial;
 import com.human.linecup.entity.RawMaterialLot;
+import com.human.linecup.entity.InventoryMovement.InventoryItemType;
+import com.human.linecup.entity.InventoryMovement.InventoryMovementType;
 import com.human.linecup.repository.RawMaterialLotRepository;
 import com.human.linecup.repository.RawMaterialRepository;
 import java.util.NoSuchElementException;
@@ -14,7 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.ZoneOffset;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,17 +29,18 @@ public class RawMaterialLotService {
 
     private final RawMaterialLotRepository rawMaterialLotRepository;
     private final RawMaterialRepository rawMaterialRepository;
+    private final InventoryMovementService inventoryMovementService;
 
     @Transactional
     public RawMaterialLotResponse receiveLot(RawMaterialLotRequest request) {
         if (rawMaterialLotRepository.existsByMaterialLotNo(request.materialLotNo())) {
-            throw new IllegalArgumentException("이미 사용 중인 원자재 LOT 번호입니다: " + request.materialLotNo());
+            throw new BusinessConflictException("이미 사용 중인 원자재 LOT 번호입니다: " + request.materialLotNo());
         }
         if (rawMaterialLotRepository.existsBySupplierNameAndSupplierLotNo(
                 request.supplierName(),
                 request.supplierLotNo()
         )) {
-            throw new IllegalArgumentException("해당 공급사의 LOT 번호가 이미 등록되어 있습니다.");
+            throw new BusinessConflictException("해당 공급사의 LOT 번호가 이미 등록되어 있습니다.");
         }
 
         RawMaterial material = rawMaterialRepository.findById(request.materialId())
@@ -52,7 +57,18 @@ public class RawMaterialLotService {
                 request.receivedQty(),
                 request.receivedDate()
         );
-        return toResponse(rawMaterialLotRepository.save(lot));
+        RawMaterialLot saved = rawMaterialLotRepository.saveAndFlush(lot);
+        inventoryMovementService.registerMovement(new InventoryMovementRequest(
+                InventoryItemType.RAW_MATERIAL,
+                InventoryMovementType.INBOUND,
+                saved.getMaterialLotId(),
+                null,
+                request.receivedQty(),
+                request.handledById(),
+                request.receivedDate().atStartOfDay(ZoneOffset.UTC).toInstant(),
+                "원자재 LOT 최초 입고"
+        ));
+        return toResponse(saved);
     }
 
     public RawMaterialLotResponse getLot(Long materialLotId) {
@@ -90,16 +106,6 @@ public class RawMaterialLotService {
                         pageable
                 )
                 .map(this::toResponse);
-    }
-
-    @Transactional
-    public RawMaterialLotResponse adjustCurrentQty(Long materialLotId, BigDecimal currentQty) {
-        RawMaterialLot lot = rawMaterialLotRepository.findByIdForUpdate(materialLotId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "원자재 LOT를 찾을 수 없습니다: " + materialLotId
-                ));
-        lot.adjustCurrentQty(currentQty);
-        return toResponse(lot);
     }
 
     private RawMaterialLot findLot(Long materialLotId) {

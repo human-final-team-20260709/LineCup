@@ -10,6 +10,7 @@ import com.human.linecup.dto.response.DefectDetailResponse;
 import com.human.linecup.dto.response.DefectHandlingHistoryResponse;
 import com.human.linecup.dto.response.DefectSummaryResponse;
 import com.human.linecup.entity.Defect;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.DefectHandleMethod;
 import com.human.linecup.entity.DefectHandlingHistory;
 import com.human.linecup.entity.DefectStatus;
@@ -275,7 +276,7 @@ public class DefectService {
         Defect defect = findDefect(defectId);
         if (defect.getStatus() == DefectStatus.COMPLETED
                 && nextStatus != DefectStatus.COMPLETED) {
-            throw new IllegalStateException("처리 완료된 불량은 다시 열 수 없습니다.");
+            throw new BusinessConflictException("처리 완료된 불량은 다시 열 수 없습니다.");
         }
         User handler = findUser(request.handlerId());
 
@@ -352,7 +353,7 @@ public class DefectService {
                 ));
             }
             if (condition.endAt() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                predicates.add(criteriaBuilder.lessThan(
                         root.get("occurredAt"),
                         condition.endAt()
                 ));
@@ -570,8 +571,11 @@ public class DefectService {
     }
 
     private void validatePeriod(Instant startAt, Instant endAt) {
-        if (startAt != null && endAt != null && startAt.isAfter(endAt)) {
-            throw new IllegalArgumentException("조회 시작 시각은 종료 시각보다 늦을 수 없습니다.");
+        if ((startAt == null) != (endAt == null)) {
+            throw new IllegalArgumentException("조회 시작 시각과 종료 시각은 함께 입력해야 합니다.");
+        }
+        if (startAt != null && !endAt.isAfter(startAt)) {
+            throw new IllegalArgumentException("조회 종료 시각은 시작 시각보다 이후여야 합니다.");
         }
     }
 

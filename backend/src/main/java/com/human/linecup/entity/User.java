@@ -106,7 +106,7 @@ public class User {
 
     public void changeActive(boolean active) {
         if (active && approvalStatus != ApprovalStatus.APPROVED) {
-            throw new IllegalStateException("승인된 계정만 활성화할 수 있습니다.");
+            throw new BusinessConflictException("승인된 계정만 활성화할 수 있습니다.");
         }
         this.active = active;
     }

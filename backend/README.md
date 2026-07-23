@@ -22,7 +22,9 @@ com.human.linecup
 - 숫자 PK와 업무 식별자를 구분한다. 예: `userId`/`empNo`, `productId`/`productCode`.
 - 요청 상태는 enum 코드로 받고 응답에는 코드와 `...Label`을 함께 제공한다.
 - 작업지시 상태는 `PENDING / IN_PROGRESS / HOLD / DONE`을 사용하며 화면에는 `PENDING`을 "대기"로 표시한다.
-- 생산 LOT는 작업 시작 전에 `PENDING`으로 만들고 작업지시와 같은 트랜잭션에서 시작·보류·재개·완료한다.
+- 생산 LOT는 작업지시 등록 트랜잭션에서 하나만 자동 생성하며, 작업지시와 같은 트랜잭션에서 시작·보류·재개·완료한다.
+- 기간 조회는 UTC `Instant`의 반개구간 `[from, to)`를 사용하고 시작·종료 시각을 함께 받는다.
+- 검증 실패·미존재·상태 충돌·내부 오류는 각각 400·404·409·500 `ProblemDetail`로 반환한다.
 
 ## L2 HTTP DTO 계약
 
@@ -36,13 +38,25 @@ com.human.linecup
 
 `L2ActiveWorkOrderResponse`는 `workOrderId`, `productionLotId`, `status`, `targetQty`, `currentQty`, `hourlyTargetQty`, `equipmentCodes`를 모두 제공한다. 모든 POST는 저장이 완료된 뒤에만 2xx를 반환해야 C의 JSONL 스풀에서 안전하게 제거된다.
 
+L2 상태 조회는 `mes.l2.stale-after`(기본 30초) 동안 하트비트가 없으면 저장값과 별개로 `STOPPED`/`DISCONNECTED` 상태를 반환한다.
+
+## 조회 전용 기준정보 API
+
+| 경로 | 설명 |
+| --- | --- |
+| `GET /api/products`, `GET /api/products/{productId}` | 제품 검색·상세 |
+| `GET /api/raw-materials`, `GET /api/raw-materials/{materialId}` | 원자재 검색·상세 |
+| `GET /api/manufacturing-processes?activeOnly=true`, `GET /api/manufacturing-processes/{processId}` | 공정 목록·상세 |
+
+기준정보 생성·수정 서비스는 내부에 존재하지만 위 컨트롤러에서는 조회만 공개한다.
+
 ## 논리 ERD
 
 ```mermaid
 erDiagram
     PRODUCT ||--o{ WORK_ORDER : orders
     USER ||--o{ WORK_ORDER : supervises
-    WORK_ORDER ||--o{ PRODUCTION_LOT : creates
+    WORK_ORDER ||--|| PRODUCTION_LOT : creates
     WORK_ORDER ||--o{ HOURLY_PRODUCTION : aggregates
     WORK_ORDER ||--o{ EQUIPMENT_TELEMETRY : measures
     PRODUCTION_LOT ||--|| PRODUCTION_RESULT : summarizes
@@ -75,6 +89,7 @@ erDiagram
 - `defect`: `defect_no`, `idempotency_key`가 각각 유일하며 LOT·설비·불량 유형을 FK로 참조한다.
 - `bom`/`bom_item`: BOM 헤더 버전과 원자재 행을 분리한다. `(product_id, version)` 및 `bom_code`가 유일하다.
 - `inventory_movement`: 원자재 LOT 또는 완제품 재고 중 정확히 하나만 참조한다.
+- `production_lot`: `work_order_id`가 유일하며 LOT 번호는 작업지시 번호의 `WO-`를 `LOT-`로 치환해 생성한다.
 - `production_process_progress`: `(production_lot_id, process_id)`가 유일하다.
 - `raw_material_lot`: 내부 `material_lot_no`와 공급사 LOT 번호를 구분한다.
 
@@ -88,6 +103,17 @@ erDiagram
 | `WorkOrder` | 작업지시 전체 합계 |
 
 각 단계의 저장 필드는 의도적인 집계 스냅샷이다. 모든 갱신은 `production/currentQty = goodQty + defectQty`와 음수 금지 규칙을 적용하고, 비율은 `ProductionQuantityPolicy`의 한 자리 반올림 규칙을 사용한다.
+
+생산수량은 `HourlyProductionService` 집계만 변경한다. 원자재·완제품 현재고는 직접 수정하지 않으며, 최초 입고·생산 투입·투입 취소·일반 입출고/조정을 모두 `InventoryMovement`와 같은 트랜잭션에서 반영한다.
+
+- `POST /api/raw-material-lots`는 `handledById`를 받고 최초 `INBOUND` 이동을 생성한다.
+- `POST /api/product-inventories`는 완료 LOT의 `goodQty`를 최초 수량으로 사용하고 `handledById`의 `INBOUND` 이동을 생성한다.
+- `POST /api/production-lots/{productionLotId}/materials`는 원자재 `OUTBOUND` 이동을 생성한다.
+- `POST /api/production-lots/{productionLotId}/materials/{materialLotId}/reversal`은 담당자와 사유를 받아 역방향 `INBOUND` 이동을 생성한다.
+
+## 인증 범위
+
+현재 인증 API는 데모용이다. 로그인 실패는 401, 미승인·비활성 계정은 403으로 구분하지만 세션/JWT, 엔드포인트 권한 강제, 일회성 비밀번호 재설정 토큰은 제공하지 않는다. 운영 환경의 인증·인가 수단으로 사용해서는 안 된다.
 
 ## 초기 기준 데이터
 
