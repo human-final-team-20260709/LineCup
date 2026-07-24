@@ -275,6 +275,61 @@ export const PanelMeta = styled.span`
   white-space: nowrap;
 `;
 
+export const ProcessPager = styled.nav`
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+
+  > span {
+    ${mono};
+    min-width: 34px;
+    color: ${colors.muted};
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+    white-space: nowrap;
+  }
+`;
+
+export const ProcessPageButton = styled.button`
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid ${colors.border};
+  border-radius: 4px;
+  background: ${colors.surfaceLow};
+  color: ${colors.primary};
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease;
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: ${colors.primary};
+    background: ${colors.surfaceHigh};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    color: ${colors.dim};
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+`;
+
 export const ChartBody = styled.div`
   position: relative;
   width: 100%;
@@ -350,7 +405,13 @@ export const TooltipKey = styled.span`
 
 export const ProcessList = styled.div`
   display: grid;
+  min-height: 318px;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 0;
+
+  @media (max-width: 520px) {
+    min-height: 270px;
+  }
 `;
 
 export const ProcessItem = styled.div`

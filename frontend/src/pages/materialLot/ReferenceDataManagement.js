@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import styled from "styled-components";
 import { referenceApi } from "../../api/services";
 import { queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
@@ -9,9 +10,10 @@ import { QueryStatus } from "../../components/ApiState";
 import {
   Badge,
   Button,
-  Card,
   FormGrid,
   Input,
+  ModalBackdrop,
+  ModalPanel,
   Select,
   Table,
   TableWrap,
@@ -21,6 +23,100 @@ import {
 } from "../../components/OperationalUi";
 
 const PAGE_SIZE = 10;
+
+const ReferenceModalPanel = styled(ModalPanel)`
+  display: flex;
+  width: min(720px, 100%);
+  max-height: min(88vh, 760px);
+  max-height: min(88dvh, 760px);
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+`;
+
+const ReferenceModalHeader = styled.header`
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-low);
+`;
+
+const ReferenceModalTitle = styled.h2`
+  margin: 0;
+  color: var(--color-text);
+  font-size: 21px;
+  line-height: 29px;
+`;
+
+const ReferenceModalDescription = styled.p`
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 21px;
+`;
+
+const ReferenceModalCloseButton = styled.button`
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+`;
+
+const ReferenceForm = styled(FormGrid)`
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+`;
+
+const ReferenceModalMessage = styled.p`
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 180, 171, 0.34);
+  border-radius: 4px;
+  background: #3b1d26;
+  color: var(--color-danger);
+  font-size: 13px;
+  line-height: 20px;
+`;
+
+const ReferenceModalActions = styled.div`
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+`;
+
 const emptyProduct = {
   productId: null,
   productCode: "",
@@ -38,6 +134,40 @@ const emptyMaterial = {
   status: "ACTIVE",
 };
 
+function ReferenceModal({ children, description, labelledBy, onClose, title }) {
+  return (
+    <ModalBackdrop
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <ReferenceModalPanel
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={labelledBy}
+      >
+        <ReferenceModalHeader>
+          <div>
+            <ReferenceModalTitle id={labelledBy}>{title}</ReferenceModalTitle>
+            <ReferenceModalDescription>{description}</ReferenceModalDescription>
+          </div>
+          <ReferenceModalCloseButton
+            type="button"
+            aria-label={`${title} 창 닫기`}
+            onClick={onClose}
+          >
+            ×
+          </ReferenceModalCloseButton>
+        </ReferenceModalHeader>
+        {children}
+      </ReferenceModalPanel>
+    </ModalBackdrop>
+  );
+}
+
 export default function ReferenceDataManagement({ canManage = false }) {
   const queryClient = useQueryClient();
   const [section, setSection] = useState("product");
@@ -50,6 +180,30 @@ export default function ReferenceDataManagement({ canManage = false }) {
   const [productForm, setProductForm] = useState(null);
   const [materialForm, setMaterialForm] = useState(null);
   const [message, setMessage] = useState("");
+  const hasOpenForm = Boolean(productForm || materialForm);
+
+  useEffect(() => {
+    if (!hasOpenForm) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setProductForm(null);
+        setMaterialForm(null);
+        setMessage("");
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [hasOpenForm]);
 
   const productKeyword = useDebouncedValue(productKeywordDraft.trim());
   const materialKeyword = useDebouncedValue(materialKeywordDraft.trim());
@@ -191,19 +345,34 @@ export default function ReferenceDataManagement({ canManage = false }) {
               <option value="INACTIVE">사용 중지</option>
             </Select>
             {canManage && (
-              <Button type="button" onClick={() => setProductForm({ ...emptyProduct })}>
+              <Button
+                type="button"
+                onClick={() => {
+                  setMessage("");
+                  setProductForm({ ...emptyProduct });
+                }}
+              >
                 제품 등록
               </Button>
             )}
           </Toolbar>
 
           {productForm && (
-            <Card>
-              <h2>{productForm.productId ? "제품 수정" : "제품 등록"}</h2>
-              <FormGrid onSubmit={saveProduct}>
+            <ReferenceModal
+              labelledBy="product-reference-form-title"
+              title={productForm.productId ? "제품 수정" : "제품 등록"}
+              description="제품 코드, 분류, 단위와 사용 상태를 입력합니다."
+              onClose={() => {
+                setProductForm(null);
+                setMessage("");
+              }}
+            >
+              <ReferenceForm onSubmit={saveProduct}>
+                {message && <ReferenceModalMessage role="status">{message}</ReferenceModalMessage>}
                 <label>
                   제품 코드
                   <input
+                    autoFocus
                     maxLength="30"
                     value={productForm.productCode}
                     onChange={(event) => setProductForm({ ...productForm, productCode: event.target.value })}
@@ -249,16 +418,23 @@ export default function ReferenceDataManagement({ canManage = false }) {
                     <option value="INACTIVE">사용 중지</option>
                   </Select>
                 </label>
-                <div>
+                <ReferenceModalActions>
                   <Button disabled={productMutation.isPending}>
                     {productMutation.isPending ? "저장 중..." : "저장"}
                   </Button>{" "}
-                  <Button type="button" $secondary onClick={() => setProductForm(null)}>
+                  <Button
+                    type="button"
+                    $secondary
+                    onClick={() => {
+                      setProductForm(null);
+                      setMessage("");
+                    }}
+                  >
                     취소
                   </Button>
-                </div>
-              </FormGrid>
-            </Card>
+                </ReferenceModalActions>
+              </ReferenceForm>
+            </ReferenceModal>
           )}
 
           <QueryStatus query={productsQuery} empty={products.length === 0} />
@@ -286,7 +462,14 @@ export default function ReferenceDataManagement({ canManage = false }) {
                     <td><Badge $tone={toneForStatus(product.status)}>{product.statusLabel}</Badge></td>
                     {canManage && (
                       <td>
-                        <Button type="button" $secondary onClick={() => setProductForm({ ...product })}>
+                        <Button
+                          type="button"
+                          $secondary
+                          onClick={() => {
+                            setMessage("");
+                            setProductForm({ ...product });
+                          }}
+                        >
                           수정
                         </Button>
                       </td>
@@ -330,19 +513,34 @@ export default function ReferenceDataManagement({ canManage = false }) {
               <option value="INACTIVE">사용 중지</option>
             </Select>
             {canManage && (
-              <Button type="button" onClick={() => setMaterialForm({ ...emptyMaterial })}>
+              <Button
+                type="button"
+                onClick={() => {
+                  setMessage("");
+                  setMaterialForm({ ...emptyMaterial });
+                }}
+              >
                 원자재 등록
               </Button>
             )}
           </Toolbar>
 
           {materialForm && (
-            <Card>
-              <h2>{materialForm.materialId ? "원자재 수정" : "원자재 등록"}</h2>
-              <FormGrid onSubmit={saveMaterial}>
+            <ReferenceModal
+              labelledBy="material-reference-form-title"
+              title={materialForm.materialId ? "원자재 수정" : "원자재 등록"}
+              description="원자재 코드, 단위, 안전재고와 사용 상태를 입력합니다."
+              onClose={() => {
+                setMaterialForm(null);
+                setMessage("");
+              }}
+            >
+              <ReferenceForm onSubmit={saveMaterial}>
+                {message && <ReferenceModalMessage role="status">{message}</ReferenceModalMessage>}
                 <label>
                   원자재 코드
                   <input
+                    autoFocus
                     maxLength="30"
                     value={materialForm.materialCode}
                     onChange={(event) => setMaterialForm({ ...materialForm, materialCode: event.target.value })}
@@ -389,16 +587,23 @@ export default function ReferenceDataManagement({ canManage = false }) {
                     <option value="INACTIVE">사용 중지</option>
                   </Select>
                 </label>
-                <div>
+                <ReferenceModalActions>
                   <Button disabled={materialMutation.isPending}>
                     {materialMutation.isPending ? "저장 중..." : "저장"}
                   </Button>{" "}
-                  <Button type="button" $secondary onClick={() => setMaterialForm(null)}>
+                  <Button
+                    type="button"
+                    $secondary
+                    onClick={() => {
+                      setMaterialForm(null);
+                      setMessage("");
+                    }}
+                  >
                     취소
                   </Button>
-                </div>
-              </FormGrid>
-            </Card>
+                </ReferenceModalActions>
+              </ReferenceForm>
+            </ReferenceModal>
           )}
 
           <QueryStatus query={materialsQuery} empty={materials.length === 0} />
@@ -424,7 +629,14 @@ export default function ReferenceDataManagement({ canManage = false }) {
                     <td><Badge $tone={toneForStatus(material.status)}>{material.statusLabel}</Badge></td>
                     {canManage && (
                       <td>
-                        <Button type="button" $secondary onClick={() => setMaterialForm({ ...material })}>
+                        <Button
+                          type="button"
+                          $secondary
+                          onClick={() => {
+                            setMessage("");
+                            setMaterialForm({ ...material });
+                          }}
+                        >
                           수정
                         </Button>
                       </td>

@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { ModalPanel as OperationalModalPanel } from '../../components/OperationalUi';
 
 const badge = {
   success: { color: '#4be277', bg: 'rgba(75, 226, 119, 0.12)' },
@@ -506,5 +507,158 @@ export const ConditionApplyButton = styled.button`
   &:hover {
     border-color: #6bff8f;
     background: #6bff8f;
+  }
+`;
+
+export const InventoryTableShell = styled.section`
+  min-width: 0;
+  margin-bottom: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  overflow: hidden;
+`;
+
+export const InventoryTableViewport = styled.div`
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: var(--color-border-soft) var(--color-surface-lowest);
+`;
+
+export const InventoryModalPanel = styled(OperationalModalPanel)`
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  max-height: min(88vh, 820px);
+  max-height: min(88dvh, 820px);
+  padding: 0;
+  overflow: hidden;
+`;
+
+export const InventoryModalHeader = styled.header`
+  flex-shrink: 0;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-low);
+`;
+
+export const InventoryModalTitle = styled.h2`
+  margin: 0;
+  color: var(--color-text);
+  font-size: 21px;
+  line-height: 29px;
+`;
+
+export const InventoryModalDescription = styled.p`
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 21px;
+`;
+
+export const InventoryModalForm = styled.form`
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+`;
+
+export const InventoryModalBody = styled.div`
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 22px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  > p[role='alert'] {
+    margin: 16px 0 0;
+    color: var(--color-danger);
+    font-size: 13px;
+    line-height: 20px;
+  }
+`;
+
+export const InventoryModalFields = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const InventoryModalField = styled.label`
+  display: grid;
+  grid-column: ${({ $wide }) => ($wide ? '1 / -1' : 'auto')};
+  min-width: 0;
+  align-content: start;
+  gap: 7px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    outline: 0;
+    background: var(--color-surface-lowest);
+    color: var(--color-text);
+    padding: 9px 11px;
+    font-size: 14px;
+  }
+
+  input[type='date'] {
+    color-scheme: dark;
+  }
+
+  select {
+    padding-right: 34px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  input:hover,
+  select:hover {
+    border-color: var(--color-border-soft);
+  }
+
+  input:focus-visible,
+  select:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
+  }
+
+  @media (max-width: 640px) {
+    grid-column: 1;
+  }
+`;
+
+export const InventoryModalActions = styled.footer`
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-low);
+
+  > button {
+    min-width: 96px;
+  }
+
+  @media (max-width: 480px) {
+    > button {
+      flex: 1 1 0;
+      min-width: 0;
+    }
   }
 `;
