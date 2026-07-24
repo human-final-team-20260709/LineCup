@@ -131,8 +131,20 @@ function AlarmPage({ children }) {
 }
 
 function QualityPage({ children }) {
+  const { pathname } = useLocation();
+  const isDefectDetail =
+    pathname.startsWith("/quality/defects/") &&
+    pathname !== "/quality/defects/new";
+  const navItems = isDefectDetail
+    ? qualityNavItems.map((item) =>
+        item.to === "/quality/defects"
+          ? { ...item, end: true }
+          : item,
+      )
+    : qualityNavItems;
+
   return (
-    <SectionPage label="품질 관리 화면 이동" navItems={qualityNavItems}>
+    <SectionPage label="품질 관리 화면 이동" navItems={navItems}>
       {children}
     </SectionPage>
   );

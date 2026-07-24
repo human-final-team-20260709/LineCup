@@ -12,8 +12,11 @@ function withClass(Tag, baseClass) {
 
 export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
 & {
-  min-height: 100vh;
-  padding: 32px;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - 56px);
+  padding: 40px 32px 48px 88px;
+  overflow-x: clip;
   background: #0b1326;
   color: #dae2fd;
 }
@@ -39,7 +42,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
 
 & .alarm-page-header {
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 & .alarm-title-block {
@@ -58,8 +61,10 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
 
 & .alarm-title-block h1 {
   margin-bottom: 8px;
-  font-size: 24px;
-  line-height: 32px;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 & .alarm-title-block p {
@@ -78,10 +83,6 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   letter-spacing: 0.1em;
   line-height: 16px;
   text-transform: uppercase;
-}
-
-& .alarm-text-button:hover {
-  border-color: #4be277;
 }
 
 & .alarm-state-switch {
@@ -120,13 +121,26 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
 & .alarm-summary-card,
 & .alarm-panel,
 & .alarm-modal {
+  min-width: 0;
   border: 1px solid #334155;
   border-radius: 4px;
   background: #171f33;
 }
 
 & .alarm-summary-card {
+  position: relative;
+  overflow: hidden;
   padding: 16px;
+}
+
+& .alarm-summary-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: #4be277;
+  content: '';
 }
 
 & .alarm-summary-card strong {
@@ -152,10 +166,15 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   grid-template-columns: 150px 150px minmax(280px, 1fr) 180px 160px;
   gap: 8px;
   margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #131b2e;
 }
 
 & .alarm-field {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   height: 40px;
@@ -177,6 +196,16 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   font-size: 14px;
 }
 
+& .alarm-field svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+& .alarm-field input::placeholder {
+  color: #869585;
+}
+
 & .alarm-field input[type="date"] {
   color-scheme: dark;
 }
@@ -192,6 +221,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
 
 & .alarm-field:focus-within {
   border-color: #4be277;
+  box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.12);
 }
 
 & .alarm-panel-header {
@@ -217,7 +247,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
 
 & .alarm-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 900px;
   border-collapse: collapse;
 }
 
@@ -244,6 +274,23 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   line-height: 20px;
 }
 
+& .alarm-table td > strong,
+& .alarm-table td > small {
+  display: block;
+}
+
+& .alarm-table td > strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+& .alarm-table td > small {
+  margin-top: 3px;
+  color: #869585;
+  font-size: 12px;
+  line-height: 16px;
+}
+
 & .alarm-table tbody tr:nth-child(even) {
   background: rgba(6, 14, 32, 0.46);
 }
@@ -252,11 +299,11 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   cursor: pointer;
 }
 
-& .alarm-clickable-row:hover {
+& .alarm-table tbody .alarm-clickable-row:hover {
   background: rgba(75, 226, 119, 0.06);
 }
 
-& .alarm-clickable-row:focus {
+& .alarm-table tbody .alarm-clickable-row:focus {
   outline: 2px solid #4be277;
   outline-offset: -2px;
   background: rgba(75, 226, 119, 0.08);
@@ -314,21 +361,6 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   border-color: rgba(75, 226, 119, 0.3);
   background: rgba(75, 226, 119, 0.12);
   color: #4be277;
-}
-
-& .alarm-text-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  background: #131b2e;
-  color: #dae2fd;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 & .alarm-empty-state {
@@ -434,6 +466,99 @@ export const PageShell = styled.main.attrs({ className: 'alarm-history-page' })`
   line-height: 20px;
 }
 
+@media (max-width: 1180px) {
+  & .alarm-history-filter-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  & .alarm-history-filter-panel > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 820px) {
+  & {
+    padding-top: 32px;
+    padding-right: 20px;
+    padding-bottom: 40px;
+    padding-left: 68px;
+  }
+
+  & .alarm-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  & .alarm-summary-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 16px;
+  }
+
+  & .alarm-summary-card strong {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    margin-top: 0;
+  }
+
+  & .alarm-summary-card small {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  & {
+    min-height: calc(100dvh - 52px);
+    padding: 28px 16px 36px 56px;
+  }
+
+  & .alarm-page-header,
+  & .alarm-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  & .alarm-page-header {
+    margin-bottom: 18px;
+  }
+
+  & .alarm-title-block h1 {
+    font-size: 24px;
+  }
+
+  & .alarm-history-filter-panel {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  & .alarm-history-filter-panel > :nth-child(3) {
+    grid-column: auto;
+  }
+
+  & .alarm-field {
+    height: 44px;
+  }
+
+  & .alarm-panel-header {
+    gap: 8px;
+  }
+
+  & .alarm-table {
+    min-width: 900px;
+  }
+
+  & .alarm-table th,
+  & .alarm-table td {
+    padding: 10px;
+  }
+
+  & .alarm-modal-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+}
+
 `;
 export const PageHeader = withClass('section', 'alarm-page-header');
 export const TitleBlock = withClass('div', 'alarm-title-block');
@@ -452,7 +577,6 @@ export const TableFrame = withClass('div', 'alarm-table-frame');
 export const HistoryTable = withClass('table', 'alarm-table');
 export const TimeCell = withClass('div', 'alarm-time-cell');
 export const MonoText = withClass('span', 'alarm-mono');
-export const TextButton = withClass('button', 'alarm-text-button');
 export const EmptyState = withClass('div', 'alarm-empty-state');
 export const ModalBackdrop = withClass('div', 'alarm-modal-backdrop');
 export const Modal = withClass('div', 'alarm-modal');

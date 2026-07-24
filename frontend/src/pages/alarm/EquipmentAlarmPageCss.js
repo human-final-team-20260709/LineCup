@@ -18,8 +18,11 @@ const healthClassMap = {
 
 export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' })`
 & {
-  min-height: 100vh;
-  padding: 32px;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - 56px);
+  padding: 40px 32px 48px 88px;
+  overflow-x: clip;
   background: #0b1326;
   color: #dae2fd;
 }
@@ -39,7 +42,7 @@ export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' }
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 & .alarm-title-block {
@@ -48,10 +51,10 @@ export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' }
 
 & .alarm-title-block h1 {
   margin: 4px 0 8px;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 32px;
-  letter-spacing: 0;
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 & .alarm-title-block p {
@@ -150,6 +153,19 @@ export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' }
   display: grid;
   align-content: start;
   gap: 12px;
+}
+
+& .equipment-pagination {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #171f33;
+}
+
+& .equipment-pagination nav {
+  margin-top: 0;
+  border-top: 0;
 }
 
 & .equipment-card {
@@ -523,6 +539,65 @@ export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' }
   line-height: 20px;
 }
 
+@media (max-width: 1080px) {
+  & .equipment-content-grid {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  & .equipment-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  & {
+    padding: 32px 20px 40px 68px;
+  }
+
+  & .alarm-filter-bar {
+    grid-template-columns: minmax(0, 1fr) repeat(2, 160px);
+  }
+
+  & .equipment-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  & .equipment-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  & {
+    min-height: calc(100dvh - 52px);
+    padding: 32px 16px 32px 56px;
+  }
+
+  & .alarm-page-header,
+  & .alarm-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  & .alarm-filter-bar,
+  & .equipment-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  & .equipment-count-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  & .equipment-detail-grid {
+    padding: 12px;
+  }
+
+  & .equipment-sub-panel {
+    margin: 0 12px 12px;
+  }
+}
+
 `;
 export const PageHeader = withClass('section', 'alarm-page-header');
 export const TitleBlock = withClass('div', 'alarm-title-block');
@@ -533,6 +608,7 @@ export const SearchBox = withClass('label', 'alarm-field alarm-search-box');
 export const SelectBox = withClass('label', 'alarm-field alarm-select-box');
 export const ContentGrid = withClass('section', 'equipment-content-grid');
 export const EquipmentColumn = withClass('div', 'equipment-column');
+export const EquipmentPagination = withClass('div', 'equipment-pagination');
 export const CardTopLine = withClass('div', 'equipment-card-top-line');
 export const EquipmentTitle = withClass('div', 'equipment-title');
 export const EquipmentMeta = withClass('div', 'equipment-meta');
@@ -568,9 +644,11 @@ export const EquipmentCard = styled.button.attrs(({ $active, className }) => ({
   className: cx('equipment-card', $active && 'is-active', className),
 }))``;
 
-export const ProgressFill = styled.div.attrs(({ $value, className }) => ({
-  className: cx('alarm-progress-fill', `alarm-progress-fill--${Math.round($value || 0)}`, className),
-}))``;
+export const ProgressFill = styled.div.attrs(({ className }) => ({
+  className: cx('alarm-progress-fill', className),
+}))`
+  width: ${({ $value }) => Math.min(100, Math.max(0, Number($value) || 0))}%;
+`;
 
 export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
   className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
