@@ -5,7 +5,14 @@ import { queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
 import { toUtcInstant } from "../../api/time";
 import { useAuth } from "../../context/AuthContext";
-import { Button, Card, FormGrid, Select, pageContent } from "../../components/OperationalUi";
+import {
+  Button,
+  FormGrid,
+  ModalBackdrop,
+  ModalPanel,
+  Select,
+  pageContent,
+} from "../../components/OperationalUi";
 import { ApiErrors } from "../../components/ApiState";
 
 export default function StockMovementRegistration({ isOpen, onClose }) {
@@ -37,8 +44,8 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
       onClose();
     } catch (error) { setMessage(extractApiError(error)); }
   };
-  return <div role="presentation" onMouseDown={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.55)", zIndex: 1000, display: "grid", placeItems: "center", padding: 20 }}>
-    <Card role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()} style={{ width: "min(760px, 100%)", maxHeight: "90vh", overflow: "auto" }}>
+  return <ModalBackdrop role="presentation" onMouseDown={onClose}>
+    <ModalPanel role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
       <h2>재고 이동 등록</h2>
       <p>이미 생성된 원자재 LOT 또는 완제품 재고의 추가 입고·출고·조정만 처리합니다. 신규 LOT는 원자재 LOT 입고 기능을 이용해주세요.</p>
       <FormGrid onSubmit={submit}>
@@ -52,6 +59,6 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
       </FormGrid>
       {message && <p role="alert">{message}</p>}
       <ApiErrors queries={[rawQuery, productQuery]} />
-    </Card>
-  </div>;
+    </ModalPanel>
+  </ModalBackdrop>;
 }

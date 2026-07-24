@@ -15,7 +15,7 @@ const colors = {
 };
 
 export const PageShell = styled.main`
-  min-height: 100vh;
+  min-height: calc(100dvh - 56px);
   background: ${colors.background};
   color: ${colors.text};
   padding: 40px 32px;
@@ -27,6 +27,7 @@ export const PageShell = styled.main`
   justify-content: center;
 
   @media (max-width: 768px) {
+    min-height: calc(100dvh - 52px);
     padding: 16px;
   }
 `;
@@ -38,7 +39,7 @@ export const PageHeader = styled.header`
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surfaceLow};
-  padding: 22px 24px;
+  padding: 20px 22px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -93,6 +94,11 @@ export const TopLink = styled(Link)`
   &:hover {
     border-color: ${colors.primary};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
 `;
 
 export const FindLayout = styled.section`
@@ -107,7 +113,7 @@ export const FindCard = styled.section`
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: ${colors.surface};
-  padding: 32px;
+  padding: 28px;
   box-sizing: border-box;
   min-height: 420px;
   display: grid;
@@ -145,23 +151,24 @@ export const Label = styled.label`
 
 export const Input = styled.input`
   width: 100%;
-  min-height: 58px;
+  min-height: 50px;
   box-sizing: border-box;
   border: 1px solid ${colors.border};
   border-radius: 4px;
   background: #060e20;
   color: ${colors.text};
-  padding: 12px 16px;
+  padding: 10px 14px;
   font: inherit;
-  font-size: 18px;
+  font-size: 16px;
   outline: none;
 
   &::placeholder {
     color: #869585;
   }
 
-  &:focus {
+  &:focus-visible {
     border-color: ${colors.primary};
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
   }
 `;
 
@@ -172,13 +179,13 @@ export const ActionBar = styled.div`
 
 export const Button = styled.button`
   width: 100%;
-  min-height: 60px;
+  min-height: 52px;
   border: 1px solid ${colors.primary};
   border-radius: 4px;
   background: ${colors.primary};
   color: ${colors.primaryText};
   padding: 0 28px;
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 24px;
   cursor: pointer;
@@ -189,6 +196,16 @@ export const Button = styled.button`
 
   &:hover {
     background: #6bff8f;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 `;
 

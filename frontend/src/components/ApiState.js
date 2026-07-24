@@ -1,23 +1,40 @@
 import { extractApiError } from "../api/client";
+import styled from "styled-components";
+
+const ErrorMessage = styled.p`
+  margin: 12px 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 180, 171, 0.34);
+  border-radius: 4px;
+  background: rgba(147, 0, 10, 0.16);
+  color: var(--color-danger);
+  font-size: 13px;
+  line-height: 20px;
+`;
+
+const EmptyMessage = styled.p`
+  margin: 0;
+  padding: 28px 16px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
+`;
 
 export function ApiError({ error, prefix = "" }) {
   if (!error) {
     return null;
   }
   return (
-    <p role="alert" style={{ color: "#dc2626", margin: "12px 0" }}>
+    <ErrorMessage role="alert">
       {prefix}
       {extractApiError(error)}
-    </p>
+    </ErrorMessage>
   );
 }
 
 export function EmptyState({ children = "조회된 데이터가 없습니다." }) {
-  return (
-    <p style={{ color: "#64748b", padding: "24px 0", textAlign: "center" }}>
-      {children}
-    </p>
-  );
+  return <EmptyMessage>{children}</EmptyMessage>;
 }
 
 export function QueryStatus({ query, empty }) {

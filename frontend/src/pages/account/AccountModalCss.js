@@ -17,6 +17,8 @@ export const ModalBackdrop = styled.div`
   inset: 0;
   z-index: 1000;
   background: rgba(6, 14, 32, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,6 +35,7 @@ export const ModalCard = styled.div`
   position: relative;
   display: grid;
   gap: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
 
   > button:first-child {
     position: absolute;
@@ -48,6 +51,16 @@ export const ModalCard = styled.div`
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
+    &:hover {
+      border-color: ${colors.primary};
+      background: ${colors.surfaceLowest};
+    }
+
+    &:focus-visible {
+      outline: 2px solid ${colors.primary};
+      outline-offset: 2px;
+    }
   }
 
   h2 {
@@ -111,5 +124,10 @@ export const OutlineButton = styled.button`
   &:hover {
     border-color: ${colors.primary};
     background: ${colors.surfaceLowest};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
   }
 `;

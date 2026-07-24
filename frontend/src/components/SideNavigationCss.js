@@ -9,6 +9,8 @@ export const Backdrop = styled.button`
   padding: 0;
   border: 0;
   background: rgba(6, 14, 32, 0.56);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
   visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
   pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
@@ -24,7 +26,7 @@ export const NavigationPanel = styled.aside`
   left: 0;
   z-index: 910;
   display: flex;
-  width: min(304px, calc(100vw - 56px));
+  width: min(288px, calc(100vw - 48px));
   height: 100vh;
   height: 100dvh;
   flex-direction: column;
@@ -34,6 +36,10 @@ export const NavigationPanel = styled.aside`
   transform: translateX(${({ $isOpen }) => ($isOpen ? '0' : '-100%')});
   transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
+
+  @media (max-width: 720px) {
+    width: min(280px, calc(100vw - 44px));
+  }
 
   @media (prefers-reduced-motion: reduce) {
     transition-duration: 1ms;
@@ -45,9 +51,9 @@ export const ToggleButton = styled.button`
   top: 50%;
   left: 100%;
   display: grid;
-  width: 42px;
-  height: 96px;
-  padding: 0 7px 0 3px;
+  width: 38px;
+  height: 80px;
+  padding: 0 6px 0 2px;
   place-items: center;
   border: 1px solid ${({ $isOpen }) => ($isOpen ? '#4be277' : '#3d4a3d')};
   border-left: 0;
@@ -62,8 +68,8 @@ export const ToggleButton = styled.button`
     color 160ms ease;
 
   svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     stroke-width: 2.2;
   }
 
@@ -76,11 +82,22 @@ export const ToggleButton = styled.button`
     outline: 2px solid #6bff8f;
     outline-offset: 3px;
   }
+
+  @media (max-width: 720px) {
+    width: 34px;
+    height: 68px;
+    padding-right: 5px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
 `;
 
 export const Header = styled.header`
   flex: 0 0 auto;
-  padding: 24px 20px 20px;
+  padding: 20px 18px 18px;
   border-bottom: 1px solid #3d4a3d;
   background: #171f33;
 `;
@@ -137,7 +154,7 @@ export const BrandText = styled.div`
 export const SectionLabel = styled.p`
   flex: 0 0 auto;
   margin: 0;
-  padding: 20px 20px 10px;
+  padding: 18px 18px 8px;
   color: #869585;
   font-size: 11px;
   font-weight: 700;
@@ -149,7 +166,7 @@ export const Menu = styled.ul`
   flex: 1 1 auto;
   min-height: 0;
   margin: 0;
-  padding: 0 12px 16px;
+  padding: 0 10px 14px;
   overflow-y: auto;
   list-style: none;
   scrollbar-color: #3d4a3d transparent;
@@ -255,7 +272,7 @@ export const MenuLabel = styled.span`
 
 export const Footer = styled.footer`
   flex: 0 0 auto;
-  padding: 16px 20px 20px;
+  padding: 14px 18px 18px;
   border-top: 1px solid #3d4a3d;
   background: #171f33;
 `;

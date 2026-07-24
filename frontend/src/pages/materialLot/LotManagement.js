@@ -24,8 +24,24 @@ export default function LotManagement() {
   const lots = pageContent(lotsQuery.data);
   const detail = detailQuery.data;
   const registerUsage = async (event) => {
-    event.preventDefault(); const data = new FormData(event.currentTarget); setMessage("");
-    try { await usageMutation.mutateAsync({ id: selectedId, body: { materialLotId: Number(data.get("materialLotId")), usedQty: Number(data.get("usedQty")), handledById: user.userId } }); event.currentTarget.reset(); setMessage("사용 자재를 등록했습니다."); } catch (error) { setMessage(extractApiError(error)); }
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    setMessage("");
+    try {
+      await usageMutation.mutateAsync({
+        id: selectedId,
+        body: {
+          materialLotId: Number(data.get("materialLotId")),
+          usedQty: Number(data.get("usedQty")),
+          handledById: user.userId,
+        },
+      });
+      form.reset();
+      setMessage("사용 자재를 등록했습니다.");
+    } catch (error) {
+      setMessage(extractApiError(error));
+    }
   };
   return <>
     <Toolbar><Input value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} placeholder="LOT·작업지시·제품 검색" /></Toolbar>

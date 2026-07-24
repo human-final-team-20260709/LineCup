@@ -9,9 +9,10 @@ import { ApiErrors, EmptyState, QueryStatus } from "../../components/ApiState";
 import {
   Badge,
   Button,
-  Card,
   FormGrid,
   Input,
+  ModalBackdrop,
+  ModalPanel,
   Select,
   Table,
   TableWrap,
@@ -42,28 +43,18 @@ const emptyRawLotForm = () => ({
 
 function Modal({ children, onClose }) {
   return (
-    <div
+    <ModalBackdrop
       role="presentation"
       onMouseDown={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(15,23,42,.55)",
-        zIndex: 1000,
-        display: "grid",
-        placeItems: "center",
-        padding: 20,
-      }}
     >
-      <Card
+      <ModalPanel
         role="dialog"
         aria-modal="true"
         onMouseDown={(event) => event.stopPropagation()}
-        style={{ width: "min(820px, 100%)", maxHeight: "90vh", overflowY: "auto" }}
       >
         {children}
-      </Card>
-    </div>
+      </ModalPanel>
+    </ModalBackdrop>
   );
 }
 

@@ -16,7 +16,10 @@ const colors = {
 };
 
 export const PageShell = styled.main`
+  width: 100%;
   min-height: 100vh;
+  min-height: 100svh;
+  box-sizing: border-box;
   background: ${colors.background};
   color: ${colors.text};
   padding: 32px;
@@ -89,6 +92,11 @@ export const TopLink = styled(Link)`
   &:hover {
     border-color: ${colors.primary};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
 `;
 
 export const FormLayout = styled.section`
@@ -152,6 +160,7 @@ const controlStyle = `
 
   &:focus {
     border-color: ${colors.primary};
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
   }
 `;
 
@@ -220,6 +229,11 @@ export const RadioCard = styled.label`
     font-size: 13px;
     line-height: 18px;
   }
+
+  &:focus-within {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
 `;
 
 export const RadioHeader = styled.div`
@@ -264,6 +278,16 @@ export const Button = styled.button`
   &:hover {
     background: #6bff8f;
   }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
 `;
 
 export const OutlineButton = styled.button`
@@ -279,6 +303,11 @@ export const OutlineButton = styled.button`
 
   &:hover {
     border-color: ${colors.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
   }
 `;
 
@@ -311,6 +340,11 @@ export const ModalCard = styled.section`
     background: ${colors.surfaceHigh};
     color: ${colors.text};
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid ${colors.primary};
+      outline-offset: 2px;
+    }
   }
 
   > svg {
