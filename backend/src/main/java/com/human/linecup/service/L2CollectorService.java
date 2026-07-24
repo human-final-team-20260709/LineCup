@@ -8,18 +8,13 @@ import com.human.linecup.entity.L2Collector;
 import com.human.linecup.repository.L2CollectorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 /**
  * L2 수집기 상태(백엔드 관점)를 관리한다.
@@ -35,7 +30,6 @@ public class L2CollectorService {
     private final L2CollectorRepository l2CollectorRepository;
     private final L1DeviceService l1DeviceService;
     private final CommunicationLogService communicationLogService;
-    private final PlatformTransactionManager transactionManager;
 
     @Value("${mes.l2.stale-after:30s}")
     private Duration staleAfter;
@@ -57,7 +51,6 @@ public class L2CollectorService {
                 ConnectionStatus.CONNECTED,
                 request.sentAt()
         );
-        l2CollectorRepository.save(collector);
 
         request.devices().forEach(device -> l1DeviceService.applyHeartbeat(device, request.sentAt()));
 
@@ -74,24 +67,7 @@ public class L2CollectorService {
 
     private L2Collector findOrCreate(String collectorCode) {
         return l2CollectorRepository.findByCollectorCode(collectorCode)
-                .orElseGet(() -> createSafely(collectorCode));
-    }
-
-    /**
-     * collector_code UNIQUE 제약을 고려한 방어적 upsert. name은 최초 등록 시 collectorCode로
-     * 초기화하고, 운영자가 설정 화면에서 나중에 사람이 읽기 좋은 이름으로 바꿀 수 있게 한다.
-     */
-    private L2Collector createSafely(String collectorCode) {
-        TransactionTemplate registrationTransaction = new TransactionTemplate(transactionManager);
-        registrationTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        try {
-            return Objects.requireNonNull(registrationTransaction.execute(status ->
-                    l2CollectorRepository.saveAndFlush(L2Collector.create(collectorCode, collectorCode))
-            ));
-        } catch (DataIntegrityViolationException raceLoserException) {
-            return l2CollectorRepository.findByCollectorCode(collectorCode)
-                    .orElseThrow(() -> raceLoserException);
-        }
+                .orElseGet(() -> l2CollectorRepository.save(L2Collector.create(collectorCode, collectorCode)));
     }
 
     private L2Collector findByCode(String collectorCode) {
