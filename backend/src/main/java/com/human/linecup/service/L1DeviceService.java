@@ -9,17 +9,12 @@ import com.human.linecup.entity.L1Device;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.L1DeviceRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 /**
  * L1 장비(TCP 서버로 동작하는 개별 설비 제어기)의 연결 상태를 관리한다.
@@ -34,7 +29,6 @@ public class L1DeviceService {
     private final L1DeviceRepository l1DeviceRepository;
     private final EquipmentRepository equipmentRepository;
     private final CommunicationLogService communicationLogService;
-    private final PlatformTransactionManager transactionManager;
 
     public List<L1DeviceResponse> getAll() {
         return l1DeviceRepository.findAllByOrderByEquipmentEquipmentIdAsc()
@@ -67,7 +61,6 @@ public class L1DeviceService {
                 : (success ? sentAt : device.getLastReceivedAt());
 
         device.updateConnection(deviceReport.connectionStatus(), deviceReport.port(), lastReceivedAt);
-        l1DeviceRepository.save(device);
 
         String failReason = success ? null : "L1 장비 연결 끊김: " + deviceReport.equipmentCode();
         communicationLogService.recordDeviceLog(device, CommunicationDirection.RX, success, failReason, sentAt);
@@ -75,25 +68,7 @@ public class L1DeviceService {
 
     private L1Device findOrCreate(Equipment equipment) {
         return l1DeviceRepository.findByEquipmentEquipmentId(equipment.getEquipmentId())
-                .orElseGet(() -> createSafely(equipment));
-    }
-
-    /**
-     * equipment_id UNIQUE 제약 위반 가능성을 대비한 방어적 upsert.
-     * 동시에 여러 하트비트 스레드가 같은 설비에 대해 최초 생성을 시도하는 극단적인 경쟁 상황에서도
-     * 예외 없이 기존 행을 재조회해 반환한다.
-     */
-    private L1Device createSafely(Equipment equipment) {
-        TransactionTemplate registrationTransaction = new TransactionTemplate(transactionManager);
-        registrationTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        try {
-            return Objects.requireNonNull(registrationTransaction.execute(status ->
-                    l1DeviceRepository.saveAndFlush(L1Device.create(equipment, null, null))
-            ));
-        } catch (DataIntegrityViolationException raceLoserException) {
-            return l1DeviceRepository.findByEquipmentEquipmentId(equipment.getEquipmentId())
-                    .orElseThrow(() -> raceLoserException);
-        }
+                .orElseGet(() -> l1DeviceRepository.save(L1Device.create(equipment, null, null)));
     }
 
     private L1Device findByEquipmentId(Long equipmentId) {
