@@ -5,6 +5,8 @@ import {
   PaginationRoot,
 } from './CommonPaginationCss';
 
+const MAX_VISIBLE_PAGES = 5;
+
 function CommonPagination({
   ariaLabel = '페이지 이동',
   currentPage,
@@ -17,6 +19,16 @@ function CommonPagination({
   const safeCurrentPage = Math.min(Math.max(currentPage, 1), safeTotalPages);
   const startItem = totalItems > 0 ? (safeCurrentPage - 1) * pageSize + 1 : 0;
   const endItem = Math.min(safeCurrentPage * pageSize, totalItems);
+  const visiblePageCount = Math.min(MAX_VISIBLE_PAGES, safeTotalPages);
+  const maxStartPage = safeTotalPages - visiblePageCount + 1;
+  const startPage = Math.min(
+    Math.max(safeCurrentPage - Math.floor(visiblePageCount / 2), 1),
+    maxStartPage,
+  );
+  const visiblePages = Array.from(
+    { length: visiblePageCount },
+    (_, index) => startPage + index,
+  );
 
   const moveToPage = (nextPage) => {
     onPageChange(Math.min(Math.max(nextPage, 1), safeTotalPages));
@@ -33,7 +45,7 @@ function CommonPagination({
         >
           이전
         </PageButton>
-        {Array.from({ length: safeTotalPages }, (_, index) => index + 1).map((page) => (
+        {visiblePages.map((page) => (
           <PageButton
             key={page}
             type="button"
