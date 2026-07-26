@@ -66,6 +66,7 @@ export const productionApi = {
   summary: (params) => get("/production-results/summary", params),
   byProduct: (params) => get("/production-results/by-product", params),
   byWorkOrder: (params) => get("/production-results/by-work-order", params),
+  byProcess: (params) => get("/production-results/by-process", params),
   hourly: (params) => get("/hourly-productions", params),
 };
 
@@ -82,7 +83,8 @@ export const defectApi = {
   list: (params) => get("/quality/defects", params),
   dashboard: () => get("/quality/defects/dashboard"),
   detail: (id) => get(`/quality/defects/${id}`),
-  byNumber: (number) => get(`/quality/defects/number/${encodeURIComponent(number)}`),
+  byNumber: (number) =>
+    get(`/quality/defects/number/${encodeURIComponent(number)}`),
   statistics: (params) => get("/quality/defects/statistics", params),
   types: () => get("/quality/defect-types"),
   create: (body) => post("/quality/defects", body),
