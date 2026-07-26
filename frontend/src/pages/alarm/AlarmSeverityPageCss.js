@@ -12,8 +12,11 @@ function withClass(Tag, baseClass) {
 
 export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })`
 & {
-  min-height: 100vh;
-  padding: 32px;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - 56px);
+  padding: 40px 32px 48px 88px;
+  overflow-x: clip;
   background: #0b1326;
   color: #dae2fd;
 }
@@ -32,7 +35,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 & .alarm-title-block {
@@ -41,10 +44,10 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
 
 & .alarm-title-block h1 {
   margin: 4px 0 8px;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 32px;
-  letter-spacing: 0;
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 & .alarm-title-block p {
@@ -189,6 +192,18 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   color: #4be277;
 }
 
+& .alarm-severity-card--info .alarm-severity-card-top svg {
+  color: #8bd5ff;
+}
+
+& .alarm-severity-card--warning .alarm-severity-card-top svg {
+  color: #ffb95f;
+}
+
+& .alarm-severity-card--critical .alarm-severity-card-top svg {
+  color: #ffb4ab;
+}
+
 & .alarm-definition-list {
   display: grid;
   gap: 6px;
@@ -230,7 +245,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
 
 & .alarm-severity-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -320,14 +335,14 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
 }
 
 & .alarm-table-frame {
-  overflow-x: visible;
+  overflow-x: auto;
 }
 
 & .alarm-table {
   width: 100%;
-  min-width: 0;
+  min-width: 820px;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 & .alarm-table th:nth-child(1),
@@ -432,6 +447,18 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   font-weight: 600;
 }
 
+& .alarm-status-pill.is-handled {
+  border-color: rgba(75, 226, 119, 0.3);
+  background: rgba(75, 226, 119, 0.12);
+  color: #4be277;
+}
+
+& .alarm-status-pill.is-pending {
+  border-color: rgba(255, 185, 95, 0.34);
+  background: rgba(255, 185, 95, 0.14);
+  color: #ffb95f;
+}
+
 & .alarm-severity-chip--info {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
@@ -479,6 +506,57 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   line-height: 20px;
 }
 
+@media (max-width: 1040px) {
+  & .alarm-severity-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  & {
+    padding: 32px 20px 40px 68px;
+  }
+
+  & .alarm-severity-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  & .alarm-severity-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  & {
+    min-height: calc(100dvh - 52px);
+    padding: 32px 16px 32px 56px;
+  }
+
+  & .alarm-page-header,
+  & .alarm-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  & .alarm-severity-top-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  & .alarm-state-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  & .alarm-state-switch__button {
+    min-width: 0;
+  }
+
+  & .alarm-definition-panel {
+    padding: 14px;
+  }
+}
+
 `;
 export const PageHeader = withClass('section', 'alarm-page-header');
 export const TitleBlock = withClass('div', 'alarm-title-block');
@@ -491,6 +569,8 @@ export const SeverityTop = withClass('div', 'alarm-severity-card-top');
 export const DefinitionList = withClass('ul', 'alarm-definition-list');
 export const CardMetric = withClass('div', 'alarm-card-metric');
 export const MainGrid = withClass('section', 'alarm-severity-main-grid');
+export const RuleBox = withClass('div', 'alarm-rule-box');
+export const RuleItem = withClass('div', 'alarm-rule-item');
 export const PanelLabel = withClass('span', 'alarm-panel-label');
 export const Panel = withClass('article', 'alarm-panel');
 export const PanelHeader = withClass('div', 'alarm-panel-header');
@@ -499,7 +579,6 @@ export const TableFrame = withClass('div', 'alarm-table-frame');
 export const SeverityTable = withClass('table', 'alarm-table');
 export const TimeCell = withClass('div', 'alarm-time-cell');
 export const MonoText = withClass('span', 'alarm-mono');
-export const StatusPill = withClass('span', 'alarm-status-pill');
 export const EmptyState = withClass('div', 'alarm-empty-state');
 
 export const SwitchButton = styled.button.attrs(({ $active, className }) => ({
@@ -515,6 +594,18 @@ export const SeverityCard = styled.button.attrs(({ $severity, $active, className
   ),
 }))``;
 
+export const DefinitionPanel = styled.article.attrs(({ $severity, className }) => ({
+  className: cx(
+    'alarm-definition-panel',
+    $severity && `alarm-definition-panel--${$severity}`,
+    className
+  ),
+}))``;
+
 export const SeverityChip = styled.span.attrs(({ $severity, className }) => ({
   className: cx('alarm-severity-chip', $severity && `alarm-severity-chip--${$severity}`, className),
+}))``;
+
+export const StatusPill = styled.span.attrs(({ $handled, className }) => ({
+  className: cx('alarm-status-pill', $handled ? 'is-handled' : 'is-pending', className),
 }))``;
