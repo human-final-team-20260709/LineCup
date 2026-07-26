@@ -32,8 +32,8 @@ export const ModalPanel = styled.section`
   display: flex;
   flex-direction: column;
   width: min(880px, 94vw);
-  height: min(760px, calc(100vh - 64px));
-  height: min(760px, calc(100dvh - 64px));
+  max-height: min(720px, calc(100vh - 64px));
+  max-height: min(720px, calc(100dvh - 64px));
   min-height: 0;
   border: 1px solid #334155;
   border-radius: 4px;
@@ -43,8 +43,8 @@ export const ModalPanel = styled.section`
 
   @media (max-width: 720px) {
     width: 100%;
-    height: calc(100vh - 32px);
-    height: calc(100dvh - 32px);
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
   }
 `;
 
@@ -68,6 +68,7 @@ export const ModalTitle = styled.h2`
 `;
 
 export const ModalDescription = styled.p`
+  max-width: 760px;
   margin: 4px 0 0;
   color: #869585;
   font-size: 13px;
@@ -168,13 +169,13 @@ export const ModalCloseButton = styled.button`
 `;
 
 export const ModalBody = styled.div`
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 0;
   display: grid;
   align-content: start;
   gap: 16px;
   padding: 18px 20px;
-  overflow-y: scroll;
+  overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -335,7 +336,6 @@ export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 16px;
 
   @media (max-width: 620px) {
     grid-template-columns: 1fr;
@@ -390,6 +390,9 @@ export const TextInput = styled.input`
 export const Select = styled.select`
   ${fieldStyle}
   padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export const TextArea = styled.textarea`
@@ -456,6 +459,17 @@ export const Notice = styled.div`
   }
 `;
 
+export const ModalFeedback = styled.p`
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 138, 131, 0.3);
+  border-radius: 4px;
+  background: rgba(255, 138, 131, 0.08);
+  color: #ffb4ae;
+  font-size: 12px;
+  line-height: 18px;
+`;
+
 export const ModalActions = styled.footer`
   display: flex;
   flex-shrink: 0;
@@ -481,6 +495,11 @@ export const SecondaryButton = styled.button`
   &:hover {
     border-color: #4be277;
   }
+
+  &:focus-visible {
+    outline: 2px solid #4be277;
+    outline-offset: 2px;
+  }
 `;
 
 export const PrimaryButton = styled.button`
@@ -498,5 +517,15 @@ export const PrimaryButton = styled.button`
   &:hover {
     border-color: #6bff8f;
     background: #6bff8f;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4be277;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 `;
