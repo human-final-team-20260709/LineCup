@@ -17,6 +17,17 @@ int main(void)
     HourlyAggregate closed;
     assert(!hourly_aggregator_add_result_at(&aggregator, DEFECT_OK, 20000, &closed));
     assert(!hourly_aggregator_add_result_at(&aggregator, DEFECT_SEALING, 30000, &closed));
+    HourlyAggregate snapshot;
+    assert(hourly_aggregator_snapshot(&aggregator, 40000, &snapshot));
+    assert(snapshot.work_order_id == 101);
+    assert(snapshot.bucket_start_ms == 10000);
+    assert(snapshot.bucket_end_ms == 40000);
+    assert(snapshot.production_qty == 2);
+    assert(snapshot.good_qty == 1);
+    assert(snapshot.defect_qty == 1);
+    assert(snapshot.is_partial);
+    assert(snapshot.close_reason == CLOSE_REASON_IN_PROGRESS);
+    assert(hourly_aggregator_is_active(&aggregator));
     assert(!hourly_aggregator_tick(&aggregator, 59999, &closed));
     assert(hourly_aggregator_tick(&aggregator, 60000, &closed));
     assert(closed.work_order_id == 101);

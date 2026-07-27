@@ -32,9 +32,9 @@ com.human.linecup
 | --- | --- | --- | --- |
 | `/api/l2/work-orders/active?collectorCode=...` | GET | `L2ActiveWorkOrderResponse` | 활성 작업 없음 `204`, 있으면 `200`; `equipmentCodes`는 비어 있을 수 없음 |
 | `/api/l2/telemetry/batch` | POST | `TelemetryBatchRequest` | `samples` 1개 이상, metric은 `TEMPERATURE/HUMIDITY/SPEED` |
-| `/api/l2/hourly-productions` | POST | `HourlyProductionRequest` | `(workOrderId, bucketStart)` 기준 멱등 갱신 |
+| `/api/l2/hourly-productions` | POST | `HourlyProductionRequest` | `(workOrderId, bucketStart)` 기준 멱등 갱신; `IN_PROGRESS` 스냅샷은 종료 집계를 되돌릴 수 없음 |
 | `/api/l2/defects` | POST | `DefectIngestRequest` | `idempotencyKey` 기준 중복 저장 방지 |
-| `/api/l2/status/heartbeat` | POST | `L2HeartbeatRequest` | `connectedL1Count`와 연결 장비 수가 일치해야 함 |
+| `/api/l2/status/heartbeat` | POST | `L2HeartbeatRequest` | `connectedL1Count`와 연결 장비 수가 일치해야 하며 장비별 `operatingStatus`를 설비 상태에 반영 |
 
 `L2ActiveWorkOrderResponse`는 `workOrderId`, `productionLotId`, `status`, `targetQty`, `currentQty`, `hourlyTargetQty`, `equipmentCodes`를 모두 제공한다. 모든 POST는 저장이 완료된 뒤에만 2xx를 반환해야 C의 JSONL 스풀에서 안전하게 제거된다.
 

@@ -5,6 +5,7 @@ import com.human.linecup.dto.response.L1DeviceResponse;
 import com.human.linecup.entity.CommunicationLog.CommunicationDirection;
 import com.human.linecup.entity.ConnectionStatus;
 import com.human.linecup.entity.Equipment;
+import com.human.linecup.entity.Equipment.EquipmentStatus;
 import com.human.linecup.entity.L1Device;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.L1DeviceRepository;
@@ -61,6 +62,7 @@ public class L1DeviceService {
                 : (success ? sentAt : device.getLastReceivedAt());
 
         device.updateConnection(deviceReport.connectionStatus(), deviceReport.port(), lastReceivedAt);
+        equipment.changeStatus(success ? deviceReport.operatingStatus() : EquipmentStatus.STOPPED);
 
         String failReason = success ? null : "L1 장비 연결 끊김: " + deviceReport.equipmentCode();
         communicationLogService.recordDeviceLog(device, CommunicationDirection.RX, success, failReason, sentAt);

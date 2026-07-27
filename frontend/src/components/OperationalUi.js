@@ -327,20 +327,26 @@ export const Badge = styled.span`
         ? "rgba(255, 180, 171, 0.38)"
         : $tone === "warn"
           ? "rgba(255, 185, 95, 0.38)"
-          : "rgba(75, 226, 119, 0.38)"};
+          : $tone === "neutral"
+            ? "rgba(148, 163, 184, 0.34)"
+            : "rgba(75, 226, 119, 0.38)"};
   border-radius: 999px;
   background: ${({ $tone }) =>
     $tone === "danger"
       ? "rgba(147, 0, 10, 0.18)"
       : $tone === "warn"
         ? "rgba(238, 152, 0, 0.14)"
-        : "rgba(75, 226, 119, 0.12)"};
+        : $tone === "neutral"
+          ? "rgba(71, 85, 105, 0.2)"
+          : "rgba(75, 226, 119, 0.12)"};
   color: ${({ $tone }) =>
     $tone === "danger"
       ? "var(--color-danger)"
       : $tone === "warn"
         ? "var(--color-warning)"
-        : "var(--color-primary)"};
+        : $tone === "neutral"
+          ? "var(--color-text-muted)"
+          : "var(--color-primary)"};
   padding: 3px 9px;
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas,
     monospace;

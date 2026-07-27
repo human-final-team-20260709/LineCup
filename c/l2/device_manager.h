@@ -20,6 +20,7 @@ typedef struct {
     int port;
     socket_t socket;
     bool connected;
+    MachineRunState operating_status;
     int64_t last_received_at_ms;
     int invalid_packets;
     pthread_mutex_t lock;

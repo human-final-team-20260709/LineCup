@@ -1,6 +1,7 @@
 package com.human.linecup.dto.request;
 
 import com.human.linecup.entity.ConnectionStatus;
+import com.human.linecup.entity.Equipment.EquipmentStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -35,6 +36,7 @@ public record L2HeartbeatRequest(
             @NotBlank @Size(max = 50) String equipmentCode,
             @NotNull @Positive Integer port,
             @NotNull ConnectionStatus connectionStatus,
+            @NotNull EquipmentStatus operatingStatus,
             Instant lastReceivedAt
     ) {
     }

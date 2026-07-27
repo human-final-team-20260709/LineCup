@@ -245,6 +245,11 @@ int api_send_heartbeat(ApiClient *client, const DeviceStatus *statuses, size_t c
         cJSON_AddStringToObject(device, "equipmentCode", statuses[i].equipment_code);
         cJSON_AddNumberToObject(device, "port", statuses[i].port);
         cJSON_AddStringToObject(device, "connectionStatus", statuses[i].connected ? "CONNECTED" : "DISCONNECTED");
+        cJSON_AddStringToObject(
+            device,
+            "operatingStatus",
+            machine_run_state_name(statuses[i].operating_status)
+        );
         if (statuses[i].last_received_at_ms > 0) {
             char last_received[MES_TIMESTAMP_SIZE];
             platform_format_utc(statuses[i].last_received_at_ms, last_received, sizeof(last_received));

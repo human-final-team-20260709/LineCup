@@ -30,6 +30,7 @@ ON DUPLICATE KEY UPDATE
     sequence_no = VALUES(sequence_no),
     is_active = VALUES(is_active);
 
+-- 실제 L1 포트(5001~5009)에 대응하는 제1생산라인 설비 9대만 등록한다.
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
 SELECT '혼합기 1호', 'MIXER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'MIXING'
@@ -103,53 +104,6 @@ CROSS JOIN (
     SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
 ) hundreds
 WHERE ones.n + tens.n * 10 + hundreds.n * 100 < 500;
-
--- 생산라인별 설비
-INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT
-    CONCAT(mp.process_name, ' 설비 2호'),
-    CONCAT(
-        CASE mp.process_code
-            WHEN 'MIXING' THEN 'MIXER'
-            WHEN 'ROLLING' THEN 'ROLLER'
-            WHEN 'NOODLE_MAKING' THEN 'NOODLE'
-            WHEN 'STEAMING' THEN 'STEAMER'
-            WHEN 'CUTTING' THEN 'CUTTER'
-            WHEN 'FRYING' THEN 'FRYER'
-            WHEN 'COOLING' THEN 'COOLER'
-            WHEN 'PACKING' THEN 'PACKER'
-            ELSE 'INSPECTOR'
-        END,
-        '-02'
-    ),
-    mp.process_id,
-    '제2생산라인',
-    'STOPPED'
-FROM manufacturing_process mp
-ORDER BY mp.sequence_no;
-
-INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT
-    CONCAT(mp.process_name, ' 설비 3호'),
-    CONCAT(
-        CASE mp.process_code
-            WHEN 'MIXING' THEN 'MIXER'
-            WHEN 'ROLLING' THEN 'ROLLER'
-            WHEN 'NOODLE_MAKING' THEN 'NOODLE'
-            WHEN 'STEAMING' THEN 'STEAMER'
-            WHEN 'CUTTING' THEN 'CUTTER'
-            WHEN 'FRYING' THEN 'FRYER'
-            WHEN 'COOLING' THEN 'COOLER'
-            WHEN 'PACKING' THEN 'PACKER'
-            ELSE 'INSPECTOR'
-        END,
-        '-03'
-    ),
-    mp.process_id,
-    '제3생산라인',
-    'STOPPED'
-FROM manufacturing_process mp
-ORDER BY mp.sequence_no;
 
 -- 사용자와 작업자
 INSERT INTO app_user (
@@ -226,14 +180,14 @@ SELECT
     e.equipment_id,
     TIMESTAMPADD(DAY, -(30 + MOD(wp.user_id, 120)), CURRENT_TIMESTAMP),
     CASE
-        WHEN wp.user_id BETWEEN 6 AND 15 THEN NULL
+        WHEN wp.user_id BETWEEN 6 AND 14 THEN NULL
         ELSE TIMESTAMPADD(DAY, -(1 + MOD(wp.user_id, 20)), CURRENT_TIMESTAMP)
     END
 FROM worker_profile wp
 JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(wp.user_id - 1, 9)
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(wp.user_id - 1, 3), 2, '0');
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 -- 제품과 BOM
 INSERT INTO product (
@@ -541,7 +495,7 @@ FROM work_order w
 CROSS JOIN manufacturing_process mp
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(w.work_order_id - 1, 3), 2, '0');
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 INSERT INTO work_order_worker (work_order_id, user_id)
 SELECT
@@ -594,12 +548,11 @@ JOIN work_order w ON w.work_order_id = pl.work_order_id
 CROSS JOIN manufacturing_process mp
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(w.work_order_id - 1, 3), 2, '0');
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 UPDATE equipment
 SET status = CASE
     WHEN equipment_code = 'STEAMER-01' THEN 'RUNNING'
-    WHEN equipment_code = 'PACKER-03' THEN 'ERROR'
     ELSE 'STOPPED'
 END;
 
@@ -920,11 +873,7 @@ FROM seed_sequence s
 JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(
-     1 + MOD(CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END - 1, 3),
-     2,
-     '0'
- );
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 INSERT INTO equipment_telemetry (
     equipment_id, work_order_id, metric_type, metric_value, unit, measured_at
@@ -940,11 +889,7 @@ FROM seed_sequence s
 JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(
-     1 + MOD(CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END - 1, 3),
-     2,
-     '0'
- );
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 INSERT INTO equipment_telemetry (
     equipment_id, work_order_id, metric_type, metric_value, unit, measured_at
@@ -960,11 +905,7 @@ FROM seed_sequence s
 JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(
-     1 + MOD(CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END - 1, 3),
-     2,
-     '0'
- );
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 -- 불량과 처리 이력
 INSERT INTO defect (
@@ -1000,7 +941,7 @@ CROSS JOIN (
 JOIN manufacturing_process mp ON mp.process_code = 'INSPECTION'
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(w.work_order_id - 1, 3), 2, '0')
+ AND RIGHT(e.equipment_code, 3) = '-01'
 JOIN defect_type dt
   ON dt.code = CASE MOD(w.work_order_id + d.slot_no, 5)
       WHEN 0 THEN 'SEALING'
@@ -1092,16 +1033,14 @@ FROM seed_sequence s
 JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(FLOOR((s.seq - 1) / 9), 3), 2, '0');
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 -- L1/L2 연결 상태와 통신 이력
 INSERT INTO l2_collector (
     collector_id, collector_code, name, status, connected_l1_count,
     backend_connection_status, last_sent_at
 ) VALUES
-    (1, 'L2-01', '제1생산라인 L2 수집기', 'RUNNING', 9, 'CONNECTED', CURRENT_TIMESTAMP - INTERVAL 3 SECOND),
-    (2, 'L2-02', '제2생산라인 L2 수집기', 'RUNNING', 9, 'CONNECTED', CURRENT_TIMESTAMP - INTERVAL 6 SECOND),
-    (3, 'L2-03', '제3생산라인 L2 수집기', 'STOPPED', 0, 'DISCONNECTED', CURRENT_TIMESTAMP - INTERVAL 2 HOUR);
+    (1, 'L2-01', '제1생산라인 L2 수집기', 'RUNNING', 9, 'CONNECTED', CURRENT_TIMESTAMP - INTERVAL 3 SECOND);
 
 INSERT INTO l1_device (
     device_id, equipment_id, ip_address, port, connection_status, last_received_at
@@ -1109,14 +1048,12 @@ INSERT INTO l1_device (
 SELECT
     e.equipment_id,
     e.equipment_id,
-    CONCAT('10.20.', 10 + FLOOR((e.equipment_id - 1) / 9), '.', 20 + MOD(e.equipment_id - 1, 9)),
-    9100 + FLOOR((e.equipment_id - 1) / 9) * 100 + MOD(e.equipment_id - 1, 9),
-    CASE WHEN e.equipment_id <= 18 THEN 'CONNECTED' ELSE 'DISCONNECTED' END,
-    CASE
-        WHEN e.equipment_id <= 18 THEN TIMESTAMPADD(SECOND, -MOD(e.equipment_id, 12), CURRENT_TIMESTAMP)
-        ELSE TIMESTAMPADD(HOUR, -2, CURRENT_TIMESTAMP)
-    END
-FROM equipment e;
+    CONCAT('10.20.10.', 20 + MOD(e.equipment_id - 1, 9)),
+    5001 + MOD(e.equipment_id - 1, 9),
+    'CONNECTED',
+    TIMESTAMPADD(SECOND, -MOD(e.equipment_id, 12), CURRENT_TIMESTAMP)
+FROM equipment e
+WHERE RIGHT(e.equipment_code, 3) = '-01';
 
 INSERT INTO communication_log (
     device_id, collector_id, direction, success, fail_reason, occurred_at
@@ -1132,14 +1069,14 @@ FROM seed_sequence s
 JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
 JOIN equipment e
   ON e.process_id = mp.process_id
- AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(FLOOR((s.seq - 1) / 9), 3), 2, '0');
+ AND RIGHT(e.equipment_code, 3) = '-01';
 
 INSERT INTO communication_log (
     device_id, collector_id, direction, success, fail_reason, occurred_at
 )
 SELECT
     NULL,
-    1 + MOD(s.seq - 1, 3),
+    1,
     'TX',
     MOD(s.seq, 37) <> 0,
     CASE WHEN MOD(s.seq, 37) = 0 THEN '백엔드 전송 지연으로 재전송 대기' ELSE NULL END,

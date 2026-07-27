@@ -13,6 +13,7 @@
 typedef struct {
     socket_t socket;
     pthread_mutex_t lock;
+    pthread_mutex_t send_lock;
     MachineRunState state;
     int target_qty;
     int processed_qty;
@@ -32,14 +33,17 @@ static double random_between(unsigned int *seed, double minimum, double maximum)
     return minimum + (maximum - minimum) * ratio;
 }
 
-static int send_value(socket_t socket, uint8_t type, int32_t value)
+static int send_value(MachineConnection *connection, uint8_t type, int32_t value)
 {
     uint8_t packet[MES_PACKET_SIZE];
     protocol_build(packet, type, value);
-    return net_send_all(socket, packet, sizeof(packet));
+    pthread_mutex_lock(&connection->send_lock);
+    int result = net_send_all(connection->socket, packet, sizeof(packet));
+    pthread_mutex_unlock(&connection->send_lock);
+    return result;
 }
 
-static void apply_command(MachineConnection *connection, uint8_t type, int32_t value)
+static MachineRunState apply_command(MachineConnection *connection, uint8_t type, int32_t value)
 {
     pthread_mutex_lock(&connection->lock);
     if (type == MSG_COMMAND_START) {
@@ -56,7 +60,9 @@ static void apply_command(MachineConnection *connection, uint8_t type, int32_t v
         connection->target_qty = 0;
         connection->processed_qty = 0;
     }
+    MachineRunState state = connection->state;
     pthread_mutex_unlock(&connection->lock);
+    return state;
 }
 
 static void *command_receive_loop(void *argument)
@@ -79,7 +85,8 @@ static void *command_receive_loop(void *argument)
             continue;
         }
         connection->invalid_packets = 0;
-        apply_command(connection, type, protocol_get_value(packet));
+        MachineRunState state = apply_command(connection, type, protocol_get_value(packet));
+        if (send_value(connection, MSG_MACHINE_STATE, (int32_t)state) < 0) break;
     }
 
     atomic_store(&connection->connected, 0);
@@ -108,9 +115,17 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
     atomic_init(&connection.connected, 1);
     connection.state = MACHINE_STATE_IDLE;
     pthread_mutex_init(&connection.lock, NULL);
+    pthread_mutex_init(&connection.send_lock, NULL);
+
+    if (send_value(&connection, MSG_MACHINE_STATE, MACHINE_STATE_IDLE) < 0) {
+        pthread_mutex_destroy(&connection.send_lock);
+        pthread_mutex_destroy(&connection.lock);
+        return;
+    }
 
     pthread_t command_thread;
     if (pthread_create(&command_thread, NULL, command_receive_loop, &connection) != 0) {
+        pthread_mutex_destroy(&connection.send_lock);
         pthread_mutex_destroy(&connection.lock);
         return;
     }
@@ -134,7 +149,7 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
                 const MachineMetric *metric = &args->profile.metrics[i];
                 double generated = random_between(&args->seed, metric->minimum, metric->maximum);
                 int32_t wire_value = (int32_t)llround(generated * metric->scale);
-                if (send_value(client_socket, metric_message_type(metric->type), wire_value) < 0) {
+                if (send_value(&connection, metric_message_type(metric->type), wire_value) < 0) {
                     atomic_store(&connection.connected, 0);
                     break;
                 }
@@ -145,7 +160,7 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
         if (args->profile.inspector && state == MACHINE_STATE_RUNNING && now >= next_inspection_at &&
             processed_qty < target_qty) {
             DefectCode result = generate_inspection_result(&args->seed, args->defect_rate_percent);
-            if (send_value(client_socket, MSG_INSPECTION_RESULT, (int32_t)result) < 0) {
+            if (send_value(&connection, MSG_INSPECTION_RESULT, (int32_t)result) < 0) {
                 atomic_store(&connection.connected, 0);
             } else {
                 pthread_mutex_lock(&connection.lock);
@@ -163,6 +178,7 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
     atomic_store(&connection.connected, 0);
     net_shutdown(client_socket);
     pthread_join(command_thread, NULL);
+    pthread_mutex_destroy(&connection.send_lock);
     pthread_mutex_destroy(&connection.lock);
 }
 

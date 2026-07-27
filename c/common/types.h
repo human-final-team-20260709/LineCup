@@ -28,7 +28,8 @@ typedef enum {
 typedef enum {
     MACHINE_STATE_IDLE = 0,
     MACHINE_STATE_RUNNING,
-    MACHINE_STATE_HOLD
+    MACHINE_STATE_HOLD,
+    MACHINE_STATE_ERROR
 } MachineRunState;
 
 typedef enum {
@@ -49,7 +50,8 @@ typedef enum {
     CLOSE_REASON_HOURLY = 0,
     CLOSE_REASON_WORK_ORDER_COMPLETED,
     CLOSE_REASON_HOLD,
-    CLOSE_REASON_SHUTDOWN
+    CLOSE_REASON_SHUTDOWN,
+    CLOSE_REASON_IN_PROGRESS
 } CloseReason;
 
 typedef enum {
@@ -105,10 +107,12 @@ typedef struct {
     char equipment_code[MES_CODE_SIZE];
     int port;
     bool connected;
+    MachineRunState operating_status;
     int64_t last_received_at_ms;
 } DeviceStatus;
 
 const char *machine_type_code(MachineType type);
+const char *machine_run_state_name(MachineRunState state);
 const char *metric_type_name(MetricType type);
 const char *close_reason_name(CloseReason reason);
 const char *defect_code_name(DefectCode code);

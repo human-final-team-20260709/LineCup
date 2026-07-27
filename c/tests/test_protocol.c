@@ -19,6 +19,7 @@ int main(void)
     verify_round_trip(MSG_TEMPERATURE, -1234);
     verify_round_trip(MSG_HUMIDITY, INT32_MAX);
     verify_round_trip(MSG_SPEED, INT32_MIN);
+    verify_round_trip(MSG_MACHINE_STATE, MACHINE_STATE_RUNNING);
     verify_round_trip(MSG_COMMAND_START, 1000);
 
     uint8_t packet[MES_PACKET_SIZE];

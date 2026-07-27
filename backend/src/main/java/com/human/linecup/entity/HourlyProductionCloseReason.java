@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
 
 public enum HourlyProductionCloseReason {
+    IN_PROGRESS,
     HOURLY,
     WORK_ORDER_COMPLETED,
     HOLD,

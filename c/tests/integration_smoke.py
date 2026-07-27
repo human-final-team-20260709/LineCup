@@ -30,8 +30,10 @@ def main():
         env = os.environ.copy()
         env.update({
             "MES_BASE_URL": "http://127.0.0.1:18080",
+            "MES_BASE_PORT": "15001",
             "MES_COMMAND_POLL_MS": "200",
             "MES_TELEMETRY_BATCH_MS": "500",
+            "MES_PRODUCTION_SYNC_MS": "1000",
             "MES_AGGREGATION_SECONDS": "2",
             "MES_SENSOR_INTERVAL_MS": "100",
             "MES_INSPECTION_INTERVAL_MS": "200",
@@ -52,7 +54,22 @@ def main():
             }
             while time.time() < deadline:
                 paths = {path for path, _ in Handler.received}
-                if required.issubset(paths):
+                heartbeats = [
+                    payload
+                    for path, payload in Handler.received
+                    if path == "/api/l2/status/heartbeat"
+                ]
+                running_reported = any(
+                    device.get("operatingStatus") == "RUNNING"
+                    for heartbeat in heartbeats
+                    for device in heartbeat.get("devices", [])
+                )
+                snapshot_reported = any(
+                    payload.get("closeReason") == "IN_PROGRESS"
+                    for path, payload in Handler.received
+                    if path == "/api/l2/hourly-productions"
+                )
+                if required.issubset(paths) and running_reported and snapshot_reported:
                     break
                 if l1.poll() is not None or l2.poll() is not None:
                     raise RuntimeError("L1 or L2 exited before smoke test completed")
@@ -64,6 +81,21 @@ def main():
             heartbeats = [payload for path, payload in Handler.received if path == "/api/l2/status/heartbeat"]
             if not any(item.get("connectedL1Count") == 9 for item in heartbeats):
                 raise AssertionError("heartbeat never reported all 9 L1 connections")
+            device_reports = [
+                device
+                for heartbeat in heartbeats
+                for device in heartbeat.get("devices", [])
+            ]
+            if not device_reports or not all(
+                device.get("operatingStatus") in {"RUNNING", "STOPPED", "ERROR"}
+                for device in device_reports
+            ):
+                raise AssertionError("heartbeat omitted a valid operatingStatus")
+            if not any(device.get("operatingStatus") == "RUNNING" for device in device_reports):
+                raise AssertionError("heartbeat never reported a running L1 machine")
+            hourly = [payload for path, payload in Handler.received if path == "/api/l2/hourly-productions"]
+            if not any(item.get("closeReason") == "IN_PROGRESS" for item in hourly):
+                raise AssertionError("production progress snapshot was not sent")
         finally:
             stop_process(l2)
             stop_process(l1)

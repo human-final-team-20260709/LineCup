@@ -19,7 +19,7 @@ int protocol_validate(const uint8_t packet[MES_PACKET_SIZE])
 
 int protocol_type_is_known(uint8_t type)
 {
-    return (type >= MSG_TEMPERATURE && type <= MSG_SPEED) ||
+    return (type >= MSG_TEMPERATURE && type <= MSG_MACHINE_STATE) ||
            type == MSG_INSPECTION_RESULT ||
            (type >= MSG_COMMAND_START && type <= MSG_COMMAND_STOP);
 }

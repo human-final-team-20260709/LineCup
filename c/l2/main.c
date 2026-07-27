@@ -40,6 +40,8 @@ int main(void)
     int base_port = platform_env_int("MES_BASE_PORT", MES_DEFAULT_BASE_PORT, 1024, 65527);
     int poll_ms = platform_env_int("MES_COMMAND_POLL_MS", MES_DEFAULT_COMMAND_POLL_MS, 100, 3600000);
     int telemetry_ms = platform_env_int("MES_TELEMETRY_BATCH_MS", MES_DEFAULT_TELEMETRY_BATCH_MS, 100, 3600000);
+    int production_sync_ms = platform_env_int(
+        "MES_PRODUCTION_SYNC_MS", MES_DEFAULT_PRODUCTION_SYNC_MS, 1000, 3600000);
     int aggregation_seconds = platform_env_int("MES_AGGREGATION_SECONDS", MES_DEFAULT_AGGREGATION_SECONDS, 1, 86400);
 
     if (net_init() != 0) {
@@ -93,6 +95,7 @@ int main(void)
            collector_code, base_url, spool_count(&spool));
     int64_t next_telemetry_at = platform_now_ms() + telemetry_ms;
     int64_t next_heartbeat_at = platform_now_ms() + telemetry_ms;
+    int64_t next_production_sync_at = platform_now_ms() + production_sync_ms;
     int64_t next_spool_attempt = platform_now_ms();
     int spool_backoff_ms = 1000;
 
@@ -117,6 +120,13 @@ int main(void)
             size_t count = device_manager_get_statuses(&devices, statuses, MES_MACHINE_COUNT);
             api_send_heartbeat(&api, statuses, count);
             next_heartbeat_at = now + telemetry_ms;
+        }
+
+        if (now >= next_production_sync_at) {
+            HourlyAggregate snapshot;
+            if (hourly_aggregator_snapshot(&aggregator, now, &snapshot))
+                api_send_hourly(&api, &snapshot);
+            next_production_sync_at = platform_now_ms() + production_sync_ms;
         }
 
         if (now >= next_spool_attempt) {
