@@ -10,7 +10,7 @@ INSERT INTO defect_type (code, name, is_active) VALUES
     ('WEIGHT', '중량 불량', true),
     ('FOREIGN_MATERIAL', '이물 불량', true),
     ('GENERAL_NG', '일반 불량', true),
-    ('LEGACY_DISABLED', '사용 중지 테스트 유형', false)
+    ('LEGACY_DISABLED', '사용 중지 불량 유형', false)
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     is_active = VALUES(is_active);
@@ -31,398 +31,66 @@ ON DUPLICATE KEY UPDATE
     is_active = VALUES(is_active);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '혼합기 1호', 'MIXER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '혼합기 1호', 'MIXER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'MIXING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '압연기 1호', 'ROLLER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '압연기 1호', 'ROLLER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'ROLLING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '제면기 1호', 'NOODLE-01', process_id, '생산 구역', 'STOPPED'
+SELECT '제면기 1호', 'NOODLE-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'NOODLE_MAKING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '증숙기 1호', 'STEAMER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '증숙기 1호', 'STEAMER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'STEAMING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '절단기 1호', 'CUTTER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '절단기 1호', 'CUTTER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'CUTTING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '유탕기 1호', 'FRYER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '유탕기 1호', 'FRYER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'FRYING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '냉각기 1호', 'COOLER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '냉각기 1호', 'COOLER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'COOLING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '포장기 1호', 'PACKER-01', process_id, '생산 구역', 'STOPPED'
+SELECT '포장기 1호', 'PACKER-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'PACKING'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
-SELECT '검사기 1호', 'INSPECTOR-01', process_id, '생산 구역', 'STOPPED'
+SELECT '검사기 1호', 'INSPECTOR-01', process_id, '제1생산라인', 'STOPPED'
 FROM manufacturing_process WHERE process_code = 'INSPECTION'
 ON DUPLICATE KEY UPDATE process_id = VALUES(process_id), location = VALUES(location);
 
 -- ============================================================================
--- 통합 테스트용 초기 데이터
--- spring.jpa.hibernate.ddl-auto=create 환경에서 테이블 생성 후 자동 실행됩니다.
--- 운영 환경에서는 사용하지 마세요.
---
--- 공통 테스트 비밀번호: Test1234!
--- 승인 계정: admin01 / supervisor01 / supervisor02 / operator01~04
--- 승인 대기/거절/비활성 검증 계정: pending01 / rejected01 / inactive01
---
--- L1/L2 최초 등록과 heartbeat 흐름을 검증할 수 있도록
--- l1_device, l2_collector, communication_log에는 데이터를 넣지 않습니다.
--- 활성 작업지시는 WO-20260723-001 한 건만 두어 L2 조회 충돌을 방지합니다.
--- 다른 대기 작업지시의 시작 테스트 전에는 위 활성 작업지시를 먼저 완료해야 합니다.
--- 미래 날짜는 예약 대기 작업지시의 계획일과 정상 재고의 유통기한에만 사용합니다.
+-- MES 종합 운영 데이터
+-- 제품, 자재, 생산, 품질, 재고, 설비, 작업자, L1/L2 흐름을 함께 확인한다.
+-- 초기 로그인 비밀번호: Linecup2026!
+-- 관리자 계정: admin01
+-- 생산 지시자 계정: supervisor01
+-- 작업자 계정: operator01 ~ operator10
+-- 활성 작업지시는 L2 단일 작업 조회 규칙에 맞춰 한 건만 유지한다.
 -- ============================================================================
 
-INSERT INTO app_user (
-    user_id, emp_no, name, email, phone, password, role,
-    approval_status, is_active, created_at, last_access_at
-) VALUES
-    (1,  'admin01',      '시스템 관리자', 'admin01@linecup.test',      '010-1000-0001', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'ADMIN',      'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 120 DAY, CURRENT_TIMESTAMP - INTERVAL 5 MINUTE),
-    (2,  'supervisor01', '생산 관리자 김철수', 'supervisor01@linecup.test', '010-1000-0002', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'SUPERVISOR', 'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 100 DAY, CURRENT_TIMESTAMP - INTERVAL 10 MINUTE),
-    (3,  'supervisor02', '품질 관리자 이영희', 'supervisor02@linecup.test', '010-1000-0003', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'SUPERVISOR', 'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 90 DAY,  CURRENT_TIMESTAMP - INTERVAL 1 HOUR),
-    (4,  'operator01',   '작업자 박민수', 'operator01@linecup.test',   '010-1000-0004', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 80 DAY,  CURRENT_TIMESTAMP - INTERVAL 20 MINUTE),
-    (5,  'operator02',   '작업자 최지은', 'operator02@linecup.test',   '010-1000-0005', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 75 DAY,  CURRENT_TIMESTAMP - INTERVAL 30 MINUTE),
-    (6,  'operator03',   '작업자 정현우', 'operator03@linecup.test',   '010-1000-0006', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 70 DAY,  CURRENT_TIMESTAMP - INTERVAL 2 HOUR),
-    (7,  'operator04',   '작업자 한소라', 'operator04@linecup.test',   '010-1000-0007', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 65 DAY,  CURRENT_TIMESTAMP - INTERVAL 3 HOUR),
-    (8,  'pending01',    '승인 대기 사용자', 'pending01@linecup.test',    '010-1000-0008', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'SUPERVISOR', 'PENDING',  false, CURRENT_TIMESTAMP - INTERVAL 2 DAY,   NULL),
-    (9,  'rejected01',   '승인 거절 사용자', 'rejected01@linecup.test',   '010-1000-0009', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'OPERATOR',   'REJECTED', false, CURRENT_TIMESTAMP - INTERVAL 5 DAY,   NULL),
-    (10, 'inactive01',   '비활성 사용자', 'inactive01@linecup.test',   '010-1000-0010', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU', 'OPERATOR',   'APPROVED', false, CURRENT_TIMESTAMP - INTERVAL 30 DAY,  CURRENT_TIMESTAMP - INTERVAL 20 DAY);
-
-INSERT INTO product (
-    product_id, product_code, product_name, category, unit, status
-) VALUES
-    (1, 'FG-CUP-SPICY-065',   '매운맛 컵라면 65g',   '컵라면', 'EA', 'ACTIVE'),
-    (2, 'FG-CUP-MILD-065',    '순한맛 컵라면 65g',   '컵라면', 'EA', 'ACTIVE'),
-    (3, 'FG-CUP-SEAFOOD-075', '해물맛 컵라면 75g',   '컵라면', 'EA', 'ACTIVE'),
-    (4, 'FG-BAG-SPICY-120',   '매운맛 봉지라면 120g', '봉지라면', 'EA', 'REVIEW'),
-    (5, 'FG-CUP-OLD-065',     '단종 컵라면 65g',     '컵라면', 'EA', 'INACTIVE');
-
-INSERT INTO raw_material (
-    material_id, material_code, material_name, unit, safety_stock_qty, status
-) VALUES
-    (1, 'RM-FLOUR-001',     '밀가루',          'kg', 100.000, 'ACTIVE'),
-    (2, 'RM-SOUP-001',      '매운맛 분말스프',   'kg', 20.000,  'ACTIVE'),
-    (3, 'RM-SOUP-MILD-001', '순한맛 분말스프',   'kg', 20.000,  'ACTIVE'),
-    (4, 'RM-OIL-001',       '팜유',            'L',  200.000, 'ACTIVE'),
-    (5, 'RM-CUP-001',       '종이 용기',        'EA', 500.000, 'ACTIVE'),
-    (6, 'RM-LID-001',       '용기 뚜껑',        'EA', 500.000, 'ACTIVE'),
-    (7, 'RM-FILM-001',      '포장 필름',        'm',  1000.000,'ACTIVE'),
-    (8, 'RM-SEAFOOD-001',   '해물맛 분말스프',   'kg', 20.000,  'ACTIVE'),
-    (9, 'RM-OLD-001',       '단종 원자재',       'kg', 10.000,  'INACTIVE');
-
-INSERT INTO bom (
-    bom_id, bom_code, product_id, version, status, note
-) VALUES
-    (1, 'BOM-CUP-SPICY-065',    1, '1.0', 'ACTIVE', '매운맛 컵라면 표준 BOM'),
-    (2, 'BOM-CUP-MILD-065',     2, '1.0', 'ACTIVE', '순한맛 컵라면 표준 BOM'),
-    (3, 'BOM-CUP-SEAFOOD-075',  3, '1.0', 'ACTIVE', '해물맛 컵라면 표준 BOM'),
-    (4, 'BOM-CUP-SPICY-065-V2', 1, '2.0', 'REVIEW', '팜유 배합을 포함한 검토 버전');
-
-INSERT INTO bom_item (
-    bom_item_id, bom_id, material_id, process_id, spec,
-    required_qty, loss_rate, note
-) VALUES
-    (1, 1, 1, (SELECT process_id FROM manufacturing_process WHERE process_code = 'MIXING'),  '식품용', 0.055, 2.000, '면 원료'),
-    (2, 1, 2, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '매운맛', 0.010, 1.000, '분말스프'),
-    (3, 1, 5, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '65g용',  1.000, 0.000, '컵 용기'),
-    (4, 1, 6, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '65g용',  1.000, 0.000, '용기 뚜껑'),
-    (5, 2, 1, (SELECT process_id FROM manufacturing_process WHERE process_code = 'MIXING'),  '식품용', 0.055, 2.000, '면 원료'),
-    (6, 2, 3, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '순한맛', 0.010, 1.000, '분말스프'),
-    (7, 2, 5, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '65g용',  1.000, 0.000, '컵 용기'),
-    (8, 2, 6, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '65g용',  1.000, 0.000, '용기 뚜껑'),
-    (9, 3, 1, (SELECT process_id FROM manufacturing_process WHERE process_code = 'MIXING'),  '식품용', 0.065, 2.000, '면 원료'),
-    (10,3, 8, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '해물맛', 0.010, 1.000, '분말스프'),
-    (11,3, 5, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '75g용',  1.000, 0.000, '컵 용기'),
-    (12,3, 6, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '75g용',  1.000, 0.000, '용기 뚜껑'),
-    (13,4, 1, (SELECT process_id FROM manufacturing_process WHERE process_code = 'MIXING'),  '식품용', 0.053, 1.500, '배합 개선안'),
-    (14,4, 2, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '매운맛', 0.011, 1.000, '스프 증량안'),
-    (15,4, 4, (SELECT process_id FROM manufacturing_process WHERE process_code = 'FRYING'),  '식품용', 0.008, 1.000, '유탕용 팜유'),
-    (16,4, 5, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '65g용',  1.000, 0.000, '컵 용기'),
-    (17,4, 6, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'), '65g용',  1.000, 0.000, '용기 뚜껑');
-
-INSERT INTO raw_material_lot (
-    material_lot_id, material_id, material_lot_no, supplier_name, supplier_lot_no,
-    manufacture_date, expiry_date, received_date, received_qty, current_qty
-) VALUES
-    (1, 1, 'RMLOT-20260723-001', '대한제분',   'SUP-20260720-001', '2026-07-20', '2027-07-20', '2026-07-23', 500.000, 494.500),
-    (2, 1, 'RMLOT-20260710-002', '대한제분',   'SUP-20260708-002', '2026-07-08', '2027-07-08', '2026-07-10', 300.000, 300.000),
-    (3, 2, 'RMLOT-20260723-002', '한국스프',   'SPICY-20260718',   '2026-07-18', '2027-01-18', '2026-07-23', 100.000, 99.000),
-    (4, 3, 'RMLOT-20260723-003', '한국스프',   'MILD-20260718',    '2026-07-18', '2027-01-18', '2026-07-23', 100.000, 100.000),
-    (5, 4, 'RMLOT-20260722-001', '서울유지',   'OIL-20260715',     '2026-07-15', '2027-07-15', '2026-07-22', 1000.000,1000.000),
-    (6, 5, 'RMLOT-20260723-004', '대한용기',   'CUP-20260720',     '2026-07-20', '2029-07-20', '2026-07-23', 2000.000,1965.000),
-    (7, 6, 'RMLOT-20260723-005', '대한용기',   'LID-20260720',     '2026-07-20', '2029-07-20', '2026-07-23', 2000.000,1965.000),
-    (8, 7, 'RMLOT-20260722-002', '라인패키지', 'FILM-20260719',    '2026-07-19', '2029-07-19', '2026-07-22', 5000.000,5000.000),
-    (9, 8, 'RMLOT-20260723-006', '바다식품',   'SEA-20260718',     '2026-07-18', '2027-01-18', '2026-07-23', 80.000,  80.000),
-    (10,9, 'RMLOT-20260110-001', '구형공급사', 'OLD-20260105',     '2026-01-05', '2026-12-31', '2026-01-10', 50.000,  50.000);
-
-INSERT INTO work_order (
-    work_order_id, work_order_no, product_id, supervisor_id,
-    target_qty, hourly_target_qty, current_qty, good_qty, defect_qty,
-    planned_start_date, registered_at, started_at, completed_at, status, remarks
-) VALUES
-    (1, 'WO-20260724-001', 1, 2, 100, 50, 0,   0,   0, CURRENT_DATE - INTERVAL 1 DAY, CURRENT_TIMESTAMP - INTERVAL 1 HOUR,  NULL,                                  NULL,                                  'PENDING',     '신규 등록/작업 시작 테스트용'),
-    (2, 'WO-20260723-001', 1, 2, 100, 50, 35,  33,  2, CURRENT_DATE - INTERVAL 1 DAY, CURRENT_TIMESTAMP - INTERVAL 1 DAY,   CURRENT_TIMESTAMP - INTERVAL 2 HOUR,   NULL,                                  'IN_PROGRESS', 'L1/L2 활성 작업지시 조회용'),
-    (3, 'WO-20260722-001', 2, 2, 80,  40, 80,  77,  3, CURRENT_DATE - INTERVAL 2 DAY, CURRENT_TIMESTAMP - INTERVAL 3 DAY,   CURRENT_TIMESTAMP - INTERVAL 2 DAY,    CURRENT_TIMESTAMP - INTERVAL 46 HOUR, 'DONE',        '완료/완제품 재고 생성 완료'),
-    (4, 'WO-20260721-001', 3, 3, 120, 60, 115, 110, 5, CURRENT_DATE - INTERVAL 3 DAY, CURRENT_TIMESTAMP - INTERVAL 4 DAY,   CURRENT_TIMESTAMP - INTERVAL 3 DAY,    CURRENT_TIMESTAMP - INTERVAL 68 HOUR, 'DONE',        '완제품 입고 가능 LOT 테스트용'),
-    (5, 'WO-20260720-001', 1, 2, 50,  25, 50,  49,  1, CURRENT_DATE - INTERVAL 4 DAY, CURRENT_TIMESTAMP - INTERVAL 5 DAY,   CURRENT_TIMESTAMP - INTERVAL 4 DAY,    CURRENT_TIMESTAMP - INTERVAL 92 HOUR, 'DONE',        '이미 완제품 입고된 LOT'),
-    (6, 'WO-20260719-001', 2, 3, 10,  10, 0,   0,   0, CURRENT_DATE - INTERVAL 5 DAY, CURRENT_TIMESTAMP - INTERVAL 6 DAY,   CURRENT_TIMESTAMP - INTERVAL 5 DAY,    CURRENT_TIMESTAMP - INTERVAL 116 HOUR,'DONE',        'goodQty 0 선택 제외 테스트용'),
-    (7, 'WO-20260718-001', 2, 2, 60,  30, 0,   0,   0, CURRENT_DATE + INTERVAL 1 DAY, CURRENT_TIMESTAMP - INTERVAL 30 MINUTE,NULL,                                  NULL,                                  'PENDING',     '추가 대기 작업지시');
-
-INSERT INTO production_lot (
-    production_lot_id, lot_no, work_order_id, production_qty, good_qty, defect_qty,
-    started_at, completed_at, status
-) VALUES
-    (1, 'LOT-20260724-001', 1, 0,   0,   0, NULL,                                  NULL,                                  'PENDING'),
-    (2, 'LOT-20260723-001', 2, 35,  33,  2, CURRENT_TIMESTAMP - INTERVAL 2 HOUR,    NULL,                                  'IN_PROGRESS'),
-    (3, 'LOT-20260722-001', 3, 80,  77,  3, CURRENT_TIMESTAMP - INTERVAL 2 DAY,     CURRENT_TIMESTAMP - INTERVAL 46 HOUR, 'COMPLETED'),
-    (4, 'LOT-20260721-001', 4, 115, 110, 5, CURRENT_TIMESTAMP - INTERVAL 3 DAY,     CURRENT_TIMESTAMP - INTERVAL 68 HOUR, 'COMPLETED'),
-    (5, 'LOT-20260720-001', 5, 50,  49,  1, CURRENT_TIMESTAMP - INTERVAL 4 DAY,     CURRENT_TIMESTAMP - INTERVAL 92 HOUR, 'COMPLETED'),
-    (6, 'LOT-20260719-001', 6, 0,   0,   0, CURRENT_TIMESTAMP - INTERVAL 5 DAY,     CURRENT_TIMESTAMP - INTERVAL 116 HOUR,'COMPLETED'),
-    (7, 'LOT-20260718-001', 7, 0,   0,   0, NULL,                                  NULL,                                  'PENDING');
-
-INSERT INTO work_order_equipment (work_order_id, equipment_id)
-SELECT wo.work_order_id, e.equipment_id
-FROM work_order wo
-CROSS JOIN equipment e;
-
-INSERT INTO work_order_worker (work_order_id, user_id) VALUES
-    (1,4), (1,5),
-    (2,4), (2,5), (2,6),
-    (3,4), (3,7),
-    (4,5), (4,6),
-    (5,4), (5,5),
-    (6,6),
-    (7,6), (7,7);
-
-INSERT INTO production_process_progress (
-    production_lot_id, process_id, equipment_id, target_qty,
-    production_qty, good_qty, defect_qty, started_at, completed_at, status
-)
-SELECT
-    pl.production_lot_id,
-    mp.process_id,
-    e.equipment_id,
-    wo.target_qty,
-    CASE WHEN pl.status = 'PENDING' THEN 0 ELSE pl.production_qty END,
-    CASE WHEN pl.status = 'PENDING' THEN 0 ELSE pl.good_qty END,
-    CASE WHEN pl.status = 'PENDING' THEN 0 ELSE pl.defect_qty END,
-    pl.started_at,
-    pl.completed_at,
-    pl.status
-FROM production_lot pl
-JOIN work_order wo ON wo.work_order_id = pl.work_order_id
-CROSS JOIN manufacturing_process mp
-LEFT JOIN equipment e ON e.process_id = mp.process_id;
-
-INSERT INTO work_order_status_history (
-    work_order_id, changed_by_id, action, prev_status, new_status, changed_at, note
-) VALUES
-    (1,2,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 1 HOUR,   '작업지시 등록'),
-    (2,2,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 1 DAY,    '작업지시 등록'),
-    (2,2,'START',     'PENDING','IN_PROGRESS',CURRENT_TIMESTAMP - INTERVAL 2 HOUR,'작업 시작'),
-    (3,2,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 3 DAY,    '작업지시 등록'),
-    (3,2,'START',     'PENDING','IN_PROGRESS',CURRENT_TIMESTAMP - INTERVAL 2 DAY,'작업 시작'),
-    (3,2,'COMPLETE',  'IN_PROGRESS','DONE',CURRENT_TIMESTAMP - INTERVAL 46 HOUR, '작업 완료'),
-    (4,3,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 4 DAY,    '작업지시 등록'),
-    (4,3,'START',     'PENDING','IN_PROGRESS',CURRENT_TIMESTAMP - INTERVAL 3 DAY,'작업 시작'),
-    (4,3,'HOLD',      'IN_PROGRESS','HOLD',CURRENT_TIMESTAMP - INTERVAL 71 HOUR, '품질 점검으로 보류'),
-    (4,3,'RESUME',    'HOLD','IN_PROGRESS',CURRENT_TIMESTAMP - INTERVAL 70 HOUR, '품질 점검 완료'),
-    (4,3,'COMPLETE',  'IN_PROGRESS','DONE',CURRENT_TIMESTAMP - INTERVAL 68 HOUR, '작업 완료'),
-    (5,2,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 5 DAY,    '작업지시 등록'),
-    (5,2,'START',     'PENDING','IN_PROGRESS',CURRENT_TIMESTAMP - INTERVAL 4 DAY,'작업 시작'),
-    (5,2,'COMPLETE',  'IN_PROGRESS','DONE',CURRENT_TIMESTAMP - INTERVAL 92 HOUR, '작업 완료'),
-    (6,3,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 6 DAY,    '작업지시 등록'),
-    (6,3,'START',     'PENDING','IN_PROGRESS',CURRENT_TIMESTAMP - INTERVAL 5 DAY,'작업 시작'),
-    (6,3,'COMPLETE',  'IN_PROGRESS','DONE',CURRENT_TIMESTAMP - INTERVAL 116 HOUR,'생산 없이 작업 종료'),
-    (7,2,'REGISTERED',NULL,'PENDING',     CURRENT_TIMESTAMP - INTERVAL 30 MINUTE,'작업지시 등록');
-
-INSERT INTO hourly_production (
-    work_order_id, bucket_start, bucket_end, received_at,
-    target_qty, production_qty, good_qty, defect_qty, is_partial, close_reason
-) VALUES
-    (2, CURRENT_TIMESTAMP - INTERVAL 2 HOUR, CURRENT_TIMESTAMP - INTERVAL 1 HOUR, CURRENT_TIMESTAMP - INTERVAL 59 MINUTE, 100, 20, 19, 1, false, 'HOURLY'),
-    (2, CURRENT_TIMESTAMP - INTERVAL 1 HOUR, CURRENT_TIMESTAMP - INTERVAL 1 MINUTE,CURRENT_TIMESTAMP - INTERVAL 2 MINUTE,  100, 15, 14, 1, true,  'HOURLY'),
-    (3, CURRENT_TIMESTAMP - INTERVAL 48 HOUR,CURRENT_TIMESTAMP - INTERVAL 47 HOUR,CURRENT_TIMESTAMP - INTERVAL 47 HOUR,   80,  40, 39, 1, false, 'HOURLY'),
-    (3, CURRENT_TIMESTAMP - INTERVAL 47 HOUR,CURRENT_TIMESTAMP - INTERVAL 46 HOUR,CURRENT_TIMESTAMP - INTERVAL 46 HOUR,   80,  40, 38, 2, true,  'WORK_ORDER_COMPLETED'),
-    (4, CURRENT_TIMESTAMP - INTERVAL 70 HOUR,CURRENT_TIMESTAMP - INTERVAL 69 HOUR,CURRENT_TIMESTAMP - INTERVAL 69 HOUR,   120, 60, 58, 2, false, 'HOURLY'),
-    (4, CURRENT_TIMESTAMP - INTERVAL 69 HOUR,CURRENT_TIMESTAMP - INTERVAL 68 HOUR,CURRENT_TIMESTAMP - INTERVAL 68 HOUR,   120, 55, 52, 3, true,  'WORK_ORDER_COMPLETED'),
-    (5, CURRENT_TIMESTAMP - INTERVAL 94 HOUR,CURRENT_TIMESTAMP - INTERVAL 93 HOUR,CURRENT_TIMESTAMP - INTERVAL 93 HOUR,   50,  25, 25, 0, false, 'HOURLY'),
-    (5, CURRENT_TIMESTAMP - INTERVAL 93 HOUR,CURRENT_TIMESTAMP - INTERVAL 92 HOUR,CURRENT_TIMESTAMP - INTERVAL 92 HOUR,   50,  25, 24, 1, true,  'WORK_ORDER_COMPLETED');
-
-INSERT INTO production_result (
-    result_no, production_lot_id, target_qty, production_qty, good_qty, defect_qty,
-    status, started_at, created_at, updated_at, last_aggregated_at, completed_at
-) VALUES
-    ('RESULT-20260723-001', 2, 100, 35,  33,  2, 'COLLECTING', CURRENT_TIMESTAMP - INTERVAL 2 HOUR, CURRENT_TIMESTAMP - INTERVAL 2 HOUR, CURRENT_TIMESTAMP - INTERVAL 2 MINUTE, CURRENT_TIMESTAMP - INTERVAL 2 MINUTE, NULL),
-    ('RESULT-20260722-001', 3, 80,  80,  77,  3, 'COMPLETED',  CURRENT_TIMESTAMP - INTERVAL 2 DAY,  CURRENT_TIMESTAMP - INTERVAL 2 DAY,  CURRENT_TIMESTAMP - INTERVAL 46 HOUR, CURRENT_TIMESTAMP - INTERVAL 46 HOUR, CURRENT_TIMESTAMP - INTERVAL 46 HOUR),
-    ('RESULT-20260721-001', 4, 120, 115, 110, 5, 'COMPLETED',  CURRENT_TIMESTAMP - INTERVAL 3 DAY,  CURRENT_TIMESTAMP - INTERVAL 3 DAY,  CURRENT_TIMESTAMP - INTERVAL 68 HOUR, CURRENT_TIMESTAMP - INTERVAL 68 HOUR, CURRENT_TIMESTAMP - INTERVAL 68 HOUR),
-    ('RESULT-20260720-001', 5, 50,  50,  49,  1, 'COMPLETED',  CURRENT_TIMESTAMP - INTERVAL 4 DAY,  CURRENT_TIMESTAMP - INTERVAL 4 DAY,  CURRENT_TIMESTAMP - INTERVAL 92 HOUR, CURRENT_TIMESTAMP - INTERVAL 92 HOUR, CURRENT_TIMESTAMP - INTERVAL 92 HOUR);
-
-INSERT INTO production_lot_material (
-    production_lot_id, material_lot_id, used_qty
-) VALUES
-    (2, 1, 5.500),
-    (2, 3, 1.000),
-    (2, 6, 35.000),
-    (2, 7, 35.000);
-
-INSERT INTO product_inventory (
-    inventory_id, production_lot_id, current_qty, safety_stock_qty, expiry_date, created_at
-) VALUES
-    (1, 3, 70, 20, CURRENT_DATE + INTERVAL 180 DAY, CURRENT_TIMESTAMP - INTERVAL 45 HOUR),
-    (2, 5, 49, 15, CURRENT_DATE + INTERVAL 175 DAY, CURRENT_TIMESTAMP - INTERVAL 91 HOUR);
-
-INSERT INTO inventory_movement (
-    movement_no, item_type, movement_type, raw_material_lot_id, product_inventory_id,
-    quantity, occurred_at, handled_by_id, remarks
-) VALUES
-    ('MV-RM-IN-001', 'RAW_MATERIAL',    'INBOUND',  1, NULL, 500.000, CURRENT_TIMESTAMP - INTERVAL 1 DAY,   1, '밀가루 최초 입고'),
-    ('MV-RM-IN-002', 'RAW_MATERIAL',    'INBOUND',  2, NULL, 300.000, CURRENT_TIMESTAMP - INTERVAL 14 DAY,  1, '밀가루 추가 입고'),
-    ('MV-RM-IN-003', 'RAW_MATERIAL',    'INBOUND',  3, NULL, 100.000, CURRENT_TIMESTAMP - INTERVAL 1 DAY,   1, '매운맛 스프 입고'),
-    ('MV-RM-IN-004', 'RAW_MATERIAL',    'INBOUND',  4, NULL, 100.000, CURRENT_TIMESTAMP - INTERVAL 1 DAY,   1, '순한맛 스프 입고'),
-    ('MV-RM-IN-005', 'RAW_MATERIAL',    'INBOUND',  5, NULL, 1000.000,CURRENT_TIMESTAMP - INTERVAL 2 DAY,   1, '팜유 입고'),
-    ('MV-RM-IN-006', 'RAW_MATERIAL',    'INBOUND',  6, NULL, 2000.000,CURRENT_TIMESTAMP - INTERVAL 1 DAY,   1, '종이 용기 입고'),
-    ('MV-RM-IN-007', 'RAW_MATERIAL',    'INBOUND',  7, NULL, 2000.000,CURRENT_TIMESTAMP - INTERVAL 1 DAY,   1, '용기 뚜껑 입고'),
-    ('MV-RM-IN-008', 'RAW_MATERIAL',    'INBOUND',  8, NULL, 5000.000,CURRENT_TIMESTAMP - INTERVAL 2 DAY,   1, '포장 필름 입고'),
-    ('MV-RM-IN-009', 'RAW_MATERIAL',    'INBOUND',  9, NULL, 80.000, CURRENT_TIMESTAMP - INTERVAL 1 DAY,   1, '해물맛 스프 입고'),
-    ('MV-RM-IN-010', 'RAW_MATERIAL',    'INBOUND', 10, NULL, 50.000, CURRENT_TIMESTAMP - INTERVAL 190 DAY, 1, '단종 원자재 과거 입고'),
-    ('MV-RM-OUT-001','RAW_MATERIAL',    'OUTBOUND', 1, NULL, 5.500,  CURRENT_TIMESTAMP - INTERVAL 90 MINUTE,2, 'LOT-20260723-001 실제 사용'),
-    ('MV-RM-OUT-002','RAW_MATERIAL',    'OUTBOUND', 3, NULL, 1.000,  CURRENT_TIMESTAMP - INTERVAL 88 MINUTE,2, 'LOT-20260723-001 실제 사용'),
-    ('MV-RM-OUT-003','RAW_MATERIAL',    'OUTBOUND', 6, NULL, 35.000, CURRENT_TIMESTAMP - INTERVAL 85 MINUTE,2, 'LOT-20260723-001 실제 사용'),
-    ('MV-RM-OUT-004','RAW_MATERIAL',    'OUTBOUND', 7, NULL, 35.000, CURRENT_TIMESTAMP - INTERVAL 84 MINUTE,2, 'LOT-20260723-001 실제 사용'),
-    ('MV-FG-IN-001', 'FINISHED_PRODUCT','INBOUND',  NULL, 1, 77.000, CURRENT_TIMESTAMP - INTERVAL 45 HOUR, 2, 'LOT-20260722-001 완제품 입고'),
-    ('MV-FG-OUT-001','FINISHED_PRODUCT','OUTBOUND', NULL, 1, 7.000,  CURRENT_TIMESTAMP - INTERVAL 20 HOUR, 1, '완제품 샘플 출고'),
-    ('MV-FG-IN-002', 'FINISHED_PRODUCT','INBOUND',  NULL, 2, 49.000, CURRENT_TIMESTAMP - INTERVAL 91 HOUR, 2, 'LOT-20260720-001 완제품 입고');
-
-INSERT INTO worker_profile (
-    worker_profile_id, user_id, primary_process_id, team_name, joined_date, shift_type
-) VALUES
-    (1, 4, (SELECT process_id FROM manufacturing_process WHERE process_code = 'MIXING'),         '생산 1팀', '2024-03-04', 'DAY'),
-    (2, 5, (SELECT process_id FROM manufacturing_process WHERE process_code = 'PACKING'),        '생산 1팀', '2024-05-13', 'DAY'),
-    (3, 6, (SELECT process_id FROM manufacturing_process WHERE process_code = 'INSPECTION'),     '품질 1팀', '2025-01-06', 'ROTATING'),
-    (4, 7, (SELECT process_id FROM manufacturing_process WHERE process_code = 'NOODLE_MAKING'),  '생산 2팀', '2025-06-02', 'NIGHT');
-
-INSERT INTO worker_skill (worker_profile_id, skill_name) VALUES
-    (1, '혼합기 운전'), (1, '원료 계량'),
-    (2, '포장기 운전'), (2, '자주검사'),
-    (3, '품질 검사'),   (3, '불량 판정'),
-    (4, '제면기 운전'), (4, '설비 점검');
-
-INSERT INTO equipment_assignment (
-    user_id, equipment_id, started_at, ended_at
-) VALUES
-    (4, (SELECT equipment_id FROM equipment WHERE equipment_code = 'MIXER-01'),     CURRENT_TIMESTAMP - INTERVAL 2 HOUR, NULL),
-    (5, (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),    CURRENT_TIMESTAMP - INTERVAL 2 HOUR, NULL),
-    (6, (SELECT equipment_id FROM equipment WHERE equipment_code = 'INSPECTOR-01'), CURRENT_TIMESTAMP - INTERVAL 2 HOUR, NULL),
-    (7, (SELECT equipment_id FROM equipment WHERE equipment_code = 'NOODLE-01'),    CURRENT_TIMESTAMP - INTERVAL 3 DAY,  CURRENT_TIMESTAMP - INTERVAL 68 HOUR);
-
-INSERT INTO equipment_telemetry (
-    equipment_id, work_order_id, metric_type, metric_value, unit, measured_at
-)
-SELECT
-    e.equipment_id,
-    2,
-    metrics.metric_type,
-    CASE metrics.metric_type
-        WHEN 'TEMPERATURE' THEN 55.0000 + e.equipment_id
-        WHEN 'HUMIDITY' THEN 38.0000 + e.equipment_id
-        ELSE 90.0000 + e.equipment_id
-    END,
-    CASE metrics.metric_type
-        WHEN 'TEMPERATURE' THEN '°C'
-        WHEN 'HUMIDITY' THEN '%'
-        ELSE 'EA/min'
-    END,
-    CURRENT_TIMESTAMP - INTERVAL metrics.minutes_ago MINUTE
-FROM equipment e
-CROSS JOIN (
-    SELECT 'TEMPERATURE' AS metric_type, 3 AS minutes_ago
-    UNION ALL SELECT 'HUMIDITY', 2
-    UNION ALL SELECT 'SPEED', 1
-) metrics;
-
-UPDATE equipment
-SET status = 'RUNNING'
-WHERE equipment_code IN (
-    'MIXER-01', 'ROLLER-01', 'NOODLE-01', 'STEAMER-01', 'CUTTER-01',
-    'FRYER-01', 'COOLER-01', 'PACKER-01', 'INSPECTOR-01'
+CREATE TEMPORARY TABLE seed_sequence (
+    seq INT PRIMARY KEY
 );
 
-INSERT INTO defect (
-    defect_no, idempotency_key, production_lot_id, equipment_id,
-    defect_type_id, quantity, occurred_at, cause, status
-) VALUES
-    ('DF-20260723-001', 'seed-defect-20260723-001', 2, (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),    (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),          1, CURRENT_TIMESTAMP - INTERVAL 70 MINUTE, '실링 온도 편차',       'UNHANDLED'),
-    ('DF-20260723-002', 'seed-defect-20260723-002', 2, (SELECT equipment_id FROM equipment WHERE equipment_code = 'FRYER-01'),    (SELECT defect_type_id FROM defect_type WHERE code = 'MOISTURE'),         1, CURRENT_TIMESTAMP - INTERVAL 55 MINUTE, '유탕 시간 편차',       'IN_PROGRESS'),
-    ('DF-20260722-001', 'seed-defect-20260722-001', 3, (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),    (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),          1, CURRENT_TIMESTAMP - INTERVAL 47 HOUR,   '포장 필름 정렬 불량',   'COMPLETED'),
-    ('DF-20260722-002', 'seed-defect-20260722-002', 3, (SELECT equipment_id FROM equipment WHERE equipment_code = 'INSPECTOR-01'), (SELECT defect_type_id FROM defect_type WHERE code = 'WEIGHT'),           2, CURRENT_TIMESTAMP - INTERVAL 46 HOUR,   '내용량 기준 미달',      'COMPLETED'),
-    ('DF-20260721-001', 'seed-defect-20260721-001', 4, (SELECT equipment_id FROM equipment WHERE equipment_code = 'MIXER-01'),     (SELECT defect_type_id FROM defect_type WHERE code = 'FOREIGN_MATERIAL'), 2, CURRENT_TIMESTAMP - INTERVAL 70 HOUR,   '원료 육안 검사 보류',   'ON_HOLD'),
-    ('DF-20260721-002', 'seed-defect-20260721-002', 4, (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),    (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),          3, CURRENT_TIMESTAMP - INTERVAL 69 HOUR,   '뚜껑 실링 압력 부족',   'COMPLETED'),
-    ('DF-20260720-001', 'seed-defect-20260720-001', 5, (SELECT equipment_id FROM equipment WHERE equipment_code = 'INSPECTOR-01'), (SELECT defect_type_id FROM defect_type WHERE code = 'WEIGHT'),           1, CURRENT_TIMESTAMP - INTERVAL 93 HOUR,   '중량 검사 기준 미달',  'COMPLETED');
-
-INSERT INTO defect_handling_history (
-    defect_id, handled_by_id, status, handle_method, content, handled_at
-) VALUES
-    ((SELECT defect_id FROM defect WHERE defect_no = 'DF-20260723-002'), 3, 'IN_PROGRESS', NULL,              '유탕기 설정값과 원료 수분을 점검 중', CURRENT_TIMESTAMP - INTERVAL 45 MINUTE),
-    ((SELECT defect_id FROM defect WHERE defect_no = 'DF-20260722-001'), 3, 'COMPLETED',   'REWORK',          '필름 위치 조정 후 재포장 완료',       CURRENT_TIMESTAMP - INTERVAL 46 HOUR),
-    ((SELECT defect_id FROM defect WHERE defect_no = 'DF-20260722-002'), 3, 'COMPLETED',   'DISPOSAL',        '중량 미달품 폐기 완료',              CURRENT_TIMESTAMP - INTERVAL 45 HOUR),
-    ((SELECT defect_id FROM defect WHERE defect_no = 'DF-20260721-001'), 3, 'ON_HOLD',     NULL,              '원료 시료 분석 결과 대기',           CURRENT_TIMESTAMP - INTERVAL 69 HOUR),
-    ((SELECT defect_id FROM defect WHERE defect_no = 'DF-20260721-002'), 3, 'COMPLETED',   'REWORK',          '실링 압력 조정 후 재작업 완료',       CURRENT_TIMESTAMP - INTERVAL 68 HOUR),
-    ((SELECT defect_id FROM defect WHERE defect_no = 'DF-20260720-001'), 3, 'COMPLETED',   'NORMAL_APPROVAL', '재측정 결과 허용 범위 확인',          CURRENT_TIMESTAMP - INTERVAL 92 HOUR);
-
-INSERT INTO alarm (
-    alarm_no, equipment_id, handler_id, message, severity, status,
-    occurred_at, resolved_at, description, handling_content
-) VALUES
-    ('ALM-20260724-001', (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),    NULL, '포장기 실링 온도 상한 경고',       'WARNING',  'PENDING_CONFIRMATION', CURRENT_TIMESTAMP - INTERVAL 15 MINUTE, NULL,                                  '설정 상한보다 온도가 높습니다.',         NULL),
-    ('ALM-20260724-002', (SELECT equipment_id FROM equipment WHERE equipment_code = 'FRYER-01'),    3,    '유탕기 수분 편차 점검 중',          'CRITICAL', 'IN_PROGRESS',         CURRENT_TIMESTAMP - INTERVAL 50 MINUTE, NULL,                                  '품질 기준을 벗어난 수분값이 감지되었습니다.','시료 채취 및 설정값 확인 중'),
-    ('ALM-20260724-003', (SELECT equipment_id FROM equipment WHERE equipment_code = 'MIXER-01'),    2,    '혼합기 진동 증가 모니터링',          'INFO',     'MONITORING',          CURRENT_TIMESTAMP - INTERVAL 2 HOUR,   NULL,                                  '진동값이 평소보다 높습니다.',             '베어링 상태 모니터링'),
-    ('ALM-20260724-004', (SELECT equipment_id FROM equipment WHERE equipment_code = 'INSPECTOR-01'),3,    '검사기 정기 점검 예약',              'INFO',     'INSPECTION_RESERVED', CURRENT_TIMESTAMP - INTERVAL 4 HOUR,   NULL,                                  '교정 주기 도래 예정입니다.',              '다음 비가동 시간에 교정 예정'),
-    ('ALM-20260723-001', (SELECT equipment_id FROM equipment WHERE equipment_code = 'ROLLER-01'),   2,    '압연기 두께 편차 해소',              'WARNING',  'RESOLVED',            CURRENT_TIMESTAMP - INTERVAL 20 HOUR,  CURRENT_TIMESTAMP - INTERVAL 19 HOUR, '롤 간격 편차가 감지되었습니다.',          '롤 간격 재설정 완료'),
-    ('ALM-20260723-002', (SELECT equipment_id FROM equipment WHERE equipment_code = 'NOODLE-01'),   2,    '제면기 절삭 상태 정상화',            'WARNING',  'RESOLVED',            CURRENT_TIMESTAMP - INTERVAL 22 HOUR,  CURRENT_TIMESTAMP - INTERVAL 21 HOUR, '면 폭 편차가 감지되었습니다.',            '칼날 청소 후 정상 확인'),
-    ('ALM-20260722-001', (SELECT equipment_id FROM equipment WHERE equipment_code = 'STEAMER-01'),  2,    '증숙기 압력 경고 처리 완료',          'CRITICAL', 'RESOLVED',            CURRENT_TIMESTAMP - INTERVAL 48 HOUR,  CURRENT_TIMESTAMP - INTERVAL 47 HOUR, '증기 압력이 기준을 초과했습니다.',         '압력 밸브 점검 완료'),
-    ('ALM-20260722-002', (SELECT equipment_id FROM equipment WHERE equipment_code = 'CUTTER-01'),   2,    '절단기 센서 오염 처리 완료',          'INFO',     'RESOLVED',            CURRENT_TIMESTAMP - INTERVAL 49 HOUR,  CURRENT_TIMESTAMP - INTERVAL 48 HOUR, '제품 감지 센서 신호가 불안정했습니다.',     '센서 표면 청소 완료'),
-    ('ALM-20260721-001', (SELECT equipment_id FROM equipment WHERE equipment_code = 'COOLER-01'),   3,    '냉각기 온도 회복 완료',              'WARNING',  'RESOLVED',            CURRENT_TIMESTAMP - INTERVAL 72 HOUR,  CURRENT_TIMESTAMP - INTERVAL 71 HOUR, '냉각 출구 온도가 높았습니다.',             '냉각팬 점검 후 정상화'),
-    ('ALM-20260720-001', (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),   3,    '포장 필름 공급 지연 처리 완료',       'INFO',     'RESOLVED',            CURRENT_TIMESTAMP - INTERVAL 96 HOUR,  CURRENT_TIMESTAMP - INTERVAL 95 HOUR, '필름 공급 속도가 일시적으로 저하되었습니다.','필름 장력 조정 완료');
-
--- ============================================================================
--- 알람 이력·품질관리 화면 체크리스트용 데이터
--- TC-AL-* : 알람 화면 테스트 데이터
--- TC-Q-*  : 품질관리 화면 테스트 데이터
---
--- 화면 테스트 경계:
---   * 현재 알람 33건 이상, 알람 이력 20건 이상
---   * 단일 설비/심각도 알람 101건으로 size=100 제한 확인
---   * 불량 목록 20건 이상, 상태 4종과 처리방법 3종 확인
---   * 생산 LOT 108건으로 등록 화면 size=100 제한 확인
---   * 최근 7일/30일 및 이전 비교기간 통계 확인
--- ============================================================================
-
-CREATE TEMPORARY TABLE screen_test_sequence (
-    seq INT NOT NULL PRIMARY KEY
-);
-
-INSERT INTO screen_test_sequence (seq)
-SELECT
-    hundreds.n * 100 + tens.n * 10 + ones.n + 1
+INSERT INTO seed_sequence (seq)
+SELECT ones.n + tens.n * 10 + hundreds.n * 100 + 1
 FROM (
     SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
     UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
@@ -432,711 +100,1050 @@ CROSS JOIN (
     UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
 ) tens
 CROSS JOIN (
-    SELECT 0 AS n UNION ALL SELECT 1
+    SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
 ) hundreds
-WHERE hundreds.n * 100 + tens.n * 10 + ones.n < 101;
+WHERE ones.n + tens.n * 10 + hundreds.n * 100 < 500;
 
-SET @screen_test_now_utc = UTC_TIMESTAMP(6);
-SET @screen_test_kst_today_utc =
-    DATE(@screen_test_now_utc + INTERVAL 9 HOUR) - INTERVAL 9 HOUR;
-SET @screen_test_30d_from_utc =
-    TIMESTAMPADD(DAY, -29, @screen_test_kst_today_utc);
+-- 생산라인별 설비
+INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
+SELECT
+    CONCAT(mp.process_name, ' 설비 2호'),
+    CONCAT(
+        CASE mp.process_code
+            WHEN 'MIXING' THEN 'MIXER'
+            WHEN 'ROLLING' THEN 'ROLLER'
+            WHEN 'NOODLE_MAKING' THEN 'NOODLE'
+            WHEN 'STEAMING' THEN 'STEAMER'
+            WHEN 'CUTTING' THEN 'CUTTER'
+            WHEN 'FRYING' THEN 'FRYER'
+            WHEN 'COOLING' THEN 'COOLER'
+            WHEN 'PACKING' THEN 'PACKER'
+            ELSE 'INSPECTOR'
+        END,
+        '-02'
+    ),
+    mp.process_id,
+    '제2생산라인',
+    'STOPPED'
+FROM manufacturing_process mp
+ORDER BY mp.sequence_no;
 
--- ----------------------------------------------------------------------------
--- 품질관리: 생산 LOT 선택 목록 100건 경계
--- 기존 7건에 완료 작업지시/LOT 101건을 더해 총 108건을 만든다.
--- TC-Q-LOT-101은 오래된 LOT이므로 size=100 조회에서 누락되는지 확인할 수 있다.
--- 추가 작업지시는 모두 DONE이므로 활성 작업지시는 기존 1건만 유지된다.
--- ----------------------------------------------------------------------------
+INSERT INTO equipment (equipment_name, equipment_code, process_id, location, status)
+SELECT
+    CONCAT(mp.process_name, ' 설비 3호'),
+    CONCAT(
+        CASE mp.process_code
+            WHEN 'MIXING' THEN 'MIXER'
+            WHEN 'ROLLING' THEN 'ROLLER'
+            WHEN 'NOODLE_MAKING' THEN 'NOODLE'
+            WHEN 'STEAMING' THEN 'STEAMER'
+            WHEN 'CUTTING' THEN 'CUTTER'
+            WHEN 'FRYING' THEN 'FRYER'
+            WHEN 'COOLING' THEN 'COOLER'
+            WHEN 'PACKING' THEN 'PACKER'
+            ELSE 'INSPECTOR'
+        END,
+        '-03'
+    ),
+    mp.process_id,
+    '제3생산라인',
+    'STOPPED'
+FROM manufacturing_process mp
+ORDER BY mp.sequence_no;
 
+-- 사용자와 작업자
+INSERT INTO app_user (
+    user_id, emp_no, name, email, phone, password, role,
+    approval_status, is_active, created_at, last_access_at
+) VALUES
+    (1,  'admin01',      'MES 시스템 관리자', 'admin01@linecup.co.kr',      '010-4100-0001', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'ADMIN',      'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 500 DAY, CURRENT_TIMESTAMP - INTERVAL 3 MINUTE),
+    (2,  'supervisor01', '생산관리 김도윤',     'supervisor01@linecup.co.kr', '010-4100-0002', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'SUPERVISOR', 'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 460 DAY, CURRENT_TIMESTAMP - INTERVAL 8 MINUTE),
+    (3,  'supervisor02', '품질관리 이서연',     'supervisor02@linecup.co.kr', '010-4100-0003', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'SUPERVISOR', 'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 430 DAY, CURRENT_TIMESTAMP - INTERVAL 14 MINUTE),
+    (4,  'supervisor03', '설비관리 박준호',     'supervisor03@linecup.co.kr', '010-4100-0004', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'SUPERVISOR', 'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 410 DAY, CURRENT_TIMESTAMP - INTERVAL 22 MINUTE),
+    (5,  'supervisor04', '자재관리 최유진',     'supervisor04@linecup.co.kr', '010-4100-0005', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'SUPERVISOR', 'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 390 DAY, CURRENT_TIMESTAMP - INTERVAL 35 MINUTE),
+    (6,  'operator01',   '혼합 작업자 정민수',  'operator01@linecup.co.kr',   '010-4100-0006', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 360 DAY, CURRENT_TIMESTAMP - INTERVAL 5 MINUTE),
+    (7,  'operator02',   '압연 작업자 한지우',  'operator02@linecup.co.kr',   '010-4100-0007', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 350 DAY, CURRENT_TIMESTAMP - INTERVAL 7 MINUTE),
+    (8,  'operator03',   '제면 작업자 송현우',  'operator03@linecup.co.kr',   '010-4100-0008', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 330 DAY, CURRENT_TIMESTAMP - INTERVAL 9 MINUTE),
+    (9,  'operator04',   '증숙 작업자 윤하린',  'operator04@linecup.co.kr',   '010-4100-0009', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 320 DAY, CURRENT_TIMESTAMP - INTERVAL 11 MINUTE),
+    (10, 'operator05',   '절단 작업자 강시우',  'operator05@linecup.co.kr',   '010-4100-0010', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 300 DAY, CURRENT_TIMESTAMP - INTERVAL 13 MINUTE),
+    (11, 'operator06',   '유탕 작업자 오예린',  'operator06@linecup.co.kr',   '010-4100-0011', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 290 DAY, CURRENT_TIMESTAMP - INTERVAL 15 MINUTE),
+    (12, 'operator07',   '냉각 작업자 임재현',  'operator07@linecup.co.kr',   '010-4100-0012', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 280 DAY, CURRENT_TIMESTAMP - INTERVAL 17 MINUTE),
+    (13, 'operator08',   '포장 작업자 신가은',  'operator08@linecup.co.kr',   '010-4100-0013', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 260 DAY, CURRENT_TIMESTAMP - INTERVAL 19 MINUTE),
+    (14, 'operator09',   '검사 작업자 문태윤',  'operator09@linecup.co.kr',   '010-4100-0014', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 250 DAY, CURRENT_TIMESTAMP - INTERVAL 21 MINUTE),
+    (15, 'operator10',   '공정지원 작업자 배수아','operator10@linecup.co.kr',  '010-4100-0015', 'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI', 'OPERATOR',   'APPROVED', true,  CURRENT_TIMESTAMP - INTERVAL 240 DAY, CURRENT_TIMESTAMP - INTERVAL 24 MINUTE);
+
+INSERT INTO app_user (
+    user_id, emp_no, name, email, phone, password, role,
+    approval_status, is_active, created_at, last_access_at
+)
+SELECT
+    1000 + s.seq,
+    CONCAT(CASE WHEN MOD(s.seq, 20) = 0 THEN 'LC-SV-' ELSE 'LC-OP-' END, LPAD(s.seq, 4, '0')),
+    CONCAT(CASE WHEN MOD(s.seq, 20) = 0 THEN '생산 지시자 ' ELSE '생산 작업자 ' END, LPAD(s.seq, 3, '0')),
+    CONCAT('factory', LPAD(s.seq, 4, '0'), '@linecup.co.kr'),
+    CONCAT('010-7', LPAD(MOD(s.seq, 1000), 3, '0'), '-', LPAD(s.seq, 4, '0')),
+    'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:fqni07Ltqmx/mz24g62fgIL/DXK5XDHbJneL4UHG/fI',
+    CASE WHEN MOD(s.seq, 20) = 0 THEN 'SUPERVISOR' ELSE 'OPERATOR' END,
+    CASE
+        WHEN s.seq <= 165 THEN 'APPROVED'
+        WHEN s.seq <= 172 THEN 'PENDING'
+        WHEN s.seq <= 177 THEN 'REJECTED'
+        ELSE 'APPROVED'
+    END,
+    s.seq <= 165,
+    TIMESTAMPADD(DAY, -(220 - s.seq), CURRENT_TIMESTAMP),
+    CASE WHEN s.seq <= 165 THEN TIMESTAMPADD(MINUTE, -s.seq, CURRENT_TIMESTAMP) ELSE NULL END
+FROM seed_sequence s
+WHERE s.seq <= 180;
+
+INSERT INTO worker_profile (
+    worker_profile_id, user_id, team_name, shift_type, joined_date, primary_process_id
+)
+SELECT
+    u.user_id,
+    u.user_id,
+    CONCAT('생산 ', 1 + MOD(u.user_id, 3), '조'),
+    CASE MOD(u.user_id, 3) WHEN 0 THEN 'DAY' WHEN 1 THEN 'NIGHT' ELSE 'ROTATING' END,
+    DATE(TIMESTAMPADD(DAY, -(300 + MOD(u.user_id, 700)), CURRENT_DATE)),
+    mp.process_id
+FROM app_user u
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(u.user_id, 9)
+WHERE u.role = 'OPERATOR'
+  AND u.approval_status = 'APPROVED'
+  AND u.is_active = true;
+
+INSERT INTO worker_skill (worker_profile_id, skill_name)
+SELECT worker_profile_id, '공정 설비 운전'
+FROM worker_profile;
+
+INSERT INTO worker_skill (worker_profile_id, skill_name)
+SELECT worker_profile_id, '작업표준 및 품질 확인'
+FROM worker_profile;
+
+INSERT INTO equipment_assignment (user_id, equipment_id, started_at, ended_at)
+SELECT
+    wp.user_id,
+    e.equipment_id,
+    TIMESTAMPADD(DAY, -(30 + MOD(wp.user_id, 120)), CURRENT_TIMESTAMP),
+    CASE
+        WHEN wp.user_id BETWEEN 6 AND 15 THEN NULL
+        ELSE TIMESTAMPADD(DAY, -(1 + MOD(wp.user_id, 20)), CURRENT_TIMESTAMP)
+    END
+FROM worker_profile wp
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(wp.user_id - 1, 9)
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(wp.user_id - 1, 3), 2, '0');
+
+-- 제품과 BOM
+INSERT INTO product (
+    product_id, product_code, product_name, category, unit, status
+) VALUES
+    (1,  'FG-CUP-SPICY-065',    '얼큰한맛 컵면 65g',      '컵면',   'EA', 'ACTIVE'),
+    (2,  'FG-CUP-MILD-065',     '담백한맛 컵면 65g',      '컵면',   'EA', 'ACTIVE'),
+    (3,  'FG-CUP-SEAFOOD-075',  '해물맛 컵면 75g',        '컵면',   'EA', 'ACTIVE'),
+    (4,  'FG-CUP-KIMCHI-075',   '김치맛 컵면 75g',        '컵면',   'EA', 'ACTIVE'),
+    (5,  'FG-CUP-BEEF-080',     '소고기맛 컵면 80g',      '컵면',   'EA', 'ACTIVE'),
+    (6,  'FG-BOWL-SPICY-105',   '매운해물 큰컵면 105g',   '큰컵면', 'EA', 'ACTIVE'),
+    (7,  'FG-BOWL-BEEF-105',    '진한소고기 큰컵면 105g', '큰컵면', 'EA', 'ACTIVE'),
+    (8,  'FG-CUP-VEGETABLE-070','채소맛 컵면 70g',        '컵면',   'EA', 'ACTIVE'),
+    (9,  'FG-CUP-CURRY-070',    '카레맛 컵면 70g',        '컵면',   'EA', 'ACTIVE'),
+    (10, 'FG-CUP-JJAJANG-090',  '짜장맛 컵면 90g',        '컵면',   'EA', 'ACTIVE'),
+    (11, 'FG-BOWL-KIMCHI-110',  '김치사발면 110g',        '큰컵면', 'EA', 'ACTIVE'),
+    (12, 'FG-CUP-CHICKEN-075',  '닭육수 컵면 75g',        '컵면',   'EA', 'ACTIVE'),
+    (13, 'FG-CUP-ANCHOVY-070',  '멸치육수 컵면 70g',      '컵면',   'EA', 'REVIEW'),
+    (14, 'FG-BOWL-CREAM-100',   '크림맛 큰컵면 100g',     '큰컵면', 'EA', 'REVIEW'),
+    (15, 'FG-CUP-CLASSIC-065',  '전통육수 컵면 65g',      '컵면',   'EA', 'INACTIVE');
+
+INSERT INTO product (
+    product_id, product_code, product_name, category, unit, status
+)
+SELECT
+    1000 + s.seq,
+    CONCAT('FG-', CASE WHEN MOD(s.seq, 4) = 0 THEN 'BOWL-' ELSE 'CUP-' END, LPAD(s.seq, 4, '0')),
+    CONCAT(
+        CASE MOD(s.seq, 8)
+            WHEN 0 THEN '얼큰육수'
+            WHEN 1 THEN '담백육수'
+            WHEN 2 THEN '해물육수'
+            WHEN 3 THEN '김치육수'
+            WHEN 4 THEN '소고기육수'
+            WHEN 5 THEN '채소육수'
+            WHEN 6 THEN '닭육수'
+            ELSE '멸치육수'
+        END,
+        CASE WHEN MOD(s.seq, 4) = 0 THEN ' 큰컵면 ' ELSE ' 컵면 ' END,
+        65 + MOD(s.seq, 10) * 5,
+        'g ',
+        LPAD(s.seq, 3, '0')
+    ),
+    CASE WHEN MOD(s.seq, 4) = 0 THEN '큰컵면' ELSE '컵면' END,
+    'EA',
+    CASE WHEN s.seq <= 135 THEN 'ACTIVE' WHEN s.seq <= 145 THEN 'REVIEW' ELSE 'INACTIVE' END
+FROM seed_sequence s
+WHERE s.seq <= 150;
+
+-- 원자재와 구매 LOT
+INSERT INTO raw_material (
+    material_id, material_code, material_name, unit, safety_stock_qty, status
+) VALUES
+    (1,  'RM-FLOUR-001',       '제면용 밀가루',       'kg', 10000.000, 'ACTIVE'),
+    (2,  'RM-STARCH-001',      '감자전분',            'kg',  3000.000, 'ACTIVE'),
+    (3,  'RM-OIL-001',         '식품용 팜유',         'L',   8000.000, 'ACTIVE'),
+    (4,  'RM-SALT-001',        '정제소금',            'kg',  1000.000, 'ACTIVE'),
+    (5,  'RM-SOUP-SPICY',      '얼큰 분말스프',       'kg',  2000.000, 'ACTIVE'),
+    (6,  'RM-SOUP-MILD',       '담백 분말스프',       'kg',  2000.000, 'ACTIVE'),
+    (7,  'RM-SOUP-SEAFOOD',    '해물 분말스프',       'kg',  2000.000, 'ACTIVE'),
+    (8,  'RM-SOUP-KIMCHI',     '김치 분말스프',       'kg',  2000.000, 'ACTIVE'),
+    (9,  'RM-SOUP-BEEF',       '소고기 분말스프',     'kg',  2000.000, 'ACTIVE'),
+    (10, 'RM-SOUP-VEGETABLE',  '채소 분말스프',       'kg',  2000.000, 'ACTIVE'),
+    (11, 'RM-CUP-065',         '종이용기 65g 규격',   'EA', 30000.000, 'ACTIVE'),
+    (12, 'RM-CUP-075',         '종이용기 75g 규격',   'EA', 30000.000, 'ACTIVE'),
+    (13, 'RM-LID-COMMON',      '알루미늄 용기뚜껑',   'EA', 30000.000, 'ACTIVE'),
+    (14, 'RM-FILM-001',        '외포장 필름',         'm',  15000.000, 'ACTIVE'),
+    (15, 'RM-CARTON-001',      '완제품 포장상자',     'EA',  5000.000, 'ACTIVE'),
+    (16, 'RM-DRIED-VEGETABLE', '건조 채소 후레이크',  'kg',  1000.000, 'ACTIVE'),
+    (17, 'RM-DRIED-SEAFOOD',   '건조 해물 후레이크',  'kg',  1000.000, 'ACTIVE'),
+    (18, 'RM-SEASONING-BASE',  '복합조미 베이스',     'kg',  1500.000, 'ACTIVE'),
+    (19, 'RM-LABEL-001',       '제품표시 라벨',       'EA', 20000.000, 'ACTIVE'),
+    (20, 'RM-CUP-OLD',         '구형 종이용기',       'EA',     0.000, 'INACTIVE');
+
+INSERT INTO raw_material (
+    material_id, material_code, material_name, unit, safety_stock_qty, status
+)
+SELECT
+    1000 + s.seq,
+    CONCAT('RM-PKG-', LPAD(s.seq, 4, '0')),
+    CONCAT(
+        CASE MOD(s.seq, 4)
+            WHEN 0 THEN '제품표시 인쇄필름 '
+            WHEN 1 THEN '전용 종이용기 '
+            WHEN 2 THEN '전용 용기뚜껑 '
+            ELSE '출하 포장상자 '
+        END,
+        LPAD(s.seq, 3, '0')
+    ),
+    CASE WHEN MOD(s.seq, 4) = 0 THEN 'm' ELSE 'EA' END,
+    1000.000 + MOD(s.seq, 10) * 250.000,
+    CASE WHEN s.seq <= 145 THEN 'ACTIVE' ELSE 'INACTIVE' END
+FROM seed_sequence s
+WHERE s.seq <= 150;
+
+INSERT INTO bom (bom_id, bom_code, product_id, version, status, note)
+SELECT
+    p.product_id,
+    CONCAT('BOM-STD-', LPAD(p.product_id, 4, '0')),
+    p.product_id,
+    '1.0',
+    CASE WHEN p.status = 'INACTIVE' THEN 'INACTIVE' WHEN p.status = 'REVIEW' THEN 'REVIEW' ELSE 'ACTIVE' END,
+    '표준 배합 및 포장 기준'
+FROM product p
+WHERE p.product_id BETWEEN 1 AND 15;
+
+INSERT INTO bom (bom_id, bom_code, product_id, version, status, note)
+SELECT
+    1000 + s.seq,
+    CONCAT('BOM-MASS-', LPAD(s.seq, 4, '0')),
+    1000 + s.seq,
+    '1.0',
+    CASE WHEN s.seq <= 135 THEN 'ACTIVE' WHEN s.seq <= 145 THEN 'REVIEW' ELSE 'INACTIVE' END,
+    CONCAT('제품별 표준 배합서 ', LPAD(s.seq, 3, '0'))
+FROM seed_sequence s
+WHERE s.seq <= 150;
+
+INSERT INTO bom_item (bom_id, material_id, process_id, spec, required_qty, loss_rate, note)
+SELECT b.bom_id, 1, mp.process_id, '제면용 식품 규격', 0.055, 2.00, '주원료 계량'
+FROM bom b
+JOIN manufacturing_process mp ON mp.process_code = 'MIXING';
+
+INSERT INTO bom_item (bom_id, material_id, process_id, spec, required_qty, loss_rate, note)
+SELECT b.bom_id, 3, mp.process_id, '유탕용 식품 규격', 0.008, 1.50, '유탕 공정 투입'
+FROM bom b
+JOIN manufacturing_process mp ON mp.process_code = 'FRYING';
+
+INSERT INTO bom_item (bom_id, material_id, process_id, spec, required_qty, loss_rate, note)
+SELECT b.bom_id, 5 + MOD(b.product_id - 1, 6), mp.process_id, '제품별 분말 배합', 0.010, 1.00, '분말스프 투입'
+FROM bom b
+JOIN manufacturing_process mp ON mp.process_code = 'PACKING';
+
+INSERT INTO bom_item (bom_id, material_id, process_id, spec, required_qty, loss_rate, note)
+SELECT b.bom_id, 13, mp.process_id, '공용 밀봉 규격', 1.000, 0.20, '용기 밀봉'
+FROM bom b
+JOIN manufacturing_process mp ON mp.process_code = 'PACKING';
+
+INSERT INTO bom_item (bom_id, material_id, process_id, spec, required_qty, loss_rate, note)
+SELECT
+    b.bom_id,
+    CASE WHEN b.bom_id < 1000 THEN 11 + MOD(b.product_id, 2) ELSE b.product_id END,
+    mp.process_id,
+    '제품별 포장 규격',
+    1.000,
+    0.30,
+    '완제품 포장'
+FROM bom b
+JOIN manufacturing_process mp ON mp.process_code = 'PACKING';
+
+INSERT INTO raw_material_lot (
+    material_lot_id, material_id, material_lot_no, supplier_name, supplier_lot_no,
+    manufacture_date, expiry_date, received_date, received_qty, current_qty
+)
+SELECT
+    s.seq,
+    1 + MOD(s.seq - 1, 20),
+    CONCAT('RMLOT-COMMON-', LPAD(s.seq, 5, '0')),
+    CASE MOD(s.seq, 5)
+        WHEN 0 THEN '한빛식품원료'
+        WHEN 1 THEN '대한제분공업'
+        WHEN 2 THEN '동해포장산업'
+        WHEN 3 THEN '중앙조미식품'
+        ELSE '미래유지산업'
+    END,
+    CONCAT('SUP-COM-', LPAD(s.seq, 5, '0')),
+    DATE(TIMESTAMPADD(DAY, -(40 + s.seq), CURRENT_DATE)),
+    CASE
+        WHEN s.seq > 20 AND MOD(s.seq, 5) = 0
+            THEN DATE(TIMESTAMPADD(DAY, -30, CURRENT_DATE))
+        ELSE DATE(TIMESTAMPADD(DAY, 365 + MOD(s.seq, 200), CURRENT_DATE))
+    END,
+    DATE(TIMESTAMPADD(DAY, -(20 + MOD(s.seq, 20)), CURRENT_DATE)),
+    500000.000 + s.seq * 100.000,
+    300000.000 + s.seq * 50.000
+FROM seed_sequence s
+WHERE s.seq <= 40;
+
+INSERT INTO raw_material_lot (
+    material_lot_id, material_id, material_lot_no, supplier_name, supplier_lot_no,
+    manufacture_date, expiry_date, received_date, received_qty, current_qty
+)
+SELECT
+    1000 + s.seq,
+    1000 + s.seq,
+    CONCAT('RMLOT-PKG-A-', LPAD(s.seq, 5, '0')),
+    CASE MOD(s.seq, 4)
+        WHEN 0 THEN '새한인쇄포장'
+        WHEN 1 THEN '라인컵용기'
+        WHEN 2 THEN '대한밀봉자재'
+        ELSE '동우출하포장'
+    END,
+    CONCAT('PKG-A-', LPAD(s.seq, 5, '0')),
+    DATE(TIMESTAMPADD(DAY, -(30 + MOD(s.seq, 90)), CURRENT_DATE)),
+    DATE(TIMESTAMPADD(DAY, 700 + MOD(s.seq, 200), CURRENT_DATE)),
+    DATE(TIMESTAMPADD(DAY, -(10 + MOD(s.seq, 60)), CURRENT_DATE)),
+    20000.000 + s.seq * 10.000,
+    12000.000 + s.seq * 5.000
+FROM seed_sequence s
+WHERE s.seq <= 150;
+
+INSERT INTO raw_material_lot (
+    material_lot_id, material_id, material_lot_no, supplier_name, supplier_lot_no,
+    manufacture_date, expiry_date, received_date, received_qty, current_qty
+)
+SELECT
+    2000 + s.seq,
+    1000 + s.seq,
+    CONCAT('RMLOT-PKG-B-', LPAD(s.seq, 5, '0')),
+    CASE MOD(s.seq, 4)
+        WHEN 0 THEN '새한인쇄포장'
+        WHEN 1 THEN '라인컵용기'
+        WHEN 2 THEN '대한밀봉자재'
+        ELSE '동우출하포장'
+    END,
+    CONCAT('PKG-B-', LPAD(s.seq, 5, '0')),
+    DATE(TIMESTAMPADD(DAY, -(300 + MOD(s.seq, 120)), CURRENT_DATE)),
+    CASE
+        WHEN MOD(s.seq, 12) = 0 THEN DATE(TIMESTAMPADD(DAY, -15, CURRENT_DATE))
+        ELSE DATE(TIMESTAMPADD(DAY, 240 + MOD(s.seq, 100), CURRENT_DATE))
+    END,
+    DATE(TIMESTAMPADD(DAY, -(120 + MOD(s.seq, 120)), CURRENT_DATE)),
+    8000.000 + s.seq * 5.000,
+    CASE WHEN MOD(s.seq, 12) = 0 THEN 0.000 ELSE 2500.000 + s.seq * 2.000 END
+FROM seed_sequence s
+WHERE s.seq <= 150;
+
+-- 작업지시, 생산 LOT, 공정 진척
 INSERT INTO work_order (
-    work_order_no, product_id, supervisor_id,
+    work_order_id, work_order_no, product_id, supervisor_id,
     target_qty, hourly_target_qty, current_qty, good_qty, defect_qty,
     planned_start_date, registered_at, started_at, completed_at, status, remarks
 )
 SELECT
-    CONCAT('TC-Q-WO-', LPAD(s.seq, 3, '0')),
-    CASE WHEN s.seq = 101 THEN 4 ELSE 1 END,
-    3,
-    1,
-    1,
-    1,
-    1,
-    0,
-    DATE(TIMESTAMPADD(DAY, 0 - 40 - s.seq, @screen_test_now_utc)),
-    TIMESTAMPADD(DAY, 0 - 42 - s.seq, @screen_test_now_utc),
-    TIMESTAMPADD(DAY, 0 - 41 - s.seq, @screen_test_now_utc),
-    TIMESTAMPADD(DAY, 0 - 40 - s.seq, @screen_test_now_utc),
-    'DONE',
-    CONCAT('품질 LOT 100건 경계 테스트 ', LPAD(s.seq, 3, '0'))
-FROM screen_test_sequence s;
+    s.seq,
+    CONCAT('WO-', DATE_FORMAT(CURRENT_DATE, '%Y%m'), '-', LPAD(s.seq, 5, '0')),
+    1 + MOD(s.seq - 1, 15),
+    2 + MOD(s.seq, 3),
+    CASE WHEN s.seq = 1 THEN 1200 ELSE 800 + MOD(s.seq, 10) * 40 END,
+    CASE WHEN s.seq = 1 THEN 200 ELSE 200 + MOD(s.seq, 10) * 10 END,
+    CASE
+        WHEN s.seq = 1 THEN 420
+        WHEN s.seq <= 51 THEN 0
+        ELSE 800 + MOD(s.seq, 10) * 40 - MOD(s.seq, 4) * 10
+    END,
+    CASE
+        WHEN s.seq = 1 THEN 411
+        WHEN s.seq <= 51 THEN 0
+        ELSE 800 + MOD(s.seq, 10) * 40 - MOD(s.seq, 4) * 10 - (12 + MOD(s.seq, 18))
+    END,
+    CASE
+        WHEN s.seq = 1 THEN 9
+        WHEN s.seq <= 51 THEN 0
+        ELSE 12 + MOD(s.seq, 18)
+    END,
+    CASE
+        WHEN s.seq = 1 THEN CURRENT_DATE
+        WHEN s.seq <= 51 THEN DATE(TIMESTAMPADD(DAY, s.seq - 1, CURRENT_DATE))
+        ELSE DATE(TIMESTAMPADD(DAY, -(201 - s.seq), CURRENT_DATE))
+    END,
+    CASE
+        WHEN s.seq = 1 THEN TIMESTAMPADD(HOUR, -5, CURRENT_TIMESTAMP)
+        WHEN s.seq <= 51 THEN TIMESTAMPADD(HOUR, -(52 - s.seq), CURRENT_TIMESTAMP)
+        ELSE TIMESTAMPADD(DAY, -(202 - s.seq), CURRENT_TIMESTAMP)
+    END,
+    CASE
+        WHEN s.seq = 1 THEN TIMESTAMPADD(HOUR, -4, CURRENT_TIMESTAMP)
+        WHEN s.seq <= 51 THEN NULL
+        ELSE TIMESTAMPADD(HOUR, -6, TIMESTAMPADD(DAY, -(201 - s.seq), CURRENT_TIMESTAMP))
+    END,
+    CASE
+        WHEN s.seq <= 51 THEN NULL
+        ELSE TIMESTAMPADD(HOUR, -1, TIMESTAMPADD(DAY, -(201 - s.seq), CURRENT_TIMESTAMP))
+    END,
+    CASE WHEN s.seq = 1 THEN 'IN_PROGRESS' WHEN s.seq <= 51 THEN 'PENDING' ELSE 'DONE' END,
+    CONCAT(
+        '제',
+        1 + MOD(s.seq - 1, 3),
+        '생산라인 ',
+        CASE WHEN s.seq = 1 THEN '당일 생산 진행' WHEN s.seq <= 51 THEN '생산 계획 확정' ELSE '생산 실적 확정' END
+    )
+FROM seed_sequence s
+WHERE s.seq <= 200;
 
 INSERT INTO production_lot (
-    lot_no, work_order_id, production_qty, good_qty, defect_qty,
-    started_at, completed_at, status
+    production_lot_id, lot_no, work_order_id,
+    production_qty, good_qty, defect_qty, status, started_at, completed_at
 )
 SELECT
-    CONCAT('TC-Q-LOT-', LPAD(s.seq, 3, '0')),
-    wo.work_order_id,
-    1,
-    1,
-    0,
-    wo.started_at,
-    wo.completed_at,
-    'COMPLETED'
-FROM screen_test_sequence s
-JOIN work_order wo
-  ON wo.work_order_no = CONCAT('TC-Q-WO-', LPAD(s.seq, 3, '0'));
+    w.work_order_id,
+    REPLACE(w.work_order_no, 'WO-', 'LOT-'),
+    w.work_order_id,
+    w.current_qty,
+    w.good_qty,
+    w.defect_qty,
+    CASE WHEN w.status = 'PENDING' THEN 'PENDING' WHEN w.status = 'DONE' THEN 'COMPLETED' ELSE 'IN_PROGRESS' END,
+    w.started_at,
+    w.completed_at
+FROM work_order w;
 
--- ----------------------------------------------------------------------------
--- 품질관리: 통계 7일/30일 및 이전 기간 비교용 생산수량
--- ----------------------------------------------------------------------------
+INSERT INTO work_order_equipment (work_order_id, equipment_id)
+SELECT
+    w.work_order_id,
+    e.equipment_id
+FROM work_order w
+CROSS JOIN manufacturing_process mp
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(w.work_order_id - 1, 3), 2, '0');
 
+INSERT INTO work_order_worker (work_order_id, user_id)
+SELECT
+    w.work_order_id,
+    6 + MOD(w.work_order_id + worker_slot.slot_no, 10)
+FROM work_order w
+CROSS JOIN (
+    SELECT 0 AS slot_no UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+) worker_slot;
+
+INSERT INTO production_process_progress (
+    production_lot_id, process_id, equipment_id, status,
+    target_qty, production_qty, good_qty, defect_qty, started_at, completed_at
+)
+SELECT
+    pl.production_lot_id,
+    mp.process_id,
+    e.equipment_id,
+    CASE
+        WHEN w.status = 'PENDING' THEN 'PENDING'
+        WHEN w.status = 'DONE' THEN 'COMPLETED'
+        WHEN mp.sequence_no <= 3 THEN 'COMPLETED'
+        WHEN mp.sequence_no = 4 THEN 'IN_PROGRESS'
+        ELSE 'PENDING'
+    END,
+    w.target_qty,
+    CASE
+        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 4) THEN w.current_qty
+        ELSE 0
+    END,
+    CASE
+        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 4) THEN w.good_qty
+        ELSE 0
+    END,
+    CASE
+        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 4) THEN w.defect_qty
+        ELSE 0
+    END,
+    CASE
+        WHEN w.status = 'PENDING' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no > 4) THEN NULL
+        ELSE TIMESTAMPADD(MINUTE, (mp.sequence_no - 1) * 30, w.started_at)
+    END,
+    CASE
+        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 3)
+            THEN TIMESTAMPADD(MINUTE, mp.sequence_no * 30 - 5, w.started_at)
+        ELSE NULL
+    END
+FROM production_lot pl
+JOIN work_order w ON w.work_order_id = pl.work_order_id
+CROSS JOIN manufacturing_process mp
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(w.work_order_id - 1, 3), 2, '0');
+
+UPDATE equipment
+SET status = CASE
+    WHEN equipment_code = 'STEAMER-01' THEN 'RUNNING'
+    WHEN equipment_code = 'PACKER-03' THEN 'ERROR'
+    ELSE 'STOPPED'
+END;
+
+-- 작업지시 상태 변경 이력
+INSERT INTO work_order_status_history (
+    work_order_id, changed_by_id, action, prev_status, new_status, changed_at, note
+)
+SELECT
+    w.work_order_id,
+    w.supervisor_id,
+    'REGISTERED',
+    NULL,
+    'PENDING',
+    w.registered_at,
+    '생산계획 등록'
+FROM work_order w;
+
+INSERT INTO work_order_status_history (
+    work_order_id, changed_by_id, action, prev_status, new_status, changed_at, note
+)
+SELECT
+    w.work_order_id,
+    w.supervisor_id,
+    'START',
+    'PENDING',
+    'IN_PROGRESS',
+    w.started_at,
+    '작업표준 확인 후 생산 시작'
+FROM work_order w
+WHERE w.status IN ('IN_PROGRESS', 'DONE');
+
+INSERT INTO work_order_status_history (
+    work_order_id, changed_by_id, action, prev_status, new_status, changed_at, note
+)
+SELECT
+    w.work_order_id,
+    w.supervisor_id,
+    'HOLD',
+    'IN_PROGRESS',
+    'HOLD',
+    TIMESTAMPADD(MINUTE, 90, w.started_at),
+    '공정 품질 확인을 위한 일시 보류'
+FROM work_order w
+WHERE w.status = 'DONE'
+  AND MOD(w.work_order_id, 7) = 0;
+
+INSERT INTO work_order_status_history (
+    work_order_id, changed_by_id, action, prev_status, new_status, changed_at, note
+)
+SELECT
+    w.work_order_id,
+    w.supervisor_id,
+    'RESUME',
+    'HOLD',
+    'IN_PROGRESS',
+    TIMESTAMPADD(MINUTE, 120, w.started_at),
+    '품질 확인 완료 후 생산 재개'
+FROM work_order w
+WHERE w.status = 'DONE'
+  AND MOD(w.work_order_id, 7) = 0;
+
+INSERT INTO work_order_status_history (
+    work_order_id, changed_by_id, action, prev_status, new_status, changed_at, note
+)
+SELECT
+    w.work_order_id,
+    w.supervisor_id,
+    'COMPLETE',
+    'IN_PROGRESS',
+    'DONE',
+    w.completed_at,
+    '생산수량 및 품질실적 확정'
+FROM work_order w
+WHERE w.status = 'DONE';
+
+-- 시간별 생산량과 생산실적
 INSERT INTO hourly_production (
     work_order_id, bucket_start, bucket_end, received_at,
     target_qty, production_qty, good_qty, defect_qty, is_partial, close_reason
-) VALUES
-    (
-        3,
-        TIMESTAMPADD(DAY, -10, @screen_test_now_utc),
-        TIMESTAMPADD(HOUR, 1, TIMESTAMPADD(DAY, -10, @screen_test_now_utc)),
-        TIMESTAMPADD(HOUR, 1, TIMESTAMPADD(DAY, -10, @screen_test_now_utc)),
-        100, 100, 98, 2, false, 'HOURLY'
-    ),
-    (
-        4,
-        @screen_test_30d_from_utc,
-        TIMESTAMPADD(HOUR, 1, @screen_test_30d_from_utc),
-        TIMESTAMPADD(HOUR, 1, @screen_test_30d_from_utc),
-        120, 120, 117, 3, false, 'HOURLY'
-    ),
-    (
-        5,
-        TIMESTAMPADD(DAY, -31, @screen_test_now_utc),
-        TIMESTAMPADD(HOUR, 1, TIMESTAMPADD(DAY, -31, @screen_test_now_utc)),
-        TIMESTAMPADD(HOUR, 1, TIMESTAMPADD(DAY, -31, @screen_test_now_utc)),
-        80, 80, 76, 4, false, 'HOURLY'
-    ),
-    (
-        3,
-        TIMESTAMPADD(DAY, -35, @screen_test_now_utc),
-        TIMESTAMPADD(HOUR, 1, TIMESTAMPADD(DAY, -35, @screen_test_now_utc)),
-        TIMESTAMPADD(HOUR, 1, TIMESTAMPADD(DAY, -35, @screen_test_now_utc)),
-        100, 100, 99, 1, false, 'HOURLY'
-    );
-
--- ----------------------------------------------------------------------------
--- 품질관리: 상세·상태·처리방법·동일시각·기간 경계 테스트
--- ----------------------------------------------------------------------------
-
-INSERT INTO defect (
-    defect_no, idempotency_key, production_lot_id, equipment_id,
-    defect_type_id, quantity, occurred_at, cause, status
-) VALUES
-    (
-        'TC-Q-DETAIL-UNHANDLED', 'screen-tc-q-detail-unhandled', 2,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        1, CURRENT_TIMESTAMP - INTERVAL 20 MINUTE, '상세 원인 수정 전', 'UNHANDLED'
-    ),
-    (
-        'TC-Q-DETAIL-INPROGRESS', 'screen-tc-q-detail-inprogress', 2,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'FRYER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'MOISTURE'),
-        2, CURRENT_TIMESTAMP - INTERVAL 21 MINUTE, '처리 중 상세 테스트', 'IN_PROGRESS'
-    ),
-    (
-        'TC-Q-DETAIL-ONHOLD', 'screen-tc-q-detail-onhold', 3,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'MIXER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'FOREIGN_MATERIAL'),
-        3, CURRENT_TIMESTAMP - INTERVAL 22 MINUTE, '보류 상세 테스트', 'ON_HOLD'
-    ),
-    (
-        'TC-Q-COMP-NORMAL', 'screen-tc-q-comp-normal', 3,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'INSPECTOR-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'WEIGHT'),
-        1, CURRENT_TIMESTAMP - INTERVAL 23 MINUTE, '정상 승인 완료 테스트', 'COMPLETED'
-    ),
-    (
-        'TC-Q-COMP-REWORK', 'screen-tc-q-comp-rework', 4,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        2, CURRENT_TIMESTAMP - INTERVAL 24 MINUTE, '재작업 완료 테스트', 'COMPLETED'
-    ),
-    (
-        'TC-Q-COMP-DISPOSAL', 'screen-tc-q-comp-disposal', 4,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'FRYER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'MOISTURE'),
-        3, CURRENT_TIMESTAMP - INTERVAL 25 MINUTE, '폐기 완료 테스트', 'COMPLETED'
-    ),
-    (
-        'TC-Q-DETAIL-HISTORY', 'screen-tc-q-detail-history', 5,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'INSPECTOR-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'WEIGHT'),
-        2, CURRENT_TIMESTAMP - INTERVAL 26 MINUTE, '처리이력 정렬 테스트', 'ON_HOLD'
-    ),
-    (
-        'TC-Q-INACTIVE-TYPE', 'screen-tc-q-inactive-type', 5,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'LEGACY_DISABLED'),
-        1, CURRENT_TIMESTAMP - INTERVAL 27 MINUTE, '비활성 유형 과거 이력', 'UNHANDLED'
-    ),
-    (
-        'TC-Q-ZERO-PROD', 'screen-tc-q-zero-production',
-        (SELECT production_lot_id FROM production_lot WHERE lot_no = 'TC-Q-LOT-101'),
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'ROLLER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        2, CURRENT_TIMESTAMP - INTERVAL 28 MINUTE, '시간 생산수량 0 제품 테스트', 'UNHANDLED'
-    ),
-    (
-        'TC-Q-SAME-001', 'screen-tc-q-same-001', 2,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        1, CURRENT_TIMESTAMP - INTERVAL 8 HOUR, '동일 발생시각 첫 번째', 'UNHANDLED'
-    ),
-    (
-        'TC-Q-SAME-002', 'screen-tc-q-same-002', 2,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        1, CURRENT_TIMESTAMP - INTERVAL 8 HOUR, '동일 발생시각 두 번째', 'UNHANDLED'
-    ),
-    (
-        'TC-Q-STAT-10D', 'screen-tc-q-stat-10d', 3,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'STEAMER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        2, TIMESTAMPADD(DAY, -10, CURRENT_TIMESTAMP), '최근 30일 통계 포함', 'COMPLETED'
-    ),
-    (
-        'TC-Q-STAT-29D', 'screen-tc-q-stat-29d', 4,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'CUTTER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'MOISTURE'),
-        3, @screen_test_30d_from_utc, '최근 30일 경계 포함', 'UNHANDLED'
-    ),
-    (
-        'TC-Q-STAT-31D', 'screen-tc-q-stat-31d', 5,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'COOLER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'WEIGHT'),
-        4, TIMESTAMPADD(DAY, -31, CURRENT_TIMESTAMP), '최근 30일 통계 제외', 'COMPLETED'
-    ),
-    (
-        'TC-Q-STAT-PREV', 'screen-tc-q-stat-previous', 3,
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        (SELECT defect_type_id FROM defect_type WHERE code = 'SEALING'),
-        1, TIMESTAMPADD(DAY, -35, CURRENT_TIMESTAMP), '이전 비교기간 통계', 'COMPLETED'
-    );
-
--- 품질관리 목록 페이지네이션과 서버 검색용 24건
-INSERT INTO defect (
-    defect_no, idempotency_key, production_lot_id, equipment_id,
-    defect_type_id, quantity, occurred_at, cause, status
 )
 SELECT
-    CONCAT('TC-Q-PAGE-', LPAD(s.seq, 3, '0')),
-    CONCAT('screen-tc-q-page-', LPAD(s.seq, 3, '0')),
+    q.work_order_id,
+    q.bucket_start,
+    TIMESTAMPADD(HOUR, 1, q.bucket_start),
+    TIMESTAMPADD(MINUTE, 2, TIMESTAMPADD(HOUR, 1, q.bucket_start)),
+    q.target_qty,
+    q.production_qty,
+    q.production_qty - q.defect_qty,
+    q.defect_qty,
+    q.slot_no = q.slot_count AND q.current_qty < q.total_target_qty,
+    CASE
+        WHEN q.order_status = 'DONE' AND q.slot_no = q.slot_count THEN 'WORK_ORDER_COMPLETED'
+        ELSE 'HOURLY'
+    END
+FROM (
+    SELECT
+        w.work_order_id,
+        w.status AS order_status,
+        w.current_qty,
+        w.target_qty AS total_target_qty,
+        w.hourly_target_qty AS target_qty,
+        slot.slot_no,
+        CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END AS slot_count,
+        TIMESTAMPADD(HOUR, slot.slot_no - 1, w.started_at) AS bucket_start,
+        CASE
+            WHEN slot.slot_no < CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END
+                THEN FLOOR(w.current_qty / CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END)
+            ELSE w.current_qty
+                 - FLOOR(w.current_qty / CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END)
+                   * (CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END - 1)
+        END AS production_qty,
+        CASE
+            WHEN slot.slot_no < CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END
+                THEN FLOOR(w.defect_qty / CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END)
+            ELSE w.defect_qty
+                 - FLOOR(w.defect_qty / CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END)
+                   * (CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END - 1)
+        END AS defect_qty
+    FROM work_order w
+    CROSS JOIN (
+        SELECT 1 AS slot_no UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+    ) slot
+    WHERE w.status IN ('IN_PROGRESS', 'DONE')
+      AND slot.slot_no <= CASE WHEN w.status = 'IN_PROGRESS' THEN 3 ELSE 4 END
+) q;
+
+INSERT INTO production_result (
+    production_result_id, result_no, production_lot_id,
+    target_qty, production_qty, good_qty, defect_qty, status,
+    started_at, completed_at, last_aggregated_at, created_at, updated_at
+)
+SELECT
+    w.work_order_id,
+    CONCAT('PR-', LPAD(w.work_order_id, 7, '0')),
     pl.production_lot_id,
-    e.equipment_id,
-    dt.defect_type_id,
-    MOD(s.seq, 5) + 1,
-    TIMESTAMPADD(MINUTE, 0 - 60 - s.seq, CURRENT_TIMESTAMP),
-    CASE
-        WHEN s.seq = 24 THEN 'PAGE2_SEARCH_TOKEN 특수문자 %_ 검색'
-        ELSE CONCAT('품질 페이징 테스트 원인 ', LPAD(s.seq, 3, '0'))
-    END,
-    CASE MOD(s.seq, 4)
-        WHEN 1 THEN 'UNHANDLED'
-        WHEN 2 THEN 'IN_PROGRESS'
-        WHEN 3 THEN 'ON_HOLD'
-        ELSE 'COMPLETED'
-    END
-FROM screen_test_sequence s
-JOIN production_lot pl
-  ON pl.production_lot_id = 2 + MOD(s.seq - 1, 4)
-JOIN equipment e
-  ON e.equipment_code = CASE MOD(s.seq, 5)
-      WHEN 0 THEN 'PACKER-01'
-      WHEN 1 THEN 'FRYER-01'
-      WHEN 2 THEN 'INSPECTOR-01'
-      WHEN 3 THEN 'MIXER-01'
-      ELSE 'COOLER-01'
-  END
-JOIN defect_type dt
-  ON dt.code = CASE MOD(s.seq, 4)
-      WHEN 0 THEN 'SEALING'
-      WHEN 1 THEN 'MOISTURE'
-      WHEN 2 THEN 'WEIGHT'
-      ELSE 'FOREIGN_MATERIAL'
-  END
-WHERE s.seq <= 24;
+    w.target_qty,
+    w.current_qty,
+    w.good_qty,
+    w.defect_qty,
+    CASE WHEN w.status = 'DONE' THEN 'COMPLETED' ELSE 'COLLECTING' END,
+    w.started_at,
+    w.completed_at,
+    CASE WHEN w.status = 'DONE' THEN w.completed_at ELSE TIMESTAMPADD(MINUTE, -2, CURRENT_TIMESTAMP) END,
+    w.started_at,
+    CASE WHEN w.status = 'DONE' THEN w.completed_at ELSE TIMESTAMPADD(MINUTE, -2, CURRENT_TIMESTAMP) END
+FROM work_order w
+JOIN production_lot pl ON pl.work_order_id = w.work_order_id
+WHERE w.status IN ('IN_PROGRESS', 'DONE');
 
--- 상세 화면의 상태와 처리방법 3종 및 다건 처리이력
-INSERT INTO defect_handling_history (
-    defect_id, handled_by_id, status, handle_method, content, handled_at
-) VALUES
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-DETAIL-INPROGRESS'),
-        3, 'IN_PROGRESS', NULL, '원인 분석 및 설비 점검 중',
-        CURRENT_TIMESTAMP - INTERVAL 16 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-DETAIL-ONHOLD'),
-        3, 'ON_HOLD', NULL, '검사 결과 대기',
-        CURRENT_TIMESTAMP - INTERVAL 15 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-COMP-NORMAL'),
-        3, 'COMPLETED', 'NORMAL_APPROVAL', '재검사 결과 정상 승인',
-        CURRENT_TIMESTAMP - INTERVAL 14 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-COMP-REWORK'),
-        3, 'COMPLETED', 'REWORK', '재작업 완료',
-        CURRENT_TIMESTAMP - INTERVAL 13 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-COMP-DISPOSAL'),
-        3, 'COMPLETED', 'DISPOSAL', '폐기 처리 완료',
-        CURRENT_TIMESTAMP - INTERVAL 12 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-DETAIL-HISTORY'),
-        3, 'IN_PROGRESS', NULL, '1차 원인 분석',
-        CURRENT_TIMESTAMP - INTERVAL 20 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-DETAIL-HISTORY'),
-        3, 'ON_HOLD', NULL, '2차 검사 결과 대기',
-        CURRENT_TIMESTAMP - INTERVAL 10 MINUTE
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-STAT-10D'),
-        3, 'COMPLETED', 'REWORK', '10일 전 재작업 완료',
-        TIMESTAMPADD(MINUTE, 5, TIMESTAMPADD(DAY, -10, CURRENT_TIMESTAMP))
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-STAT-31D'),
-        3, 'COMPLETED', 'DISPOSAL', '31일 전 폐기 완료',
-        TIMESTAMPADD(MINUTE, 5, TIMESTAMPADD(DAY, -31, CURRENT_TIMESTAMP))
-    ),
-    (
-        (SELECT defect_id FROM defect WHERE defect_no = 'TC-Q-STAT-PREV'),
-        3, 'COMPLETED', 'NORMAL_APPROVAL', '이전 기간 정상 승인',
-        TIMESTAMPADD(MINUTE, 5, TIMESTAMPADD(DAY, -35, CURRENT_TIMESTAMP))
-    );
+-- 생산 LOT별 실제 자재 사용
+INSERT INTO production_lot_material (production_lot_id, material_lot_id, used_qty)
+SELECT pl.production_lot_id, 1, ROUND(pl.production_qty * 0.055, 3)
+FROM production_lot pl
+WHERE pl.status IN ('IN_PROGRESS', 'COMPLETED');
 
-INSERT INTO defect_handling_history (
-    defect_id, handled_by_id, status, handle_method, content, handled_at
-)
-SELECT
-    d.defect_id,
-    3,
-    d.status,
-    CASE
-        WHEN d.status = 'COMPLETED' THEN
-            CASE MOD(CAST(RIGHT(d.defect_no, 3) AS UNSIGNED), 3)
-                WHEN 0 THEN 'NORMAL_APPROVAL'
-                WHEN 1 THEN 'REWORK'
-                ELSE 'DISPOSAL'
-            END
-        ELSE NULL
-    END,
-    CONCAT('품질 페이징 처리이력 ', RIGHT(d.defect_no, 3)),
-    TIMESTAMPADD(MINUTE, 5, d.occurred_at)
-FROM defect d
-WHERE d.defect_no LIKE 'TC-Q-PAGE-%'
-  AND d.status <> 'UNHANDLED';
+INSERT INTO production_lot_material (production_lot_id, material_lot_id, used_qty)
+SELECT pl.production_lot_id, 3, ROUND(pl.production_qty * 0.008, 3)
+FROM production_lot pl
+WHERE pl.status IN ('IN_PROGRESS', 'COMPLETED');
 
--- ----------------------------------------------------------------------------
--- 알람: 상태 저장·처리 완료 검증용
--- 아래 4건은 모두 확인 대기에서 시작하므로 화면에서 상태를 변경한다.
--- ----------------------------------------------------------------------------
+INSERT INTO production_lot_material (production_lot_id, material_lot_id, used_qty)
+SELECT pl.production_lot_id, 5 + MOD(w.product_id - 1, 6), ROUND(pl.production_qty * 0.010, 3)
+FROM production_lot pl
+JOIN work_order w ON w.work_order_id = pl.work_order_id
+WHERE pl.status IN ('IN_PROGRESS', 'COMPLETED');
 
-INSERT INTO alarm (
-    alarm_no, equipment_id, handler_id, message, severity, status,
-    occurred_at, resolved_at, description, handling_content
-) VALUES
-    (
-        'TC-A16-IN-PROGRESS',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        NULL, '[A-16] 조치 중 상태 변경 테스트', 'WARNING', 'PENDING_CONFIRMATION',
-        CURRENT_TIMESTAMP - INTERVAL 2 MINUTE, NULL,
-        '조치 중으로 변경하고 A16 조치 중 저장 테스트를 입력합니다.', NULL
-    ),
-    (
-        'TC-A16-INSPECTION',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        NULL, '[A-16] 점검 예약 상태 변경 테스트', 'INFO', 'PENDING_CONFIRMATION',
-        CURRENT_TIMESTAMP - INTERVAL 3 MINUTE, NULL,
-        '점검 예약으로 변경하고 A16 점검 예약 저장 테스트를 입력합니다.', NULL
-    ),
-    (
-        'TC-A16-MONITORING',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        NULL, '[A-16] 모니터링 상태 변경 테스트', 'CRITICAL', 'PENDING_CONFIRMATION',
-        CURRENT_TIMESTAMP - INTERVAL 4 MINUTE, NULL,
-        '모니터링으로 변경하고 A16 모니터링 저장 테스트를 입력합니다.', NULL
-    ),
-    (
-        'TC-A17-RESOLVE',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'PACKER-01'),
-        NULL, '[A-17] 처리 완료 필수값 테스트', 'CRITICAL', 'PENDING_CONFIRMATION',
-        CURRENT_TIMESTAMP - INTERVAL 5 MINUTE, NULL,
-        '조치 내용 없이 완료 오류를 확인한 뒤 정상 완료합니다.', NULL
-    ),
-    (
-        'TC-AL-SEARCH-SPECIAL',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'CUTTER-01'),
-        3, '[검색키워드] ALARM_ALPHA 특수문자 %_', 'WARNING', 'RESOLVED',
-        CURRENT_TIMESTAMP - INTERVAL 7 HOUR,
-        TIMESTAMPADD(MINUTE, 1, TIMESTAMPADD(HOUR, -7, CURRENT_TIMESTAMP)),
-        '설명검색토큰 ALARM_DESCRIPTION_TOKEN', '검색 테스트 처리 완료'
-    ),
-    (
-        'TC-AL-SAME-001',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'ROLLER-01'),
-        3, '[정렬] 동일 발생시각 첫 번째', 'WARNING', 'RESOLVED',
-        CURRENT_TIMESTAMP - INTERVAL 6 HOUR,
-        TIMESTAMPADD(MINUTE, 1, TIMESTAMPADD(HOUR, -6, CURRENT_TIMESTAMP)),
-        '동일 발생시각 정렬 테스트', '정렬 테스트 완료'
-    ),
-    (
-        'TC-AL-SAME-002',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'ROLLER-01'),
-        3, '[정렬] 동일 발생시각 두 번째', 'WARNING', 'RESOLVED',
-        CURRENT_TIMESTAMP - INTERVAL 6 HOUR,
-        TIMESTAMPADD(MINUTE, 1, TIMESTAMPADD(HOUR, -6, CURRENT_TIMESTAMP)),
-        '동일 발생시각에서 최신 ID 우선 확인', '정렬 테스트 완료'
-    ),
-    (
-        'TC-AL-BOUNDARY-IN',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'COOLER-01'),
-        3, '[기간] 최근 30일 포함 데이터', 'INFO', 'RESOLVED',
-        @screen_test_30d_from_utc,
-        TIMESTAMPADD(MINUTE, 1, @screen_test_30d_from_utc),
-        '최근 30일 조회에 포함되어야 합니다.', '기간 경계 확인 완료'
-    ),
-    (
-        'TC-AL-BOUNDARY-OUT',
-        (SELECT equipment_id FROM equipment WHERE equipment_code = 'COOLER-01'),
-        3, '[기간] 최근 30일 제외 데이터', 'INFO', 'RESOLVED',
-        TIMESTAMPADD(SECOND, -1, @screen_test_30d_from_utc),
-        @screen_test_30d_from_utc,
-        '최근 30일 조회에서 제외되어야 합니다.', '기간 경계 확인 완료'
-    );
+INSERT INTO production_lot_material (production_lot_id, material_lot_id, used_qty)
+SELECT pl.production_lot_id, 11 + MOD(w.product_id, 2), pl.production_qty
+FROM production_lot pl
+JOIN work_order w ON w.work_order_id = pl.work_order_id
+WHERE pl.status IN ('IN_PROGRESS', 'COMPLETED');
 
--- 현재 알람 20건 페이지와 페이지 밖 검색 대상
-INSERT INTO alarm (
-    alarm_no, equipment_id, handler_id, message, severity, status,
-    occurred_at, resolved_at, description, handling_content
-)
-SELECT
-    CONCAT('TC-AL-CURRENT-', LPAD(s.seq, 3, '0')),
-    e.equipment_id,
-    NULL,
-    CASE
-        WHEN s.seq = 25 THEN '[페이지2검색] CURRENT_PAGE2_TARGET'
-        ELSE CONCAT('[현재알람] 페이징 테스트 ', LPAD(s.seq, 3, '0'))
-    END,
-    CASE MOD(s.seq, 3)
-        WHEN 0 THEN 'INFO'
-        WHEN 1 THEN 'CRITICAL'
-        ELSE 'WARNING'
-    END,
-    'PENDING_CONFIRMATION',
-    TIMESTAMPADD(MINUTE, 0 - 10 - s.seq, CURRENT_TIMESTAMP),
-    NULL,
-    CASE
-        WHEN s.seq = 25 THEN '첫 페이지에 없는 현재 알람 검색 대상'
-        ELSE CONCAT('현재 알람 페이지네이션 데이터 ', LPAD(s.seq, 3, '0'))
-    END,
-    NULL
-FROM screen_test_sequence s
-JOIN equipment e
-  ON e.equipment_code = CASE MOD(s.seq, 5)
-      WHEN 0 THEN 'PACKER-01'
-      WHEN 1 THEN 'FRYER-01'
-      WHEN 2 THEN 'INSPECTOR-01'
-      WHEN 3 THEN 'MIXER-01'
-      ELSE 'COOLER-01'
-  END
-WHERE s.seq <= 25;
+INSERT INTO production_lot_material (production_lot_id, material_lot_id, used_qty)
+SELECT pl.production_lot_id, 13, pl.production_qty
+FROM production_lot pl
+WHERE pl.status IN ('IN_PROGRESS', 'COMPLETED');
 
--- 설비별/심각도별 size=100 제한과 빈발 알람 상위 5개용 101건
-INSERT INTO alarm (
-    alarm_no, equipment_id, handler_id, message, severity, status,
-    occurred_at, resolved_at, description, handling_content
-)
-SELECT
-    CONCAT('TC-AL-BULK-', LPAD(s.seq, 3, '0')),
-    e.equipment_id,
-    3,
-    CASE
-        WHEN s.seq <= 30 THEN '[통계] 포장 온도 반복 경고'
-        WHEN s.seq <= 55 THEN '[통계] 포장 필름 반복 경고'
-        WHEN s.seq <= 75 THEN '[통계] 포장 압력 반복 경고'
-        WHEN s.seq <= 90 THEN '[통계] 포장 속도 반복 경고'
-        ELSE '[통계] 포장 센서 반복 경고'
-    END,
-    'INFO',
-    'RESOLVED',
-    TIMESTAMPADD(MINUTE, 0 - 14400 - s.seq, CURRENT_TIMESTAMP),
-    TIMESTAMPADD(MINUTE, 1, TIMESTAMPADD(MINUTE, 0 - 14400 - s.seq, CURRENT_TIMESTAMP)),
-    CONCAT('ALARM_BULK_TOKEN 대량 조회 데이터 ', LPAD(s.seq, 3, '0')),
-    '대량 알람 자동 처리 완료'
-FROM screen_test_sequence s
-JOIN equipment e ON e.equipment_code = 'PACKER-01';
-
--- ============================================================================
--- 공통 목록 페이지네이션용 대량 데이터
--- 기본 페이지 크기 20건을 기준으로 각 주요 목록이 최소 2페이지 이상 조회된다.
--- 제조일·입고일·가입일·발생 시각 등 이력성 날짜/시간은 모두 현재보다 과거다.
--- 유통기한은 정상/부족/품절 재고 시나리오에 필요한 경우에만 미래로 설정한다.
--- L1/L2/통신 로그는 위의 최초 등록·heartbeat 통합 테스트를 위해 계속 비워 둔다.
--- ============================================================================
-
--- 사용자 25건 추가: 기존 10건과 합쳐 총 35건
-INSERT INTO app_user (
-    emp_no, name, email, phone, password, role,
-    approval_status, is_active, created_at, last_access_at
-)
-SELECT
-    CONCAT('pageuser', LPAD(s.seq, 3, '0')),
-    CONCAT('페이지 작업자 ', LPAD(s.seq, 3, '0')),
-    CONCAT('pageuser', LPAD(s.seq, 3, '0'), '@linecup.test'),
-    CONCAT('010-7000-', LPAD(s.seq, 4, '0')),
-    'pbkdf2-sha256:210000:AAECAwQFBgcICQoLDA0ODw:RM07ZqOdg/y8TqKuolpXHQHVTZOCPDVpWrgqs+fmhjU',
-    'OPERATOR',
-    'APPROVED',
-    true,
-    TIMESTAMPADD(DAY, 0 - 200 - s.seq, @screen_test_now_utc),
-    TIMESTAMPADD(MINUTE, 0 - 30 - s.seq, @screen_test_now_utc)
-FROM screen_test_sequence s
-WHERE s.seq <= 25;
-
--- 작업자 프로필 25건 추가: 기존 4건과 합쳐 총 29건
-INSERT INTO worker_profile (
-    user_id, primary_process_id, team_name, joined_date, shift_type
-)
-SELECT
-    u.user_id,
-    mp.process_id,
-    CONCAT('페이지 생산 ', MOD(s.seq - 1, 3) + 1, '팀'),
-    DATE(TIMESTAMPADD(DAY, 0 - 365 - s.seq, @screen_test_now_utc)),
-    CASE MOD(s.seq, 3)
-        WHEN 0 THEN 'DAY'
-        WHEN 1 THEN 'NIGHT'
-        ELSE 'ROTATING'
-    END
-FROM screen_test_sequence s
-JOIN app_user u
-  ON u.emp_no = CONCAT('pageuser', LPAD(s.seq, 3, '0'))
-JOIN manufacturing_process mp
-  ON mp.sequence_no = MOD(s.seq - 1, 9) + 1
-WHERE s.seq <= 25;
-
-INSERT INTO worker_skill (worker_profile_id, skill_name)
-SELECT
-    wp.worker_profile_id,
-    CONCAT(mp.process_name, ' 공정 운전')
-FROM worker_profile wp
-JOIN app_user u ON u.user_id = wp.user_id
-JOIN manufacturing_process mp ON mp.process_id = wp.primary_process_id
-WHERE u.emp_no LIKE 'pageuser%';
-
--- 제품 25건 추가: 기존 5건과 합쳐 총 30건
-INSERT INTO product (
-    product_code, product_name, category, unit, status
-)
-SELECT
-    CONCAT('TC-FG-', LPAD(s.seq, 3, '0')),
-    CONCAT('페이지 테스트 제품 ', LPAD(s.seq, 3, '0')),
-    CASE MOD(s.seq, 3)
-        WHEN 0 THEN '컵라면'
-        WHEN 1 THEN '봉지라면'
-        ELSE '간편식'
-    END,
-    'EA',
-    CASE MOD(s.seq, 5)
-        WHEN 0 THEN 'INACTIVE'
-        WHEN 1 THEN 'REVIEW'
-        ELSE 'ACTIVE'
-    END
-FROM screen_test_sequence s
-WHERE s.seq <= 25;
-
--- 원자재 25건 추가: 기존 9건과 합쳐 총 34건
-INSERT INTO raw_material (
-    material_code, material_name, unit, safety_stock_qty, status
-)
-SELECT
-    CONCAT('TC-RM-', LPAD(s.seq, 3, '0')),
-    CONCAT('페이지 테스트 원자재 ', LPAD(s.seq, 3, '0')),
-    CASE MOD(s.seq, 3)
-        WHEN 0 THEN 'kg'
-        WHEN 1 THEN 'EA'
-        ELSE 'L'
-    END,
-    20.000 + MOD(s.seq, 5) * 10.000,
-    CASE WHEN MOD(s.seq, 7) = 0 THEN 'INACTIVE' ELSE 'ACTIVE' END
-FROM screen_test_sequence s
-WHERE s.seq <= 25;
-
--- BOM 25건 추가: 기존 4건과 합쳐 총 29건
-INSERT INTO bom (
-    bom_code, product_id, version, status, note
-)
-SELECT
-    CONCAT('TC-BOM-', LPAD(s.seq, 3, '0')),
-    p.product_id,
-    '1.0',
-    CASE MOD(s.seq, 3)
-        WHEN 0 THEN 'INACTIVE'
-        WHEN 1 THEN 'ACTIVE'
-        ELSE 'REVIEW'
-    END,
-    CONCAT('BOM 페이지네이션 테스트 ', LPAD(s.seq, 3, '0'))
-FROM screen_test_sequence s
-JOIN product p
-  ON p.product_code = CONCAT('TC-FG-', LPAD(s.seq, 3, '0'))
-WHERE s.seq <= 25;
-
-INSERT INTO bom_item (
-    bom_id, material_id, process_id, spec,
-    required_qty, loss_rate, note
-)
-SELECT
-    b.bom_id,
-    rm.material_id,
-    mp.process_id,
-    '통합 테스트 규격',
-    1.000 + MOD(s.seq, 5) * 0.100,
-    MOD(s.seq, 4) * 0.500,
-    CONCAT('BOM 구성 원자재 ', LPAD(s.seq, 3, '0'))
-FROM screen_test_sequence s
-JOIN bom b
-  ON b.bom_code = CONCAT('TC-BOM-', LPAD(s.seq, 3, '0'))
-JOIN raw_material rm
-  ON rm.material_code = CONCAT('TC-RM-', LPAD(s.seq, 3, '0'))
-JOIN manufacturing_process mp
-  ON mp.sequence_no = MOD(s.seq - 1, 9) + 1
-WHERE s.seq <= 25;
-
--- 원자재 LOT 25건 추가: 기존 10건과 합쳐 총 35건
--- EXPIRED/OUT_OF_STOCK/LOW/NORMAL 상태가 반복되도록 수량과 유통기한을 구성한다.
-INSERT INTO raw_material_lot (
-    material_id, material_lot_no, supplier_name, supplier_lot_no,
-    manufacture_date, expiry_date, received_date, received_qty, current_qty
-)
-SELECT
-    rm.material_id,
-    CONCAT('TC-RMLOT-', LPAD(s.seq, 3, '0')),
-    CONCAT('페이지 공급사 ', MOD(s.seq - 1, 5) + 1),
-    CONCAT('TC-SUPLOT-', LPAD(s.seq, 3, '0')),
-    DATE(TIMESTAMPADD(DAY, 0 - 70 - s.seq, @screen_test_now_utc)),
-    CASE
-        WHEN MOD(s.seq, 4) = 0
-            THEN DATE(TIMESTAMPADD(DAY, 0 - 5 - s.seq, @screen_test_now_utc))
-        ELSE DATE(TIMESTAMPADD(DAY, 180 + s.seq, @screen_test_now_utc))
-    END,
-    DATE(TIMESTAMPADD(DAY, 0 - 60 - s.seq, @screen_test_now_utc)),
-    100.000,
-    CASE MOD(s.seq, 4)
-        WHEN 0 THEN 40.000
-        WHEN 1 THEN 0.000
-        WHEN 2 THEN 10.000
-        ELSE 100.000
-    END
-FROM screen_test_sequence s
-JOIN raw_material rm
-  ON rm.material_code = CONCAT('TC-RM-', LPAD(s.seq, 3, '0'))
-WHERE s.seq <= 25;
-
--- 완제품 재고 25건 추가: 기존 2건과 합쳐 총 27건
--- 완료된 대량 테스트 LOT을 사용하며 재고 상태 4종을 모두 포함한다.
-INSERT INTO product_inventory (
-    production_lot_id, current_qty, safety_stock_qty, expiry_date, created_at
-)
-SELECT
-    pl.production_lot_id,
-    CASE MOD(s.seq, 4)
-        WHEN 1 THEN 0
-        ELSE 1
-    END,
-    CASE MOD(s.seq, 4)
-        WHEN 2 THEN 2
-        ELSE 1
-    END,
-    CASE
-        WHEN MOD(s.seq, 4) = 0
-            THEN DATE(TIMESTAMPADD(DAY, 0 - s.seq, @screen_test_now_utc))
-        ELSE DATE(TIMESTAMPADD(DAY, 120 + s.seq, @screen_test_now_utc))
-    END,
-    TIMESTAMPADD(MINUTE, 1, pl.completed_at)
-FROM screen_test_sequence s
-JOIN production_lot pl
-  ON pl.lot_no = CONCAT('TC-Q-LOT-', LPAD(s.seq, 3, '0'))
-WHERE s.seq <= 25;
-
--- 재고 이동 75건 추가: 기존 17건과 합쳐 총 92건
--- 원자재 입고 25건
+-- 원자재 재고 이동
 INSERT INTO inventory_movement (
-    movement_no, item_type, movement_type, raw_material_lot_id, product_inventory_id,
-    quantity, occurred_at, handled_by_id, remarks
+    movement_no, item_type, movement_type, raw_material_lot_id,
+    product_inventory_id, quantity, handled_by_id, occurred_at, remarks
 )
 SELECT
-    CONCAT('TC-MV-RM-IN-', LPAD(s.seq, 3, '0')),
+    CONCAT('RM-IN-', LPAD(rml.material_lot_id, 7, '0')),
     'RAW_MATERIAL',
     'INBOUND',
     rml.material_lot_id,
     NULL,
-    100.000,
-    TIMESTAMPADD(DAY, 0 - 60 - s.seq, @screen_test_now_utc),
-    1,
-    CONCAT('원자재 페이지 입고 ', LPAD(s.seq, 3, '0'))
-FROM screen_test_sequence s
-JOIN raw_material_lot rml
-  ON rml.material_lot_no = CONCAT('TC-RMLOT-', LPAD(s.seq, 3, '0'))
-WHERE s.seq <= 25;
+    rml.received_qty,
+    5,
+    TIMESTAMP(rml.received_date, '09:00:00'),
+    CONCAT(rml.supplier_name, ' 입고 검수 완료')
+FROM raw_material_lot rml;
 
--- 원자재 출고/조정 25건
 INSERT INTO inventory_movement (
-    movement_no, item_type, movement_type, raw_material_lot_id, product_inventory_id,
-    quantity, occurred_at, handled_by_id, remarks
+    movement_no, item_type, movement_type, raw_material_lot_id,
+    product_inventory_id, quantity, handled_by_id, occurred_at, remarks
 )
 SELECT
-    CONCAT('TC-MV-RM-CHANGE-', LPAD(s.seq, 3, '0')),
+    CONCAT('RM-OUT-', LPAD(rml.material_lot_id, 7, '0')),
     'RAW_MATERIAL',
-    CASE WHEN MOD(s.seq, 2) = 0 THEN 'OUTBOUND' ELSE 'ADJUSTMENT' END,
+    'OUTBOUND',
     rml.material_lot_id,
     NULL,
-    1.000,
-    TIMESTAMPADD(DAY, 0 - 30 - s.seq, @screen_test_now_utc),
-    2,
-    CONCAT('원자재 페이지 출고/조정 ', LPAD(s.seq, 3, '0'))
-FROM screen_test_sequence s
-JOIN raw_material_lot rml
-  ON rml.material_lot_no = CONCAT('TC-RMLOT-', LPAD(s.seq, 3, '0'))
-WHERE s.seq <= 25;
+    rml.received_qty - rml.current_qty,
+    5,
+    TIMESTAMPADD(HOUR, 6, TIMESTAMP(rml.received_date, '09:00:00')),
+    '생산계획에 따른 공정 투입'
+FROM raw_material_lot rml
+WHERE rml.received_qty > rml.current_qty;
 
--- 완제품 입고 25건
 INSERT INTO inventory_movement (
-    movement_no, item_type, movement_type, raw_material_lot_id, product_inventory_id,
-    quantity, occurred_at, handled_by_id, remarks
+    movement_no, item_type, movement_type, raw_material_lot_id,
+    product_inventory_id, quantity, handled_by_id, occurred_at, remarks
 )
 SELECT
-    CONCAT('TC-MV-FG-IN-', LPAD(s.seq, 3, '0')),
+    CONCAT('RM-ADJ-', LPAD(rml.material_lot_id, 7, '0')),
+    'RAW_MATERIAL',
+    'ADJUSTMENT',
+    rml.material_lot_id,
+    NULL,
+    rml.current_qty,
+    5,
+    TIMESTAMPADD(DAY, 1, TIMESTAMP(rml.received_date, '09:00:00')),
+    '정기 재고 실사 수량 반영'
+FROM raw_material_lot rml
+WHERE MOD(rml.material_lot_id, 10) = 0
+  AND rml.current_qty > 0;
+
+-- 완제품 재고와 이동
+INSERT INTO product_inventory (
+    inventory_id, production_lot_id, current_qty, safety_stock_qty, expiry_date, created_at
+)
+SELECT
+    pl.production_lot_id,
+    pl.production_lot_id,
+    CASE MOD(pl.production_lot_id, 4)
+        WHEN 0 THEN 0
+        WHEN 1 THEN pl.good_qty
+        WHEN 2 THEN LEAST(50, pl.good_qty)
+        ELSE LEAST(200, pl.good_qty)
+    END,
+    100,
+    CASE
+        WHEN MOD(pl.production_lot_id, 4) = 3 THEN DATE(TIMESTAMPADD(DAY, -10, CURRENT_DATE))
+        ELSE DATE(TIMESTAMPADD(DAY, 180 + MOD(pl.production_lot_id, 90), CURRENT_DATE))
+    END,
+    TIMESTAMPADD(MINUTE, 10, pl.completed_at)
+FROM production_lot pl
+WHERE pl.status = 'COMPLETED';
+
+INSERT INTO inventory_movement (
+    movement_no, item_type, movement_type, raw_material_lot_id,
+    product_inventory_id, quantity, handled_by_id, occurred_at, remarks
+)
+SELECT
+    CONCAT('FG-IN-', LPAD(pi.inventory_id, 7, '0')),
     'FINISHED_PRODUCT',
     'INBOUND',
     NULL,
     pi.inventory_id,
-    1.000,
-    TIMESTAMPADD(MINUTE, 2, pi.created_at),
-    2,
-    CONCAT('완제품 페이지 입고 ', LPAD(s.seq, 3, '0'))
-FROM screen_test_sequence s
-JOIN production_lot pl
-  ON pl.lot_no = CONCAT('TC-Q-LOT-', LPAD(s.seq, 3, '0'))
-JOIN product_inventory pi
-  ON pi.production_lot_id = pl.production_lot_id
-WHERE s.seq <= 25;
+    pl.good_qty,
+    5,
+    TIMESTAMPADD(MINUTE, 10, pl.completed_at),
+    '생산 완료 LOT 입고'
+FROM product_inventory pi
+JOIN production_lot pl ON pl.production_lot_id = pi.production_lot_id;
 
-DROP TEMPORARY TABLE screen_test_sequence;
+INSERT INTO inventory_movement (
+    movement_no, item_type, movement_type, raw_material_lot_id,
+    product_inventory_id, quantity, handled_by_id, occurred_at, remarks
+)
+SELECT
+    CONCAT('FG-OUT-', LPAD(pi.inventory_id, 7, '0')),
+    'FINISHED_PRODUCT',
+    'OUTBOUND',
+    NULL,
+    pi.inventory_id,
+    pl.good_qty - pi.current_qty,
+    5,
+    TIMESTAMPADD(DAY, 1, pl.completed_at),
+    '출하계획에 따른 완제품 출고'
+FROM product_inventory pi
+JOIN production_lot pl ON pl.production_lot_id = pi.production_lot_id
+WHERE pl.good_qty > pi.current_qty;
+
+INSERT INTO inventory_movement (
+    movement_no, item_type, movement_type, raw_material_lot_id,
+    product_inventory_id, quantity, handled_by_id, occurred_at, remarks
+)
+SELECT
+    CONCAT('FG-ADJ-', LPAD(pi.inventory_id, 7, '0')),
+    'FINISHED_PRODUCT',
+    'ADJUSTMENT',
+    NULL,
+    pi.inventory_id,
+    pi.current_qty,
+    5,
+    TIMESTAMPADD(DAY, 2, pl.completed_at),
+    '완제품 창고 실사 수량 반영'
+FROM product_inventory pi
+JOIN production_lot pl ON pl.production_lot_id = pi.production_lot_id
+WHERE MOD(pi.inventory_id, 10) = 0
+  AND pi.current_qty > 0;
+
+-- 설비 계측값
+INSERT INTO equipment_telemetry (
+    equipment_id, work_order_id, metric_type, metric_value, unit, measured_at
+)
+SELECT
+    e.equipment_id,
+    CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END,
+    'TEMPERATURE',
+    24.0000 + MOD(s.seq, 37) * 0.6500,
+    'C',
+    TIMESTAMPADD(MINUTE, -s.seq, CURRENT_TIMESTAMP)
+FROM seed_sequence s
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(
+     1 + MOD(CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END - 1, 3),
+     2,
+     '0'
+ );
+
+INSERT INTO equipment_telemetry (
+    equipment_id, work_order_id, metric_type, metric_value, unit, measured_at
+)
+SELECT
+    e.equipment_id,
+    CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END,
+    'HUMIDITY',
+    38.0000 + MOD(s.seq, 28) * 0.7000,
+    '%',
+    TIMESTAMPADD(MINUTE, -s.seq, CURRENT_TIMESTAMP)
+FROM seed_sequence s
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(
+     1 + MOD(CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END - 1, 3),
+     2,
+     '0'
+ );
+
+INSERT INTO equipment_telemetry (
+    equipment_id, work_order_id, metric_type, metric_value, unit, measured_at
+)
+SELECT
+    e.equipment_id,
+    CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END,
+    'SPEED',
+    90.0000 + MOD(s.seq, 45) * 2.5000,
+    'RPM',
+    TIMESTAMPADD(MINUTE, -s.seq, CURRENT_TIMESTAMP)
+FROM seed_sequence s
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(
+     1 + MOD(CASE WHEN MOD(s.seq, 150) = 0 THEN 1 ELSE 52 + MOD(s.seq - 1, 149) END - 1, 3),
+     2,
+     '0'
+ );
+
+-- 불량과 처리 이력
+INSERT INTO defect (
+    defect_no, idempotency_key, production_lot_id, equipment_id,
+    defect_type_id, quantity, occurred_at, cause, status
+)
+SELECT
+    CONCAT('DF-', LPAD(w.work_order_id, 6, '0'), '-', d.slot_no),
+    CONCAT('DEFECT-', LPAD(w.work_order_id, 6, '0'), '-', d.slot_no),
+    pl.production_lot_id,
+    e.equipment_id,
+    dt.defect_type_id,
+    1 + MOD(w.work_order_id + d.slot_no, 3),
+    TIMESTAMPADD(MINUTE, 35 + d.slot_no * 20, w.started_at),
+    CASE MOD(w.work_order_id + d.slot_no, 5)
+        WHEN 0 THEN '포장 밀봉 압력 편차'
+        WHEN 1 THEN '제품 중량 허용범위 이탈'
+        WHEN 2 THEN '원료 수분 편차'
+        WHEN 3 THEN '검사 공정 이물 감지'
+        ELSE '공정 조건 일시 편차'
+    END,
+    CASE MOD(w.work_order_id + d.slot_no, 4)
+        WHEN 0 THEN 'UNHANDLED'
+        WHEN 1 THEN 'IN_PROGRESS'
+        WHEN 2 THEN 'ON_HOLD'
+        ELSE 'COMPLETED'
+    END
+FROM work_order w
+JOIN production_lot pl ON pl.work_order_id = w.work_order_id
+CROSS JOIN (
+    SELECT 1 AS slot_no UNION ALL SELECT 2
+) d
+JOIN manufacturing_process mp ON mp.process_code = 'INSPECTION'
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(w.work_order_id - 1, 3), 2, '0')
+JOIN defect_type dt
+  ON dt.code = CASE MOD(w.work_order_id + d.slot_no, 5)
+      WHEN 0 THEN 'SEALING'
+      WHEN 1 THEN 'WEIGHT'
+      WHEN 2 THEN 'MOISTURE'
+      WHEN 3 THEN 'FOREIGN_MATERIAL'
+      ELSE 'GENERAL_NG'
+  END
+WHERE w.status IN ('IN_PROGRESS', 'DONE');
+
+INSERT INTO defect_handling_history (
+    defect_id, status, handle_method, content, handled_by_id, handled_at
+)
+SELECT
+    d.defect_id,
+    'IN_PROGRESS',
+    NULL,
+    '현장 원인 확인 및 영향 범위 분석',
+    3,
+    TIMESTAMPADD(MINUTE, 15, d.occurred_at)
+FROM defect d
+WHERE d.status <> 'UNHANDLED';
+
+INSERT INTO defect_handling_history (
+    defect_id, status, handle_method, content, handled_by_id, handled_at
+)
+SELECT
+    d.defect_id,
+    d.status,
+    CASE
+        WHEN d.status <> 'COMPLETED' THEN NULL
+        WHEN dt.code = 'FOREIGN_MATERIAL' THEN 'DISPOSAL'
+        WHEN dt.code IN ('SEALING', 'WEIGHT') THEN 'REWORK'
+        ELSE 'NORMAL_APPROVAL'
+    END,
+    CASE
+        WHEN d.status = 'ON_HOLD' THEN '추가 품질 판정을 위해 생산품 격리'
+        WHEN dt.code = 'FOREIGN_MATERIAL' THEN '영향 제품 격리 후 폐기 처리'
+        WHEN dt.code IN ('SEALING', 'WEIGHT') THEN '공정 조건 보정 후 재작업 완료'
+        ELSE '품질 기준 재확인 후 정상 승인'
+    END,
+    3,
+    TIMESTAMPADD(MINUTE, 40, d.occurred_at)
+FROM defect d
+JOIN defect_type dt ON dt.defect_type_id = d.defect_type_id
+WHERE d.status IN ('ON_HOLD', 'COMPLETED');
+
+-- 설비 알람
+INSERT INTO alarm (
+    alarm_no, equipment_id, handler_id, message, description,
+    severity, status, occurred_at, resolved_at, handling_content
+)
+SELECT
+    CONCAT('AL-', DATE_FORMAT(CURRENT_DATE, '%Y%m'), '-', LPAD(s.seq, 5, '0')),
+    e.equipment_id,
+    CASE WHEN MOD(s.seq, 5) = 0 THEN NULL ELSE 4 END,
+    CASE MOD(s.seq, 6)
+        WHEN 0 THEN CONCAT(e.equipment_name, ' 구동부 과부하 감지')
+        WHEN 1 THEN CONCAT(e.equipment_name, ' 공정 온도 상한 접근')
+        WHEN 2 THEN CONCAT(e.equipment_name, ' 회전속도 편차 발생')
+        WHEN 3 THEN CONCAT(e.equipment_name, ' 안전센서 신호 확인 필요')
+        WHEN 4 THEN CONCAT(e.equipment_name, ' 통신 응답 지연')
+        ELSE CONCAT(e.equipment_name, ' 예방보전 주기 도래')
+    END,
+    CONCAT(
+        e.location,
+        ' ',
+        e.equipment_code,
+        '에서 기준값 편차가 감지되었습니다. 현장 작업표준에 따라 설비 상태와 생산품 영향을 확인합니다.'
+    ),
+    CASE WHEN MOD(s.seq, 10) = 0 THEN 'CRITICAL' WHEN MOD(s.seq, 3) = 0 THEN 'WARNING' ELSE 'INFO' END,
+    CASE MOD(s.seq, 5)
+        WHEN 0 THEN 'PENDING_CONFIRMATION'
+        WHEN 1 THEN 'IN_PROGRESS'
+        WHEN 2 THEN 'INSPECTION_RESERVED'
+        WHEN 3 THEN 'MONITORING'
+        ELSE 'RESOLVED'
+    END,
+    TIMESTAMPADD(HOUR, -s.seq, CURRENT_TIMESTAMP),
+    CASE WHEN MOD(s.seq, 5) = 4 THEN TIMESTAMPADD(MINUTE, 45, TIMESTAMPADD(HOUR, -s.seq, CURRENT_TIMESTAMP)) ELSE NULL END,
+    CASE MOD(s.seq, 5)
+        WHEN 0 THEN NULL
+        WHEN 1 THEN '현장 설비 상태와 공정 조건 확인 중'
+        WHEN 2 THEN '다음 비가동 시간에 정밀점검 예정'
+        WHEN 3 THEN '조건 보정 후 계측값 추이 관찰'
+        ELSE '원인 조치와 정상 가동 확인 완료'
+    END
+FROM seed_sequence s
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(FLOOR((s.seq - 1) / 9), 3), 2, '0');
+
+-- L1/L2 연결 상태와 통신 이력
+INSERT INTO l2_collector (
+    collector_id, collector_code, name, status, connected_l1_count,
+    backend_connection_status, last_sent_at
+) VALUES
+    (1, 'L2-01', '제1생산라인 L2 수집기', 'RUNNING', 9, 'CONNECTED', CURRENT_TIMESTAMP - INTERVAL 3 SECOND),
+    (2, 'L2-02', '제2생산라인 L2 수집기', 'RUNNING', 9, 'CONNECTED', CURRENT_TIMESTAMP - INTERVAL 6 SECOND),
+    (3, 'L2-03', '제3생산라인 L2 수집기', 'STOPPED', 0, 'DISCONNECTED', CURRENT_TIMESTAMP - INTERVAL 2 HOUR);
+
+INSERT INTO l1_device (
+    device_id, equipment_id, ip_address, port, connection_status, last_received_at
+)
+SELECT
+    e.equipment_id,
+    e.equipment_id,
+    CONCAT('10.20.', 10 + FLOOR((e.equipment_id - 1) / 9), '.', 20 + MOD(e.equipment_id - 1, 9)),
+    9100 + FLOOR((e.equipment_id - 1) / 9) * 100 + MOD(e.equipment_id - 1, 9),
+    CASE WHEN e.equipment_id <= 18 THEN 'CONNECTED' ELSE 'DISCONNECTED' END,
+    CASE
+        WHEN e.equipment_id <= 18 THEN TIMESTAMPADD(SECOND, -MOD(e.equipment_id, 12), CURRENT_TIMESTAMP)
+        ELSE TIMESTAMPADD(HOUR, -2, CURRENT_TIMESTAMP)
+    END
+FROM equipment e;
+
+INSERT INTO communication_log (
+    device_id, collector_id, direction, success, fail_reason, occurred_at
+)
+SELECT
+    e.equipment_id,
+    NULL,
+    'RX',
+    MOD(s.seq, 31) <> 0,
+    CASE WHEN MOD(s.seq, 31) = 0 THEN 'L1 응답 지연으로 연결 재시도' ELSE NULL END,
+    TIMESTAMPADD(SECOND, -s.seq * 7, CURRENT_TIMESTAMP)
+FROM seed_sequence s
+JOIN manufacturing_process mp ON mp.sequence_no = 1 + MOD(s.seq - 1, 9)
+JOIN equipment e
+  ON e.process_id = mp.process_id
+ AND RIGHT(e.equipment_code, 2) = LPAD(1 + MOD(FLOOR((s.seq - 1) / 9), 3), 2, '0');
+
+INSERT INTO communication_log (
+    device_id, collector_id, direction, success, fail_reason, occurred_at
+)
+SELECT
+    NULL,
+    1 + MOD(s.seq - 1, 3),
+    'TX',
+    MOD(s.seq, 37) <> 0,
+    CASE WHEN MOD(s.seq, 37) = 0 THEN '백엔드 전송 지연으로 재전송 대기' ELSE NULL END,
+    TIMESTAMPADD(SECOND, -s.seq * 11, CURRENT_TIMESTAMP)
+FROM seed_sequence s;
+
+DROP TEMPORARY TABLE seed_sequence;
