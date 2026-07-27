@@ -554,7 +554,12 @@ export default function Dashboard() {
           {alarms.length ? (
             <CompactList>
               {alarms.map((alarm, index) => (
-                <AlarmRow key={alarm.alarmId} $tone={alarmTone(alarm.severity)} $delay={index * 50}>
+                <AlarmRow
+                  key={alarm.alarmId}
+                  $tone={alarmTone(alarm.severity)}
+                  $delay={index * 50}
+                  onClick={() => navigate(`/alarm/detail/${alarm.alarmId}`)}
+                >
                   <AlarmIconBox $tone={alarmTone(alarm.severity)}>
                     <FiAlertTriangle />
                   </AlarmIconBox>
