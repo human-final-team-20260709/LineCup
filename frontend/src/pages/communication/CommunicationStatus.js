@@ -100,7 +100,6 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
               <tr>
                 <S.Th>장비 코드</S.Th>
                 <S.Th>장비명</S.Th>
-                <S.Th>IP</S.Th>
                 <S.Th>포트</S.Th>
                 <S.Th>마지막 수신</S.Th>
                 <S.Th>상태</S.Th>
@@ -111,7 +110,6 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
                 <S.Tr key={device.deviceId || index} $odd={index % 2 === 1}>
                   <S.Td>{device.equipmentCode}</S.Td>
                   <S.Td>{device.equipmentName}</S.Td>
-                  <S.Td>{device.ipAddress}</S.Td>
                   <S.Td>{device.port}</S.Td>
                   <S.Td>{toKst(device.lastReceivedAt)}</S.Td>
                   <S.Td>

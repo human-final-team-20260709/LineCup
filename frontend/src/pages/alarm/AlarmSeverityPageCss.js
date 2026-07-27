@@ -245,7 +245,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
 
 & .alarm-severity-main-grid {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: minmax(340px, 380px) minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -258,7 +258,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
 
 & .alarm-definition-panel {
   align-self: start;
-  padding: 16px;
+  padding: 20px;
 }
 
 & .alarm-definition-panel--info {
@@ -274,37 +274,52 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
 }
 
 & .alarm-definition-panel h2 {
-  margin: 4px 0 12px;
+  margin: 6px 0 10px;
 }
 
 & .alarm-definition-panel p {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
 }
 
 & .alarm-rule-box {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 & .alarm-rule-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 10px;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 0;
+  padding: 10px 12px;
   border: 1px solid #2d3449;
   border-radius: 4px;
   background: #060e20;
   color: #dae2fd;
   font-size: 13px;
-  line-height: 18px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
 }
 
 & .alarm-rule-item span {
   width: 8px;
   height: 8px;
+  flex: 0 0 8px;
+  margin-top: 6px;
   border-radius: 999px;
   background: #4be277;
+}
+
+& .alarm-definition-panel--info .alarm-rule-item span {
+  background: #8bd5ff;
+}
+
+& .alarm-definition-panel--warning .alarm-rule-item span {
+  background: #ffb95f;
+}
+
+& .alarm-definition-panel--critical .alarm-rule-item span {
+  background: #ffb4ab;
 }
 
 & .alarm-panel-header {

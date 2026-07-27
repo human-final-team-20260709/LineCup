@@ -5,6 +5,7 @@ import { queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
 import { toKst } from "../../api/time";
 import { ApiErrors, QueryStatus } from "../../components/ApiState";
+import CommonPagination from "../../components/CommonPagination";
 import WorkerManagement from "./WorkerManagement";
 import {
   Badge,
@@ -22,20 +23,38 @@ import {
   toneForStatus,
 } from "../../components/OperationalUi";
 
+const PAGE_SIZE = 15;
+
 export default function Setting({ activeTab = "users" }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
   const [keyword, setKeyword] = useState("");
   const [role, setRole] = useState("");
+  const [usersPage, setUsersPage] = useState(1);
+  const [approvalsPage, setApprovalsPage] = useState(1);
   const [message, setMessage] = useState("");
   useEffect(() => {
-    const timeout = window.setTimeout(() => setKeyword(draft.trim()), 300);
+    const timeout = window.setTimeout(() => {
+      setKeyword(draft.trim());
+      setUsersPage(1);
+    }, 300);
     return () => window.clearTimeout(timeout);
   }, [draft]);
-  const params = { keyword: keyword || undefined, role: role || undefined, page: 0, size: 100 };
+  const params = { keyword: keyword || undefined, role: role || undefined, page: usersPage - 1, size: PAGE_SIZE };
   const usersQuery = useQuery({ queryKey: queryKeys.users(params), queryFn: () => usersApi.list(params), enabled: activeTab === "users", placeholderData: (previous) => previous });
   const pendingQuery = useQuery({ queryKey: queryKeys.pendingUsers(), queryFn: usersApi.pending, enabled: activeTab === "approvals" });
   const summaryQuery = useQuery({ queryKey: ["users", "summary"], queryFn: usersApi.summary });
+  useEffect(() => {
+    const lastPage = Math.max(1, usersQuery.data?.totalPages ?? 1);
+    setUsersPage((currentPage) => Math.min(currentPage, lastPage));
+  }, [usersQuery.data?.totalPages]);
+  useEffect(() => {
+    const lastPage = Math.max(
+      1,
+      Math.ceil((pendingQuery.data?.length ?? 0) / PAGE_SIZE),
+    );
+    setApprovalsPage((currentPage) => Math.min(currentPage, lastPage));
+  }, [pendingQuery.data?.length]);
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["users"] });
     queryClient.invalidateQueries({ queryKey: ["workers"] });
@@ -61,8 +80,23 @@ export default function Setting({ activeTab = "users" }) {
 
   if (activeTab === "workers") return <WorkerManagement />;
   const summary = summaryQuery.data || {};
-  const rows = activeTab === "users" ? pageContent(usersQuery.data) : (pendingQuery.data || []);
+  const users = pageContent(usersQuery.data);
+  const pendingUsers = pendingQuery.data || [];
+  const approvalsTotalPages = Math.max(1, Math.ceil(pendingUsers.length / PAGE_SIZE));
+  const currentApprovalsPage = Math.min(approvalsPage, approvalsTotalPages);
+  const rows = activeTab === "users"
+    ? users
+    : pendingUsers.slice(
+        (currentApprovalsPage - 1) * PAGE_SIZE,
+        currentApprovalsPage * PAGE_SIZE,
+      );
   const activeQuery = activeTab === "users" ? usersQuery : pendingQuery;
+  const totalItems = activeTab === "users"
+    ? usersQuery.data?.totalElements ?? users.length
+    : pendingUsers.length;
+  const totalPages = activeTab === "users"
+    ? Math.max(1, usersQuery.data?.totalPages ?? 1)
+    : approvalsTotalPages;
 
   return (
     <Page>
@@ -75,7 +109,10 @@ export default function Setting({ activeTab = "users" }) {
       </Grid>
       {activeTab === "users" && <Toolbar>
         <Input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="이름, 사원번호, 이메일" />
-        <Select value={role} onChange={(event) => setRole(event.target.value)}>
+        <Select value={role} onChange={(event) => {
+          setRole(event.target.value);
+          setUsersPage(1);
+        }}>
           <option value="">전체 역할</option><option value="admin">관리자</option><option value="supervisor">지시자</option><option value="operator">작업자</option>
         </Select>
       </Toolbar>}
@@ -104,6 +141,16 @@ export default function Setting({ activeTab = "users" }) {
           </tr>
         ))}</tbody>
       </Table></TableWrap>
+      {totalItems > 0 && (
+        <CommonPagination
+          ariaLabel={activeTab === "users" ? "사용자 목록 페이지 이동" : "가입 승인 대기 페이지 이동"}
+          currentPage={activeTab === "users" ? usersPage : currentApprovalsPage}
+          onPageChange={activeTab === "users" ? setUsersPage : setApprovalsPage}
+          pageSize={PAGE_SIZE}
+          totalItems={totalItems}
+          totalPages={totalPages}
+        />
+      )}
     </Page>
   );
 }
