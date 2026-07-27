@@ -1,22 +1,67 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  FiCpu,
+  FiEdit2,
+  FiTrash2,
+  FiUsers,
+} from "react-icons/fi";
+import styled from "styled-components";
 import { referenceApi, usersApi, workerApi } from "../../api/services";
 import { queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
 import { ApiErrors, QueryStatus } from "../../components/ApiState";
+import CommonPagination from "../../components/CommonPagination";
 import {
-  Badge,
   Button,
-  Card,
   FormGrid,
   Grid,
   Header,
   Input,
+  ModalBackdrop,
+  ModalPanel,
   Page,
   Select,
   pageContent,
 } from "../../components/OperationalUi";
 import useDebouncedValue from "../../hooks/useDebouncedValue";
+import {
+  ActionButton,
+  CardActions,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Identity,
+  InfoItem,
+  InfoLabel,
+  InfoValue,
+  Skill,
+  SkillList,
+  StatusChip,
+  WorkerAvatar,
+  WorkerCard,
+} from "./WorkerManagementCss";
+
+const PAGE_SIZE = 12;
+
+const WorkerGrid = styled(Grid)`
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 20px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const toneForShift = (shiftType) => {
+  if (shiftType === "NIGHT") return "warning";
+  if (shiftType === "ROTATING") return "neutral";
+  return "success";
+};
 
 const emptyEditor = {
   workerProfileId: null,
@@ -32,13 +77,18 @@ export default function WorkerManagement() {
   const queryClient = useQueryClient();
   const [keywordDraft, setKeywordDraft] = useState("");
   const keyword = useDebouncedValue(keywordDraft.trim());
+  const [page, setPage] = useState(0);
   const [editor, setEditor] = useState(null);
   const [message, setMessage] = useState("");
-  const params = { keyword: keyword || undefined, page: 0, size: 100 };
+  const params = { keyword: keyword || undefined, page, size: PAGE_SIZE };
   const workersQuery = useQuery({
     queryKey: queryKeys.workers(params),
     queryFn: () => workerApi.list(params),
     placeholderData: (previous) => previous,
+  });
+  const allWorkersQuery = useQuery({
+    queryKey: queryKeys.workers({ page: 0, size: 100 }),
+    queryFn: () => workerApi.list({ page: 0, size: 100 }),
   });
   const usersQuery = useQuery({
     queryKey: queryKeys.users({ role: "OPERATOR", size: 100 }),
@@ -48,10 +98,15 @@ export default function WorkerManagement() {
     queryKey: queryKeys.processes(),
     queryFn: referenceApi.processes,
   });
+  useEffect(() => {
+    const lastPage = Math.max(1, workersQuery.data?.totalPages ?? 1);
+    setPage((currentPage) => Math.min(currentPage, lastPage - 1));
+  }, [workersQuery.data?.totalPages]);
   const workers = pageContent(workersQuery.data);
+  const allWorkers = pageContent(allWorkersQuery.data);
   const usedUserIds = useMemo(
-    () => new Set(workers.map((worker) => worker.userId)),
-    [workers],
+    () => new Set(allWorkers.map((worker) => worker.userId)),
+    [allWorkers],
   );
   const eligibleUsers = pageContent(usersQuery.data).filter(
     (entry) =>
@@ -103,6 +158,21 @@ export default function WorkerManagement() {
     onSuccess: invalidate,
   });
 
+  useEffect(() => {
+    if (!editor) {
+      return undefined;
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setEditor(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [editor]);
+
   const handleSave = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -131,14 +201,25 @@ export default function WorkerManagement() {
       </Header>
       <Input
         value={keywordDraft}
-        onChange={(event) => setKeywordDraft(event.target.value)}
+        onChange={(event) => {
+          setKeywordDraft(event.target.value);
+          setPage(0);
+        }}
         placeholder="작업자 검색"
       />
       {message && <p role="status">{message}</p>}
-      <ApiErrors queries={[usersQuery, processesQuery]} />
+      <ApiErrors queries={[usersQuery, processesQuery, allWorkersQuery]} />
       {editor && (
-        <Card style={{ marginTop: 18 }}>
-          <h2>{editor.workerProfileId ? "프로필 수정" : "프로필 등록"}</h2>
+        <ModalBackdrop onClick={() => setEditor(null)}>
+          <ModalPanel
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="worker-profile-editor-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+          <h2 id="worker-profile-editor-title">
+            {editor.workerProfileId ? "프로필 수정" : "프로필 등록"}
+          </h2>
           <FormGrid onSubmit={handleSave}>
             <label>
               활성 작업자
@@ -227,48 +308,103 @@ export default function WorkerManagement() {
               </Button>
             </div>
           </FormGrid>
-        </Card>
+          </ModalPanel>
+        </ModalBackdrop>
       )}
       <QueryStatus query={workersQuery} empty={workers.length === 0} />
-      <Grid style={{ marginTop: 20 }}>
+      <WorkerGrid>
         {workers.map((worker) => (
-          <Card key={worker.workerProfileId}>
-            <h2>{worker.name}</h2>
-            <p>{worker.empNo}</p>
-            <p>
-              <strong>{worker.teamName}</strong> · {worker.shiftTypeLabel}
-            </p>
-            <p>주 담당 공정: {worker.primaryProcessName}</p>
-            <p>
-              {worker.skills.map((skill) => (
-                <Badge key={skill}>{skill}</Badge>
-              ))}
-            </p>
-            <Button
-              $secondary
-              onClick={() =>
-                setEditor({
-                  ...worker,
-                  skills: worker.skills.join(", "),
-                  originalSkills: worker.skills,
-                })
-              }
-            >
-              수정
-            </Button>{" "}
-            <Button
-              $secondary
-              disabled={removeMutation.isPending}
-              onClick={() =>
-                window.confirm("프로필을 삭제하시겠습니까?") &&
-                removeMutation.mutate(worker.workerProfileId)
-              }
-            >
-              삭제
-            </Button>
-          </Card>
+          <WorkerCard key={worker.workerProfileId} $tone="primary">
+            <CardHeader>
+              <WorkerAvatar aria-hidden="true">
+                {worker.name?.slice(0, 1) || "W"}
+              </WorkerAvatar>
+              <Identity>
+                <strong>{worker.name}</strong>
+                <span>{worker.empNo}</span>
+              </Identity>
+              <StatusChip $tone={toneForShift(worker.shiftType)}>
+                {worker.shiftTypeLabel}
+              </StatusChip>
+            </CardHeader>
+
+            <CardBody>
+              <InfoItem>
+                <FiUsers aria-hidden="true" />
+                <div>
+                  <InfoLabel>소속 팀</InfoLabel>
+                  <InfoValue>{worker.teamName || "-"}</InfoValue>
+                </div>
+              </InfoItem>
+              <InfoItem>
+                <FiCpu aria-hidden="true" />
+                <div>
+                  <InfoLabel>주 담당 공정</InfoLabel>
+                  <InfoValue>{worker.primaryProcessName || "-"}</InfoValue>
+                </div>
+              </InfoItem>
+              <div>
+                <InfoLabel>보유 기술</InfoLabel>
+                <SkillList>
+                  {worker.skills.length > 0 ? (
+                    worker.skills.map((skill) => (
+                      <Skill key={skill}>{skill}</Skill>
+                    ))
+                  ) : (
+                    <Skill>등록된 기술 없음</Skill>
+                  )}
+                </SkillList>
+              </div>
+            </CardBody>
+
+            <CardFooter>
+              <div>
+                <InfoLabel>등록 기술</InfoLabel>
+                <InfoValue $mono>{worker.skills.length}개</InfoValue>
+              </div>
+              <CardActions>
+                <ActionButton
+                  type="button"
+                  aria-label={`${worker.name} 프로필 수정`}
+                  title="프로필 수정"
+                  onClick={() =>
+                    setEditor({
+                      ...worker,
+                      skills: worker.skills.join(", "),
+                      originalSkills: worker.skills,
+                    })
+                  }
+                >
+                  <FiEdit2 aria-hidden="true" />
+                </ActionButton>
+                <ActionButton
+                  type="button"
+                  $danger
+                  aria-label={`${worker.name} 프로필 삭제`}
+                  title="프로필 삭제"
+                  disabled={removeMutation.isPending}
+                  onClick={() =>
+                    window.confirm("프로필을 삭제하시겠습니까?") &&
+                    removeMutation.mutate(worker.workerProfileId)
+                  }
+                >
+                  <FiTrash2 aria-hidden="true" />
+                </ActionButton>
+              </CardActions>
+            </CardFooter>
+          </WorkerCard>
         ))}
-      </Grid>
+      </WorkerGrid>
+      {(workersQuery.data?.totalElements ?? workers.length) > 0 && (
+        <CommonPagination
+          ariaLabel="작업자 관리 페이지 이동"
+          currentPage={page + 1}
+          onPageChange={(nextPage) => setPage(nextPage - 1)}
+          pageSize={PAGE_SIZE}
+          totalItems={workersQuery.data?.totalElements ?? workers.length}
+          totalPages={Math.max(1, workersQuery.data?.totalPages ?? 1)}
+        />
+      )}
     </Page>
   );
 }

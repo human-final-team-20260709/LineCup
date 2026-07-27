@@ -69,7 +69,7 @@ export const Page = styled.main`
   padding: 32px;
   background: ${colors.surface};
   color: ${colors.text};
-  font-family: Inter, system-ui, sans-serif;
+  font-family: inherit;
 
   *, *::before, *::after {
     box-sizing: border-box;
@@ -276,6 +276,13 @@ export const Panel = styled.article`
   background: ${colors.surfaceContainer};
   animation: ${fadeIn} 0.4s ease both;
   transition: border-color 0.2s ease;
+
+  ${({ $fillBody }) =>
+    $fillBody &&
+    css`
+      display: flex;
+      flex-direction: column;
+    `}
 
   &:hover {
     border-color: ${colors.surfaceHigh};
@@ -917,6 +924,27 @@ export const DonutWrap = styled.div`
   padding: 0 16px;
 `;
 
+export const DonutRing = styled.svg`
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  transform: rotate(-90deg);
+
+  circle {
+    fill: none;
+    stroke-width: 14;
+  }
+
+  .donut-track {
+    stroke: ${colors.alarm};
+  }
+
+  .donut-good {
+    stroke: ${colors.primary};
+    transition: stroke-dasharray 0.35s ease;
+  }
+`;
+
 export const DonutCenter = styled.div`
   position: absolute;
   top: 50%;
@@ -992,38 +1020,103 @@ export const ProcessMiniEquip = styled.div`
 `;
 
 export const PipelineRow = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1.08fr) 24px minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
   align-items: stretch;
-  gap: 6px;
+  gap: 8px;
   padding: 16px;
-  overflow-x: auto;
 
-  &::-webkit-scrollbar {
-    height: 6px;
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const WorkOrderStage = styled.section`
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid ${colors.surfaceHigh};
+  border-top: 2px solid ${({ $tone }) => toneColors[$tone] || colors.border};
+  border-radius: 8px;
+  background: rgba(6, 14, 32, 0.28);
+`;
+
+export const WorkOrderStageHeader = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  padding: 9px 10px;
+  border-bottom: 1px solid ${colors.surfaceHigh};
+  background: ${({ $tone }) => `${toneColors[$tone] || colors.muted}0d`};
+
+  strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+
+    &::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: ${({ $tone }) => toneColors[$tone] || colors.muted};
+    }
   }
 
-  &::-webkit-scrollbar-thumb {
-    background: ${colors.surfaceHigh};
-    border-radius: 999px;
+  span {
+    ${mono};
+    color: ${colors.dim};
+    font-size: 9px;
+    white-space: nowrap;
   }
+`;
+
+export const WorkOrderStageBody = styled.div`
+  display: grid;
+  flex: 1;
+  grid-auto-rows: minmax(88px, 1fr);
+  gap: 8px;
+  padding: 10px;
+`;
+
+export const WorkOrderStageEmpty = styled.div`
+  display: grid;
+  height: 100%;
+  min-height: 88px;
+  place-items: center;
+  padding: 12px;
+  color: ${colors.dim};
+  font-size: 11px;
+  text-align: center;
 `;
 
 export const PipelineArrow = styled.div`
   display: flex;
-  flex: 0 0 20px;
   align-items: center;
   justify-content: center;
   color: ${colors.border};
-  font-size: 16px;
+  font-size: 18px;
+
+  @media (max-width: 720px) {
+    height: 16px;
+    transform: rotate(90deg);
+  }
 `;
 
 export const PipelineCard = styled.div`
   display: flex;
-  flex: 0 0 130px;
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  min-height: 104px;
+  min-height: 88px;
   padding: 10px 12px;
   border: 1px ${({ $dashed }) => ($dashed ? 'dashed' : 'solid')} ${colors.border};
   border-radius: 6px;
@@ -1060,11 +1153,10 @@ export const PipelineCard = styled.div`
 export const PipelineActiveCard = styled.div`
   position: relative;
   display: flex;
-  flex: 0 0 210px;
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  min-height: 136px;
+  min-height: 112px;
   padding: 14px;
   border: 1.5px solid ${colors.primary};
   border-radius: 8px;
@@ -1234,20 +1326,90 @@ export const PanelLinkMore = styled.a`
 
 export const WorkerCardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(62px, 1fr);
+  flex: 1;
   gap: 8px;
   padding: 14px 16px 16px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const WorkerHeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const WorkerPagination = styled.nav`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const WorkerPageButton = styled.button`
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid ${colors.border};
+  border-radius: 6px;
+  background: ${colors.surfaceLow};
+  color: ${colors.text};
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: ${colors.primary};
+    background: rgba(75, 226, 119, 0.08);
+    color: ${colors.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    color: ${colors.dim};
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+export const WorkerPageStatus = styled.span`
+  ${mono};
+  min-width: 34px;
+  color: ${colors.muted};
+  font-size: 9px;
+  text-align: center;
 `;
 
 export const WorkerAvatarCard = styled.div`
   display: flex;
   min-width: 0;
+  min-height: 62px;
   align-items: center;
-  gap: 8px;
-  padding: 10px;
+  gap: 10px;
+  padding: 11px 12px;
   border: 1px solid ${colors.surfaceHigh};
-  border-radius: 6px;
-  background: ${colors.surfaceLow};
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(75, 226, 119, 0.07), transparent 45%),
+    ${colors.surfaceLow};
   opacity: 0;
   cursor: pointer;
   animation: ${fadeIn} 0.3s ease both;
@@ -1265,12 +1427,13 @@ export const WorkerAvatar = styled.div`
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: ${({ $tone }) => toneColors[$tone] || colors.primary};
-  color: ${colors.surfaceLowest};
-  font-size: 12px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(75, 226, 119, 0.4);
+  border-radius: 10px;
+  background: rgba(75, 226, 119, 0.14);
+  color: ${colors.primary};
+  font-size: 13px;
   font-weight: 700;
 `;
 
@@ -1290,12 +1453,9 @@ export const WorkerCardBody = styled.div`
     display: block;
     overflow: hidden;
     margin-top: 2px;
-    ${mono};
     color: ${colors.dim};
-    font-size: 9px;
+    font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 `;
-
-

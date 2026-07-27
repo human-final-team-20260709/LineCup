@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -234,7 +235,9 @@ export default function WorkOrderList({ view = "table" }) {
   const chartData = rows.slice(0, 10).map((order) => {
     const shortCode = order.workOrderNo.split("-").pop();
     const shortProduct =
-      order.productName.length > 5 ? `${order.productName.slice(0, 5)}…` : order.productName;
+      order.productName.length > 5
+        ? `${order.productName.slice(0, 5)}…`
+        : order.productName;
     return {
       name: `${shortCode} ${shortProduct}`,
       fullLabel: `${order.workOrderNo} · ${order.productName}`,
@@ -254,7 +257,11 @@ export default function WorkOrderList({ view = "table" }) {
           <Subtitle>서버 검색 결과를 5초마다 갱신합니다.</Subtitle>
         </TitleGroup>
         <HeaderActions>
-          <StyledButton type="button" $variant="primary" onClick={() => setShowForm(true)}>
+          <StyledButton
+            type="button"
+            $variant="primary"
+            onClick={() => setShowForm(true)}
+          >
             <FiPlus /> 작업지시 등록
           </StyledButton>
         </HeaderActions>
@@ -285,13 +292,21 @@ export default function WorkOrderList({ view = "table" }) {
             </KpiIcon>
           </KpiHeaderRow>
           <KpiValueRow>
-            <KpiValue $color={(summary.holdCount ?? 0) > 0 ? tokens.colors.secondary : undefined}>
+            <KpiValue
+              $color={
+                (summary.holdCount ?? 0) > 0
+                  ? tokens.colors.secondary
+                  : undefined
+              }
+            >
               {summary.holdCount ?? 0}
             </KpiValue>
             <KpiUnit>건</KpiUnit>
           </KpiValueRow>
           <KpiFootRow>
-            <KpiTrendText>전체 {summary.totalCount ?? totalElements}건 중</KpiTrendText>
+            <KpiTrendText>
+              전체 {summary.totalCount ?? totalElements}건 중
+            </KpiTrendText>
           </KpiFootRow>
         </KpiCard>
 
@@ -349,7 +364,9 @@ export default function WorkOrderList({ view = "table" }) {
               <FiClipboard size={22} />
             </EmptyIconCircle>
             <EmptyTitle>조건에 맞는 작업지시가 없습니다</EmptyTitle>
-            <EmptyDesc>검색어나 상태 필터를 변경하거나 새 작업지시를 등록해보세요.</EmptyDesc>
+            <EmptyDesc>
+              검색어나 상태 필터를 변경하거나 새 작업지시를 등록해보세요.
+            </EmptyDesc>
             <EmptyActionBtn type="button" onClick={() => setShowForm(true)}>
               작업지시 등록
             </EmptyActionBtn>
@@ -373,8 +390,15 @@ export default function WorkOrderList({ view = "table" }) {
           </ChartHeaderRow>
           <ChartFrame>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={tokens.colors.outlineVariant} vertical={false} />
+              <BarChart
+                data={chartData}
+                margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={tokens.colors.outlineVariant}
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
                   tick={{ fill: tokens.colors.onSurfaceVariant, fontSize: 11 }}
@@ -387,13 +411,27 @@ export default function WorkOrderList({ view = "table" }) {
                   tickLine={false}
                   width={44}
                 />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: tokens.hexToRgba(tokens.colors.onSurface, 0.05) }} />
-                <Bar dataKey="목표" fill={tokens.colors.outlineVariant} radius={[3, 3, 0, 0]} maxBarSize={26} />
+                <Tooltip
+                  content={<ChartTooltip />}
+                  cursor={{
+                    fill: tokens.hexToRgba(tokens.colors.onSurface, 0.05),
+                  }}
+                />
+                <Bar
+                  dataKey="목표"
+                  fill={tokens.colors.outlineVariant}
+                  radius={[3, 3, 0, 0]}
+                  maxBarSize={26}
+                />
                 <Bar dataKey="실적" radius={[3, 3, 0, 0]} maxBarSize={26}>
                   {chartData.map((entry) => (
                     <Cell
                       key={entry.fullLabel}
-                      fill={entry.실적 < entry.목표 ? tokens.colors.secondary : tokens.colors.primary}
+                      fill={
+                        entry.실적 < entry.목표
+                          ? tokens.colors.secondary
+                          : tokens.colors.primary
+                      }
                     />
                   ))}
                 </Bar>
@@ -428,18 +466,24 @@ export default function WorkOrderList({ view = "table" }) {
                   <Td $mono>{order.workOrderNo}</Td>
                   <Td>{order.productName}</Td>
                   <Td>
-                    <Badge $color={statusColor(order.status)}>{order.statusLabel}</Badge>
+                    <Badge $color={statusColor(order.status)}>
+                      {order.statusLabel}
+                    </Badge>
                   </Td>
                   <Td>
                     <QtyCell>
                       <ProgressRow>
                         <ProgressTrack>
-                          <ProgressFill $rate={order.progressRate} $color={statusColor(order.status)} />
+                          <ProgressFill
+                            $rate={order.progressRate}
+                            $color={statusColor(order.status)}
+                          />
                         </ProgressTrack>
                         <ProgressRate>{order.progressRate}%</ProgressRate>
                       </ProgressRow>
                       <QtySub>
-                        {formatNumber(order.currentQty)} / {formatNumber(order.targetQty)} EA
+                        {formatNumber(order.currentQty)} /{" "}
+                        {formatNumber(order.targetQty)} EA
                       </QtySub>
                     </QtyCell>
                   </Td>
@@ -462,77 +506,110 @@ export default function WorkOrderList({ view = "table" }) {
         totalPages={totalPages}
       />
 
-      {showForm && (
-        <ModalOverlay onClick={() => setShowForm(false)}>
-          <ModalPanel onClick={(event) => event.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>새 작업지시 등록</ModalTitle>
-              <ModalCloseBtn type="button" onClick={() => setShowForm(false)} aria-label="닫기">
-                <FiX />
-              </ModalCloseBtn>
-            </ModalHeader>
-            <form onSubmit={handleCreate}>
-              <ModalBody>
-                <FieldGrid>
-                  <Field $span2>
-                    <Label>제품</Label>
-                    <Select name="productId" required defaultValue="">
-                      <option value="" disabled>
-                        제품 선택
-                      </option>
-                      {pageContent(productsQuery.data).map((product) => (
-                        <option key={product.productId} value={product.productId}>
-                          {product.productName}
+      {showForm &&
+        createPortal(
+          <ModalOverlay onClick={() => setShowForm(false)}>
+            <ModalPanel onClick={(event) => event.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>새 작업지시 등록</ModalTitle>
+                <ModalCloseBtn
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  aria-label="닫기"
+                >
+                  <FiX />
+                </ModalCloseBtn>
+              </ModalHeader>
+              <form onSubmit={handleCreate}>
+                <ModalBody>
+                  <FieldGrid>
+                    <Field $span2>
+                      <Label>제품</Label>
+                      <Select name="productId" required defaultValue="">
+                        <option value="" disabled>
+                          제품 선택
                         </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field>
-                    <Label>목표 수량</Label>
-                    <Input name="targetQty" type="number" min="1" required />
-                  </Field>
-                  <Field>
-                    <Label>시간 목표 수량</Label>
-                    <Input name="hourlyTargetQty" type="number" min="1" required />
-                  </Field>
-                  <Field>
-                    <Label>작업 시작 예정일</Label>
-                    <Input name="plannedStartDate" type="date" required />
-                  </Field>
-                  <Field>
-                    <Label>지시자</Label>
-                    <Select name="supervisorUserId" required defaultValue="">
-                      <option value="" disabled>
-                        지시자 선택
-                      </option>
-                      {pageContent(supervisorsQuery.data)
-                        .filter((user) => user.active && user.approvalStatus === "approved")
-                        .map((user) => (
-                          <option key={user.userId} value={user.userId}>
-                            {user.name} ({user.empNo})
+                        {pageContent(productsQuery.data).map((product) => (
+                          <option
+                            key={product.productId}
+                            value={product.productId}
+                          >
+                            {product.productName}
                           </option>
                         ))}
-                    </Select>
-                  </Field>
-                  <Field $span2>
-                    <Label>비고</Label>
-                    <Textarea name="remarks" rows={3} placeholder="선택 입력" />
-                  </Field>
-                </FieldGrid>
-                {message && <ErrorText style={{ display: "block", marginTop: 12 }}>{message}</ErrorText>}
-              </ModalBody>
-              <ModalFooter>
-                <StyledButton type="button" $variant="outline" onClick={() => setShowForm(false)}>
-                  취소
-                </StyledButton>
-                <StyledButton type="submit" $variant="primary" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "등록 중..." : "등록"}
-                </StyledButton>
-              </ModalFooter>
-            </form>
-          </ModalPanel>
-        </ModalOverlay>
-      )}
+                      </Select>
+                    </Field>
+                    <Field>
+                      <Label>목표 수량</Label>
+                      <Input name="targetQty" type="number" min="1" required />
+                    </Field>
+                    <Field>
+                      <Label>시간 목표 수량</Label>
+                      <Input
+                        name="hourlyTargetQty"
+                        type="number"
+                        min="1"
+                        required
+                      />
+                    </Field>
+                    <Field>
+                      <Label>작업 시작 예정일</Label>
+                      <Input name="plannedStartDate" type="date" required />
+                    </Field>
+                    <Field>
+                      <Label>지시자</Label>
+                      <Select name="supervisorUserId" required defaultValue="">
+                        <option value="" disabled>
+                          지시자 선택
+                        </option>
+                        {pageContent(supervisorsQuery.data)
+                          .filter(
+                            (user) =>
+                              user.active && user.approvalStatus === "approved",
+                          )
+                          .map((user) => (
+                            <option key={user.userId} value={user.userId}>
+                              {user.name} ({user.empNo})
+                            </option>
+                          ))}
+                      </Select>
+                    </Field>
+                    <Field $span2>
+                      <Label>비고</Label>
+                      <Textarea
+                        name="remarks"
+                        rows={3}
+                        placeholder="선택 입력"
+                      />
+                    </Field>
+                  </FieldGrid>
+                  {message && (
+                    <ErrorText style={{ display: "block", marginTop: 12 }}>
+                      {message}
+                    </ErrorText>
+                  )}
+                </ModalBody>
+                <ModalFooter>
+                  <StyledButton
+                    type="button"
+                    $variant="outline"
+                    onClick={() => setShowForm(false)}
+                  >
+                    취소
+                  </StyledButton>
+                  <StyledButton
+                    type="submit"
+                    $variant="primary"
+                    disabled={createMutation.isPending}
+                  >
+                    {createMutation.isPending ? "등록 중..." : "등록"}
+                  </StyledButton>
+                </ModalFooter>
+              </form>
+            </ModalPanel>
+          </ModalOverlay>,
+          document.body,
+        )}
 
       {toast && (
         <Toast>

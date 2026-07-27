@@ -63,6 +63,9 @@ import {
 } from "./LotManagementCss";
 
 const PAGE_SIZE = 10;
+const toneForProductionLotStatus = (status) => (
+  status === "IN_PROGRESS" ? "warn" : toneForStatus(status)
+);
 
 export default function LotManagement() {
   const queryClient = useQueryClient();
@@ -228,7 +231,7 @@ export default function LotManagement() {
                         </td>
                         <td>{lot.currentProcess || "-"}</td>
                         <td>
-                          <Badge $tone={toneForStatus(lot.status)}>
+                          <Badge $tone={toneForProductionLotStatus(lot.status)}>
                             {lot.statusLabel}
                           </Badge>
                         </td>
@@ -262,7 +265,7 @@ export default function LotManagement() {
               <DetailEyebrow>생산 LOT 상세</DetailEyebrow>
               <TitleLine>
                 <h2 id="lot-detail-title">{detail.lotNo}</h2>
-                <Badge $tone={toneForStatus(detail.status)}>
+                <Badge $tone={toneForProductionLotStatus(detail.status)}>
                   {detail.statusLabel}
                 </Badge>
               </TitleLine>

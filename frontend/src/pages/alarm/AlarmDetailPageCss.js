@@ -161,7 +161,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-detail-page' })`
   background: #060e20;
 }
 
-& .alarm-meta-item span {
+& .alarm-meta-item > span {
   display: block;
   color: #869585;
   font-size: 11px;

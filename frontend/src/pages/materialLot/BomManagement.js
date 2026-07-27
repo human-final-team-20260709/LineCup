@@ -58,6 +58,9 @@ import {
 } from "./BomManagementCss";
 
 const PAGE_SIZE = 10;
+const toneForBomStatus = (status) => (
+  status === "INACTIVE" ? "danger" : toneForStatus(status)
+);
 const emptyItem = {
   materialId: "",
   processId: "",
@@ -308,7 +311,7 @@ export default function BomManagement({ canManage = false }) {
                         BOM 식별 정보와 적용 제품, 상태를 설정합니다.
                       </ModalSectionDescription>
                     </div>
-                    <Badge $tone={toneForStatus(form.status)}>
+                    <Badge $tone={toneForBomStatus(form.status)}>
                       {form.status === "ACTIVE"
                         ? "사용 중"
                         : form.status === "REVIEW"
@@ -582,7 +585,7 @@ export default function BomManagement({ canManage = false }) {
                         <CellSecondary>{bom.productCode}</CellSecondary>
                       </td>
                       <td>
-                        <Badge $tone={toneForStatus(bom.status)}>{bom.statusLabel}</Badge>
+                        <Badge $tone={toneForBomStatus(bom.status)}>{bom.statusLabel}</Badge>
                       </td>
                       <td>
                         <MaterialPreviewButton
@@ -665,7 +668,7 @@ export default function BomManagement({ canManage = false }) {
                 </BomDetailSummaryItem>
                 <BomDetailSummaryItem>
                   <span>상태</span>
-                  <Badge $tone={toneForStatus(materialDetailBom.status)}>
+                  <Badge $tone={toneForBomStatus(materialDetailBom.status)}>
                     {materialDetailBom.statusLabel}
                   </Badge>
                 </BomDetailSummaryItem>

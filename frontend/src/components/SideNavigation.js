@@ -16,8 +16,6 @@ import {
 import {
   Backdrop,
   Brand,
-  BrandMark,
-  BrandText,
   ErrorMessage,
   Footer,
   Header,
@@ -216,11 +214,11 @@ function SideNavigation() {
 
         <Header>
           <Brand>
-            <BrandMark aria-hidden="true">M</BrandMark>
-            <BrandText>
-              <strong>MES CONTROL</strong>
-              <span>PRODUCTION SYSTEM</span>
-            </BrandText>
+            <img
+              src={`${process.env.PUBLIC_URL}/linecup_logo.png`}
+              alt="LINECUP MES CONTROL SYSTEM"
+              style={{ display: "block", width: "100%", height: "auto" }}
+            />
           </Brand>
         </Header>
 

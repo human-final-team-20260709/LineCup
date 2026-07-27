@@ -150,7 +150,6 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
             } else {
                 pthread_mutex_lock(&connection.lock);
                 connection.processed_qty++;
-                if (connection.processed_qty >= connection.target_qty) connection.state = MACHINE_STATE_IDLE;
                 pthread_mutex_unlock(&connection.lock);
                 printf("[L1][%s] inspection=%s %d/%d\n", args->profile.display_name,
                        defect_code_name(result), processed_qty + 1, target_qty);

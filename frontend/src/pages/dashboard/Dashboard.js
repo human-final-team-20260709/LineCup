@@ -5,9 +5,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -18,6 +15,8 @@ import {
   FiActivity,
   FiAlertTriangle,
   FiBox,
+  FiChevronLeft,
+  FiChevronRight,
   FiClock,
   FiRadio,
   FiTarget,
@@ -58,6 +57,7 @@ import {
   CompactList,
   DonutCenter,
   DonutLegendRow,
+  DonutRing,
   DonutWrap,
   EmptyState,
   Eyebrow,
@@ -86,6 +86,10 @@ import {
   PipelineProgressFill,
   PipelineProgressTrack,
   PipelineRow,
+  WorkOrderStage,
+  WorkOrderStageBody,
+  WorkOrderStageEmpty,
+  WorkOrderStageHeader,
   ProductBarFill,
   ProductBarTrack,
   ProductRow,
@@ -100,7 +104,13 @@ import {
   WorkerAvatarCard,
   WorkerCardBody,
   WorkerCardGrid,
+  WorkerHeaderActions,
+  WorkerPageButton,
+  WorkerPageStatus,
+  WorkerPagination,
 } from "./DashboardCss";
+
+const WORKERS_PER_PAGE = 6;
 
 const trendRangeLabel = {
   day: "오늘 · 시간별",
@@ -164,27 +174,11 @@ function TrendTooltip({ active, payload, label }) {
   );
 }
 
-function DonutTooltip({ active, payload }) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-  const entry = payload[0];
-  return (
-    <ChartTooltipBox>
-      <ChartTooltipRow>
-        <ChartTooltipDot $color={entry.payload.fill} />
-        <ChartTooltipLabel>{entry.name}</ChartTooltipLabel>
-        <ChartTooltipValue>{formatNumber(entry.value)} EA</ChartTooltipValue>
-      </ChartTooltipRow>
-    </ChartTooltipBox>
-  );
-}
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const [trendRange, setTrendRange] = useState("week");
+  const [workerPage, setWorkerPage] = useState(0);
   const periodKey = { scope: "today", date: currentKstDate() };
-  const todayPeriod = kstPeriod(1);
   const trendPeriod = useMemo(() => {
     if (trendRange === "day") return kstPeriod(1);
     if (trendRange === "month") return kstPeriod(30);
@@ -193,7 +187,7 @@ export default function Dashboard() {
 
   const productionQuery = useQuery({
     queryKey: queryKeys.productionSummary(periodKey),
-    queryFn: () => productionApi.summary(todayPeriod),
+    queryFn: () => productionApi.summary(kstPeriod(1)),
     refetchInterval: POLLING.PRODUCTION,
   });
   const trendQuery = useQuery({
@@ -202,8 +196,8 @@ export default function Dashboard() {
     refetchInterval: POLLING.PRODUCTION,
   });
   const byProductQuery = useQuery({
-    queryKey: queryKeys.productionGroups("by-product", todayPeriod),
-    queryFn: () => productionApi.byProduct(todayPeriod),
+    queryKey: queryKeys.productionGroups("by-product", periodKey),
+    queryFn: () => productionApi.byProduct(kstPeriod(1)),
     refetchInterval: POLLING.PRODUCTION,
   });
   const activeQuery = useQuery({
@@ -258,6 +252,15 @@ export default function Dashboard() {
   const totalAlarms = alarmQuery.data?.totalElements || 0;
   const criticalAlarms = alarms.filter((alarm) => alarm.severity === "CRITICAL").length;
   const warningAlarms = alarms.filter((alarm) => alarm.severity === "WARNING").length;
+  const workerPageCount = Math.max(1, Math.ceil(workers.length / WORKERS_PER_PAGE));
+  const visibleWorkers = workers.slice(
+    workerPage * WORKERS_PER_PAGE,
+    (workerPage + 1) * WORKERS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    setWorkerPage((currentPage) => Math.min(currentPage, workerPageCount - 1));
+  }, [workerPageCount]);
 
   const trendData = useMemo(() => {
     const buckets = trendQuery.data || [];
@@ -292,10 +295,6 @@ export default function Dashboard() {
   const defectQty = production.defectQty || 0;
   const qualityTotal = goodQty + defectQty;
   const qualityRate = qualityTotal > 0 ? Math.round((goodQty / qualityTotal) * 1000) / 10 : 0;
-  const qualityData = [
-    { name: "정상", value: goodQty, fill: chartColors.primary },
-    { name: "불량", value: defectQty, fill: chartColors.alarm },
-  ];
 
   const activeSummary = activeQuery.data?.summary;
   const pendingOrders = pageContent(pendingQuery.data);
@@ -495,31 +494,27 @@ export default function Dashboard() {
           <ChartHeaderRow>
             <ChartTitleBlock>
               <PanelLabel>품질 현황</PanelLabel>
-              <h3>누적 정상 / 불량 비율</h3>
+              <h3>금일 누적 정상 / 불량 비율</h3>
             </ChartTitleBlock>
           </ChartHeaderRow>
           {qualityTotal > 0 ? (
             <>
               <DonutWrap>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={qualityData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius="68%"
-                      outerRadius="92%"
-                      startAngle={90}
-                      endAngle={-270}
-                      stroke="none"
-                    >
-                      {qualityData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<DonutTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
+                <DonutRing
+                  viewBox="0 0 120 120"
+                  role="img"
+                  aria-label={`금일 정상 ${formatNumber(goodQty)}개, 불량 ${formatNumber(defectQty)}개`}
+                >
+                  <circle className="donut-track" cx="60" cy="60" r="45" pathLength="100" />
+                  <circle
+                    className="donut-good"
+                    cx="60"
+                    cy="60"
+                    r="45"
+                    pathLength="100"
+                    strokeDasharray={`${qualityRate} ${100 - qualityRate}`}
+                  />
+                </DonutRing>
                 <DonutCenter>
                   <strong>{qualityRate}%</strong>
                   <span>양품률</span>
@@ -583,63 +578,94 @@ export default function Dashboard() {
           )}
         </Panel>
 
-        <Panel $span={1} $tabletSpan={1}>
+        <Panel $span={1} $tabletSpan={1} $fillBody>
           <PanelHeader>
             <div>
-              <PanelLabel>파이프라인</PanelLabel>
-              <h2>작업지시 흐름</h2>
+              <PanelLabel>작업 단계</PanelLabel>
+              <h2>작업지시 진행 현황</h2>
             </div>
             <PanelLinkMore onClick={() => navigate("/work-orders/list")}>더보기 ›</PanelLinkMore>
           </PanelHeader>
           {doneOrders.length || activeSummary || pendingOrders.length ? (
             <PipelineRow>
-              {doneOrders.map((order, index) => (
-                <PipelineCard
-                  key={order.workOrderId}
-                  $delay={index * 40}
-                  onClick={() => navigate(`/work-orders/${order.workOrderId}`)}
-                >
-                  <small>{order.workOrderNo}</small>
-                  <strong>{order.productName}</strong>
-                  <StatusChip $tone="neutral">완료</StatusChip>
-                </PipelineCard>
-              ))}
-              {doneOrders.length > 0 && <PipelineArrow>→</PipelineArrow>}
+              <WorkOrderStage $tone="neutral">
+                <WorkOrderStageHeader $tone="neutral">
+                  <strong>최근 완료</strong>
+                  <span>{doneOrders.length}건</span>
+                </WorkOrderStageHeader>
+                <WorkOrderStageBody>
+                  {doneOrders.length ? (
+                    doneOrders.map((order, index) => (
+                      <PipelineCard
+                        key={order.workOrderId}
+                        $delay={index * 40}
+                        onClick={() => navigate(`/work-orders/${order.workOrderId}`)}
+                      >
+                        <small>{order.workOrderNo}</small>
+                        <strong>{order.productName}</strong>
+                        <StatusChip $tone="neutral">완료</StatusChip>
+                      </PipelineCard>
+                    ))
+                  ) : (
+                    <WorkOrderStageEmpty>완료된 작업 없음</WorkOrderStageEmpty>
+                  )}
+                </WorkOrderStageBody>
+              </WorkOrderStage>
 
-              {activeSummary ? (
-                <PipelineActiveCard onClick={() => navigate(`/work-orders/${activeSummary.workOrderId}`)}>
-                  <PipelineLiveDot />
-                  <PipelineActiveEyebrow>진행중</PipelineActiveEyebrow>
-                  <small>{activeSummary.workOrderNo}</small>
-                  <strong>{activeSummary.productName}</strong>
-                  <PipelineProgressTrack>
-                    <PipelineProgressFill $value={activeSummary.progressRate} />
-                  </PipelineProgressTrack>
-                  <PipelineMeta>
-                    {formatNumber(activeSummary.currentQty)} / {formatNumber(activeSummary.targetQty)} EA ·{" "}
-                    {activeSummary.progressRate}%
-                  </PipelineMeta>
-                </PipelineActiveCard>
-              ) : (
-                <PipelineCard $dashed>
-                  <strong>진행중 없음</strong>
-                  <small>작업 시작 대기</small>
-                </PipelineCard>
-              )}
+              <PipelineArrow aria-hidden="true">→</PipelineArrow>
 
-              {pendingOrders.length > 0 && <PipelineArrow>→</PipelineArrow>}
-              {pendingOrders.map((order, index) => (
-                <PipelineCard
-                  key={order.workOrderId}
-                  $dashed
-                  $delay={index * 40}
-                  onClick={() => navigate(`/work-orders/${order.workOrderId}`)}
-                >
-                  <small>{order.workOrderNo}</small>
-                  <strong>{order.productName}</strong>
-                  <StatusChip $tone="warning">대기 · {order.plannedStartDate}</StatusChip>
-                </PipelineCard>
-              ))}
+              <WorkOrderStage $tone="success">
+                <WorkOrderStageHeader $tone="success">
+                  <strong>현재 진행</strong>
+                  <span>{activeSummary ? "1건" : "0건"}</span>
+                </WorkOrderStageHeader>
+                <WorkOrderStageBody>
+                  {activeSummary ? (
+                    <PipelineActiveCard onClick={() => navigate(`/work-orders/${activeSummary.workOrderId}`)}>
+                      <PipelineLiveDot />
+                      <PipelineActiveEyebrow>진행 중</PipelineActiveEyebrow>
+                      <small>{activeSummary.workOrderNo}</small>
+                      <strong>{activeSummary.productName}</strong>
+                      <PipelineProgressTrack>
+                        <PipelineProgressFill $value={activeSummary.progressRate} />
+                      </PipelineProgressTrack>
+                      <PipelineMeta>
+                        {formatNumber(activeSummary.currentQty)} / {formatNumber(activeSummary.targetQty)} EA ·{" "}
+                        {activeSummary.progressRate}%
+                      </PipelineMeta>
+                    </PipelineActiveCard>
+                  ) : (
+                    <WorkOrderStageEmpty>진행 중인 작업 없음</WorkOrderStageEmpty>
+                  )}
+                </WorkOrderStageBody>
+              </WorkOrderStage>
+
+              <PipelineArrow aria-hidden="true">→</PipelineArrow>
+
+              <WorkOrderStage $tone="warning">
+                <WorkOrderStageHeader $tone="warning">
+                  <strong>다음 대기</strong>
+                  <span>{pendingOrders.length}건</span>
+                </WorkOrderStageHeader>
+                <WorkOrderStageBody>
+                  {pendingOrders.length ? (
+                    pendingOrders.map((order, index) => (
+                      <PipelineCard
+                        key={order.workOrderId}
+                        $dashed
+                        $delay={index * 40}
+                        onClick={() => navigate(`/work-orders/${order.workOrderId}`)}
+                      >
+                        <small>{order.workOrderNo}</small>
+                        <strong>{order.productName}</strong>
+                        <StatusChip $tone="warning">대기 · {order.plannedStartDate}</StatusChip>
+                      </PipelineCard>
+                    ))
+                  ) : (
+                    <WorkOrderStageEmpty>대기 중인 작업 없음</WorkOrderStageEmpty>
+                  )}
+                </WorkOrderStageBody>
+              </WorkOrderStage>
             </PipelineRow>
           ) : (
             <EmptyState $compact>
@@ -653,26 +679,51 @@ export default function Dashboard() {
       </SplitRow>
 
       <SplitRow $ratio="1.6fr 1fr">
-        <Panel $span={1} $tabletSpan={1}>
+        <Panel $span={1} $tabletSpan={1} $fillBody>
           <PanelHeader>
             <div>
               <PanelLabel>작업자</PanelLabel>
               <h2>작업자 팀</h2>
             </div>
-            <PanelMeta>총 {workers.length}명</PanelMeta>
+            <WorkerHeaderActions>
+              <PanelMeta>총 {workers.length}명</PanelMeta>
+              {workers.length > 0 && (
+                <WorkerPagination aria-label="작업자 목록 페이지 이동">
+                  <WorkerPageButton
+                    type="button"
+                    aria-label="이전 작업자"
+                    disabled={workerPage === 0}
+                    onClick={() => setWorkerPage((currentPage) => Math.max(0, currentPage - 1))}
+                  >
+                    <FiChevronLeft />
+                  </WorkerPageButton>
+                  <WorkerPageStatus>
+                    {workerPage + 1} / {workerPageCount}
+                  </WorkerPageStatus>
+                  <WorkerPageButton
+                    type="button"
+                    aria-label="다음 작업자"
+                    disabled={workerPage >= workerPageCount - 1}
+                    onClick={() =>
+                      setWorkerPage((currentPage) => Math.min(workerPageCount - 1, currentPage + 1))
+                    }
+                  >
+                    <FiChevronRight />
+                  </WorkerPageButton>
+                </WorkerPagination>
+              )}
+            </WorkerHeaderActions>
           </PanelHeader>
 
           {workers.length ? (
             <WorkerCardGrid>
-              {workers.map((worker, index) => (
+              {visibleWorkers.map((worker, index) => (
                 <WorkerAvatarCard
                   key={worker.workerProfileId}
-                  $delay={Math.min(index, 14) * 40}
+                  $delay={index * 40}
                   onClick={() => navigate("/settings/workers")}
                 >
-                  <WorkerAvatar $tone={["success", "warning", "neutral"][index % 3]}>
-                    {worker.name?.slice(0, 1)}
-                  </WorkerAvatar>
+                  <WorkerAvatar>{worker.name?.slice(0, 1)}</WorkerAvatar>
                   <WorkerCardBody>
                     <strong>{worker.name}</strong>
                     <small>

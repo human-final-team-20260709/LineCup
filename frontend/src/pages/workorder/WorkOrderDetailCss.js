@@ -122,14 +122,21 @@ const dashOffset = keyframes`
  * Layout
  * ========================================================= */
 export const Page = styled.div`
+  width: 100%;
+  min-width: 0;
   min-height: 100vh;
   background: ${colors.surface};
   color: ${colors.onSurface};
-  padding: ${spacing.xl};
+  padding: clamp(20px, 3vw, 40px);
   display: flex;
   flex-direction: column;
   gap: ${spacing.lg};
   animation: ${fadeSlideUp} 0.4s ease both;
+
+  @media (max-width: 640px) {
+    padding: ${spacing.md};
+    gap: ${spacing.md};
+  }
 `;
 
 export const BackLink = styled.button`
@@ -177,6 +184,22 @@ export const Title = styled.h1`
   margin: 0;
 `;
 
+export const OrderCode = styled.p`
+  margin: ${spacing.md} 0 2px;
+  font-family: ${font.mono};
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: ${colors.onSurface};
+  letter-spacing: -0.02em;
+`;
+
+export const HeaderMeta = styled.p`
+  ${typography.bodySm};
+  margin: 0;
+  color: ${colors.onSurfaceVariant};
+`;
+
 export const LiveDot = styled.span`
   width: 8px;
   height: 8px;
@@ -210,11 +233,15 @@ export const ActionRow = styled.div`
  * ========================================================= */
 export const SummaryGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: ${spacing.md};
 
   @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -234,6 +261,30 @@ export const SummaryCard = styled.div`
   &:hover {
     border-color: ${({ $accent }) => $accent || colors.primary};
     box-shadow: inset 0 0 0 1px ${({ $accent }) => hexToRgba($accent || colors.primary, 0.3)};
+  }
+`;
+
+export const SummaryCardTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${spacing.sm};
+`;
+
+export const SummaryIcon = styled.span`
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: ${radius.full};
+  color: ${({ $color }) => $color || colors.primary};
+  background: ${({ $color }) => hexToRgba($color || colors.primary, 0.12)};
+
+  svg {
+    width: 17px;
+    height: 17px;
   }
 `;
 
@@ -263,6 +314,11 @@ export const SummaryValue = styled.span`
 export const SummaryUnit = styled.span`
   ${typography.dataSm};
   text-transform: none;
+  color: ${colors.onSurfaceVariant};
+`;
+
+export const SummaryCaption = styled.span`
+  ${typography.bodySm};
   color: ${colors.onSurfaceVariant};
 `;
 
@@ -318,19 +374,20 @@ export const ProcessGrid = styled.div`
 `;
 
 export const ProcessCard = styled.div`
-  min-height: 208px;
+  min-height: 126px;
   background: ${colors.surfaceContainerLow};
-  border: 1px solid ${colors.outlineVariant};
+  border: 1px solid ${({ $active }) => ($active ? colors.primary : colors.outlineVariant)};
   border-radius: ${radius.md};
-  padding: ${spacing.md};
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: ${spacing.sm};
+  gap: 10px;
   opacity: 0;
   animation: ${fadeSlideUp} 0.4s ease both;
   animation-delay: ${({ $delay }) => $delay || 0}ms;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: ${({ $active }) =>
+    $active ? `inset 0 0 0 1px ${hexToRgba(colors.primary, 0.24)}` : 'none'};
 
   &:hover {
     border-color: ${colors.primary};
@@ -347,7 +404,8 @@ export const ProcessCardHeader = styled.div`
 
 export const ProcessIdentity = styled.div`
   display: grid;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
 `;
 
 export const ProcessMode = styled.span`
@@ -356,7 +414,7 @@ export const ProcessMode = styled.span`
 `;
 
 export const ProcessName = styled.span`
-  ${typography.headlineSm};
+  ${typography.bodyLg};
   font-weight: 600;
   color: ${colors.onSurface};
 `;
@@ -365,6 +423,10 @@ export const ProcessQtyRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: ${spacing.sm};
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const ProcessQtyBlock = styled.div`
@@ -420,6 +482,55 @@ export const ProcessEquipRow = styled.div`
 export const ProcessEquipLabel = styled.span`
   ${typography.labelCaps};
   color: ${colors.onSurfaceVariant};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const OverallProgressCard = styled.div`
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1fr) auto;
+  align-items: center;
+  gap: ${spacing.md};
+  margin-top: ${spacing.sm};
+  padding: 12px ${spacing.md};
+  background: ${colors.surfaceContainerLow};
+  border: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.md};
+
+  @media (max-width: 680px) {
+    grid-template-columns: 1fr;
+    gap: ${spacing.sm};
+  }
+`;
+
+export const OverallProgressLabel = styled.span`
+  ${typography.bodySm};
+  font-weight: 600;
+  color: ${colors.onSurface};
+  white-space: nowrap;
+`;
+
+export const OverallProgressValue = styled.div`
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+
+  strong {
+    font-family: ${font.mono};
+    font-size: 18px;
+    color: ${colors.primary};
+  }
+
+  span {
+    ${typography.dataSm};
+    text-transform: none;
+    color: ${colors.onSurfaceVariant};
+  }
+
+  @media (max-width: 680px) {
+    justify-items: start;
+  }
 `;
 
 /* =========================================================
@@ -427,8 +538,8 @@ export const ProcessEquipLabel = styled.span`
  * ========================================================= */
 export const ContentGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: ${spacing.lg};
 
   @media (max-width: 960px) {
@@ -454,11 +565,23 @@ export const Card = styled.div`
   }
 `;
 
+export const SectionCard = styled(Card).attrs({ as: 'section' })`
+  min-width: 0;
+  gap: 0;
+`;
+
 export const CardHeaderRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: ${spacing.md};
+  flex-wrap: wrap;
   margin-top: ${({ $spaced }) => ($spaced ? spacing.sm : 0)};
+
+  > svg {
+    color: ${colors.primary};
+    flex: 0 0 auto;
+  }
 `;
 
 export const CardTitle = styled.h2`
@@ -499,15 +622,34 @@ export const InfoList = styled.div`
   flex-direction: column;
 `;
 
+export const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px ${spacing.lg};
+  border-top: 1px solid ${colors.outlineVariant};
+  border-bottom: 1px solid ${colors.outlineVariant};
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
 export const InfoRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: ${spacing.md};
-  padding: ${spacing.sm} 0;
+  min-width: 0;
+  padding: 10px 0;
 
-  &:not(:last-child) {
+  &:nth-child(-n + 6) {
     border-bottom: 1px solid ${colors.outlineVariant};
+  }
+
+  @media (max-width: 760px) {
+    &:not(:last-child) {
+      border-bottom: 1px solid ${colors.outlineVariant};
+    }
   }
 `;
 
@@ -523,16 +665,26 @@ export const InfoValue = styled.span`
   font-weight: 600;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 `;
 
 export const RemarkBox = styled.div`
   ${typography.bodySm};
+  display: grid;
+  gap: 4px;
   color: ${colors.onSurfaceVariant};
   background: ${colors.surfaceContainerLow};
   border: 1px solid ${colors.outlineVariant};
   border-radius: ${radius.DEFAULT};
   padding: ${spacing.sm} ${spacing.md};
+
+  strong {
+    color: ${colors.onSurface};
+  }
 `;
 
 export const TargetEditRow = styled.div`
@@ -551,6 +703,143 @@ export const TargetInput = styled.input`
   border: 1px solid ${colors.primary};
   border-radius: ${radius.DEFAULT};
   outline: none;
+`;
+
+export const ControlForm = styled.form`
+  display: grid;
+  grid-template-columns: ${({ $columns }) => $columns || 'minmax(0, 1fr) auto'};
+  align-items: end;
+  gap: ${spacing.sm};
+  margin-top: auto;
+
+  @media (max-width: 680px) {
+    grid-template-columns: 1fr;
+
+    > button {
+      width: 100%;
+    }
+  }
+`;
+
+export const Field = styled.label`
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+
+  > span {
+    ${typography.labelCaps};
+    color: ${colors.onSurfaceVariant};
+  }
+`;
+
+const formControl = css`
+  width: 100%;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.DEFAULT};
+  outline: none;
+  background: ${colors.surfaceContainerLow};
+  color: ${colors.onSurface};
+  ${typography.bodySm};
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: ${colors.primary};
+    box-shadow: 0 0 0 2px ${hexToRgba(colors.primary, 0.14)};
+  }
+`;
+
+export const Input = styled.input`
+  ${formControl};
+  font-family: ${font.mono};
+  font-variant-numeric: tabular-nums;
+`;
+
+export const Select = styled.select`
+  ${formControl};
+`;
+
+export const Textarea = styled.textarea`
+  ${formControl};
+  min-height: 112px;
+  resize: vertical;
+`;
+
+export const AssignedWorkerGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: ${spacing.sm};
+
+  @media (max-width: 1080px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const AssignedWorkerCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.DEFAULT};
+  background: ${colors.surfaceContainerLow};
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: ${colors.outline};
+    background: ${colors.surfaceContainerHigh};
+  }
+
+  > svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    color: ${colors.primary};
+  }
+
+  > span {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  strong {
+    ${typography.bodySm};
+    color: ${colors.onSurface};
+  }
+`;
+
+export const WorkerMeta = styled.span`
+  ${typography.dataSm};
+  text-transform: none;
+  color: ${colors.onSurfaceVariant};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const WorkerFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${spacing.md};
+  margin-top: ${spacing.md};
+
+  > span {
+    ${typography.bodySm};
+    color: ${colors.onSurfaceVariant};
+  }
+
+  @media (max-width: 480px) {
+    align-items: stretch;
+    flex-direction: column;
+  }
 `;
 
 /* =========================================================
@@ -648,6 +937,94 @@ export const StyledButton = styled.button`
     filter: none;
     transform: none;
   }
+`;
+
+export const StatusMessage = styled.p`
+  ${typography.bodySm};
+  margin: 0;
+  padding: 10px 12px;
+  color: ${colors.onSurface};
+  background: ${hexToRgba(colors.primary, 0.1)};
+  border: 1px solid ${hexToRgba(colors.primary, 0.35)};
+  border-radius: ${radius.DEFAULT};
+`;
+
+export const SectionHeader = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: ${spacing.md};
+  margin-bottom: ${spacing.md};
+
+  > svg {
+    color: ${colors.onSurfaceVariant};
+  }
+`;
+
+export const SectionTitle = styled.h2`
+  ${typography.headlineSm};
+  margin: 0;
+  color: ${colors.onSurface};
+`;
+
+export const TableWrap = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  background: ${colors.surfaceContainerLow};
+  border: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.lg};
+`;
+
+export const Table = styled.table`
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  ${typography.bodySm};
+
+  th,
+  td {
+    padding: 12px ${spacing.md};
+    text-align: left;
+    border-bottom: 1px solid ${colors.outlineVariant};
+  }
+
+  th {
+    ${typography.labelCaps};
+    color: ${colors.onSurfaceVariant};
+    background: ${colors.surfaceContainer};
+  }
+
+  td {
+    color: ${colors.onSurface};
+  }
+
+  tbody tr {
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:hover {
+    background: ${colors.surfaceContainerHigh};
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  td:first-child {
+    font-family: ${font.mono};
+    font-size: 12px;
+    white-space: nowrap;
+  }
+`;
+
+export const EmptyCard = styled.div`
+  ${typography.bodySm};
+  padding: ${spacing.lg};
+  color: ${colors.onSurfaceVariant};
+  text-align: center;
+  background: ${colors.surfaceContainerLow};
+  border: 1px dashed ${colors.outlineVariant};
+  border-radius: ${radius.md};
 `;
 
 /* =========================================================
@@ -810,11 +1187,31 @@ export const ModalBody = styled.div`
 
 export const ModalFooter = styled.div`
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: ${spacing.sm};
   padding: ${spacing.md} ${spacing.lg};
   border-top: 1px solid ${colors.outlineVariant};
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+`;
+
+export const ModalSelectionCount = styled.span`
+  ${typography.bodySm};
+  color: ${colors.onSurfaceVariant};
+`;
+
+export const ModalFieldMeta = styled.span`
+  && {
+    ${typography.bodySm};
+    color: ${({ $error }) => ($error ? colors.tertiary : colors.onSurfaceVariant)};
+    letter-spacing: normal;
+    text-transform: none;
+  }
 `;
 
 /* =========================================================
@@ -909,25 +1306,52 @@ export const PickerSearchInput = styled.input`
 `;
 
 export const PickerList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 320px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${spacing.sm};
+  max-height: 440px;
   overflow-y: auto;
+
+  @media (max-width: 620px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-export const PickerRow = styled.div`
+export const PickerRow = styled.button`
+  width: 100%;
   display: flex;
   align-items: center;
   gap: ${spacing.sm};
-  padding: ${spacing.sm};
+  padding: 10px 12px;
   border-radius: ${radius.DEFAULT};
-  border: 1px solid ${({ $active }) => ($active ? colors.primary : 'transparent')};
+  border: 1px solid ${({ $active }) => ($active ? colors.primary : colors.outlineVariant)};
   background: ${({ $active }) => ($active ? colors.surfaceContainerHigh : 'transparent')};
+  color: ${colors.onSurface};
+  text-align: left;
+  font: inherit;
   cursor: pointer;
 
   &:hover {
     background: ${colors.surfaceContainerHigh};
+  }
+`;
+
+export const PickerCheck = styled.span`
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({ $active }) => ($active ? colors.primary : colors.outline)};
+  border-radius: 3px;
+  background: ${({ $active }) => ($active ? colors.primary : 'transparent')};
+  color: ${colors.onPrimary};
+  flex: 0 0 auto;
+
+  svg {
+    width: 13px;
+    height: 13px;
+    stroke-width: 3;
   }
 `;
 
@@ -978,5 +1402,5 @@ export const ConfirmText = styled.p`
 export const ConfirmSub = styled.p`
   ${typography.bodySm};
   color: ${colors.onSurfaceVariant};
-  margin: 0;
+  margin: 0 0 ${spacing.md};
 `;
