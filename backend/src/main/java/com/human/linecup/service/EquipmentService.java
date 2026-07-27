@@ -111,12 +111,15 @@ public class EquipmentService {
                 : equipmentRepository.findAllByStatus(status);
 
         // 목록 조회 1회당 활성 배정을 한 번만 조회해 설비 수(N)만큼 쿼리가 나가는 것을 막는다.
+        // 이전 데이터에 중복 활성 배정이 남아 있어도 최신 배정을 표시하고,
+        // 다음 배정/해제 시 해당 설비의 활성 배정을 모두 종료해 데이터도 정상화한다.
         Map<Long, EquipmentAssignment> activeAssignmentByEquipmentId = equipmentAssignmentRepository
                 .findAllByEndedAtIsNull()
                 .stream()
                 .collect(Collectors.toMap(
                         a -> a.getEquipment().getEquipmentId(),
-                        Function.identity()
+                        Function.identity(),
+                        this::newerAssignment
                 ));
 
         return equipments.stream()
@@ -144,7 +147,7 @@ public class EquipmentService {
         }
 
         Instant now = Instant.now();
-        findActiveAssignment(equipmentId).ifPresent(current -> current.end(now));
+        endActiveAssignments(equipmentId, now);
 
         EquipmentAssignment assignment = EquipmentAssignment.assign(user, equipment, now);
         equipmentAssignmentRepository.save(assignment);
@@ -154,11 +157,14 @@ public class EquipmentService {
     @Transactional
     public void unassignWorker(Long equipmentId) {
         getEquipmentForUpdate(equipmentId);
-        EquipmentAssignment assignment = findActiveAssignment(equipmentId)
-                .orElseThrow(() -> new BusinessConflictException(
-                        "현재 배정된 작업자가 없습니다. equipmentId=" + equipmentId
-                ));
-        assignment.end(Instant.now());
+        List<EquipmentAssignment> assignments = findActiveAssignments(equipmentId);
+        if (assignments.isEmpty()) {
+            throw new BusinessConflictException(
+                    "현재 배정된 작업자가 없습니다. equipmentId=" + equipmentId
+            );
+        }
+        Instant now = Instant.now();
+        assignments.forEach(assignment -> assignment.end(now));
     }
 
     public List<EquipmentAssignmentResponse> getAssignmentHistory(Long equipmentId) {
@@ -184,10 +190,32 @@ public class EquipmentService {
     }
 
     private Optional<EquipmentAssignment> findActiveAssignment(Long equipmentId) {
-        return equipmentAssignmentRepository
-                .findByEquipmentEquipmentIdAndEndedAtIsNullOrderByStartedAtDesc(equipmentId)
+        return findActiveAssignments(equipmentId)
                 .stream()
                 .findFirst();
+    }
+
+    private List<EquipmentAssignment> findActiveAssignments(Long equipmentId) {
+        return equipmentAssignmentRepository
+                .findByEquipmentEquipmentIdAndEndedAtIsNullOrderByStartedAtDesc(equipmentId);
+    }
+
+    private void endActiveAssignments(Long equipmentId, Instant endedAt) {
+        findActiveAssignments(equipmentId)
+                .forEach(assignment -> assignment.end(endedAt));
+    }
+
+    private EquipmentAssignment newerAssignment(
+            EquipmentAssignment left,
+            EquipmentAssignment right
+    ) {
+        int startedAtComparison = left.getStartedAt().compareTo(right.getStartedAt());
+        if (startedAtComparison != 0) {
+            return startedAtComparison > 0 ? left : right;
+        }
+        return left.getEquipmentAssignmentId() >= right.getEquipmentAssignmentId()
+                ? left
+                : right;
     }
 
     private EquipmentResponse toResponse(Equipment equipment, EquipmentAssignment activeAssignment) {

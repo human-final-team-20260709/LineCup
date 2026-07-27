@@ -65,6 +65,24 @@ int hourly_aggregator_add_result_at(HourlyAggregator *aggregator, DefectCode res
     return rolled;
 }
 
+int hourly_aggregator_snapshot(HourlyAggregator *aggregator, int64_t now_ms,
+                               HourlyAggregate *snapshot)
+{
+    if (aggregator == NULL || snapshot == NULL) return 0;
+    pthread_mutex_lock(&aggregator->lock);
+    if (!aggregator->active || now_ms <= aggregator->current.bucket_start_ms) {
+        pthread_mutex_unlock(&aggregator->lock);
+        return 0;
+    }
+
+    *snapshot = aggregator->current;
+    snapshot->bucket_end_ms = now_ms;
+    snapshot->is_partial = true;
+    snapshot->close_reason = CLOSE_REASON_IN_PROGRESS;
+    pthread_mutex_unlock(&aggregator->lock);
+    return 1;
+}
+
 static void finalize_current(HourlyAggregator *aggregator, CloseReason reason, int64_t end_ms,
                              HourlyAggregate *closed)
 {

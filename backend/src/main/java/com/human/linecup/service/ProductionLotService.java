@@ -269,14 +269,39 @@ public class ProductionLotService {
     ) {
         List<ProductionProcessProgress> progresses = processProgressRepository
                 .findByProductionLotProductionLotIdOrderByManufacturingProcessSequenceAsc(productionLotId);
+        int transitionedCount = 0;
         for (ProductionProcessProgress progress : progresses) {
             switch (action) {
-                case START -> progress.start(occurredAt);
-                case HOLD -> progress.hold();
-                case RESUME -> progress.resume();
-                case COMPLETE -> progress.complete(occurredAt);
+                case START -> {
+                    progress.start(occurredAt);
+                    transitionedCount++;
+                }
+                case HOLD -> {
+                    if (progress.getStatus() == ProcessProgressStatus.IN_PROGRESS) {
+                        progress.hold();
+                        transitionedCount++;
+                    }
+                }
+                case RESUME -> {
+                    if (progress.getStatus() == ProcessProgressStatus.HOLD) {
+                        progress.resume();
+                        transitionedCount++;
+                    }
+                }
+                case COMPLETE -> {
+                    progress.complete(occurredAt);
+                    transitionedCount++;
+                }
                 case REGISTERED -> throw new IllegalArgumentException("등록 액션은 공정 전환에 사용할 수 없습니다.");
             }
+        }
+        if ((action == WorkOrder.Action.HOLD || action == WorkOrder.Action.RESUME)
+                && transitionedCount == 0) {
+            throw new BusinessConflictException(
+                    action == WorkOrder.Action.HOLD
+                            ? "보류할 수 있는 진행 중 공정이 없습니다."
+                            : "재개할 수 있는 보류 공정이 없습니다."
+            );
         }
     }
 

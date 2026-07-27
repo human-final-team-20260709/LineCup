@@ -2,6 +2,7 @@ package com.human.linecup.service;
 
 import com.human.linecup.dto.request.HourlyProductionRequest;
 import com.human.linecup.dto.response.HourlyProductionResponse;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.HourlyProduction;
 import com.human.linecup.entity.HourlyProductionCloseReason;
 import com.human.linecup.entity.ProductionLot;
@@ -25,6 +26,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -58,14 +60,38 @@ public class HourlyProductionService {
         // 같은 작업지시의 집계 저장과 합계 재계산을 한 트랜잭션씩 직렬화한다.
         entityManager.lock(workOrder, LockModeType.PESSIMISTIC_WRITE);
 
-        HourlyProduction hourlyProduction = hourlyProductionRepository
-                .findByWorkOrderWorkOrderIdAndBucketStart(request.workOrderId(), request.bucketStart())
-                .map(existing -> updateHourlyProduction(existing, request))
+        Optional<HourlyProduction> existing = hourlyProductionRepository
+                .findByWorkOrderWorkOrderIdAndBucketStart(request.workOrderId(), request.bucketStart());
+        if (shouldIgnoreInProgressSnapshot(workOrder, request, existing)) {
+            return existing.map(this::toResponse)
+                    .orElseThrow(() -> new BusinessConflictException(
+                            "종료된 작업지시에는 진행 중 생산 스냅샷을 저장할 수 없습니다."
+                    ));
+        }
+
+        HourlyProduction hourlyProduction = existing
+                .map(value -> updateHourlyProduction(value, request))
                 .orElseGet(() -> createHourlyProduction(workOrder, request));
 
         HourlyProduction saved = hourlyProductionRepository.saveAndFlush(hourlyProduction);
         synchronizeProductionResult(workOrder, request);
         return toResponse(saved);
+    }
+
+    private boolean shouldIgnoreInProgressSnapshot(
+            WorkOrder workOrder,
+            HourlyProductionRequest request,
+            Optional<HourlyProduction> existing
+    ) {
+        if (request.closeReason() != HourlyProductionCloseReason.IN_PROGRESS) {
+            return false;
+        }
+        if (workOrder.getStatus() == WorkOrder.Status.DONE) {
+            return true;
+        }
+        return existing
+                .map(value -> value.getCloseReason() != HourlyProductionCloseReason.IN_PROGRESS)
+                .orElse(false);
     }
 
     public HourlyProductionResponse getHourlyProduction(Long hourlyProductionId) {

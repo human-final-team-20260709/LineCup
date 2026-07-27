@@ -558,6 +558,7 @@ L1 장비는 각각 `MES_BASE_PORT + 장비 순번`에서 TCP 서버로 동작�
 | `0x10` | L1 → L2 | 온도 ×100 |
 | `0x11` | L1 → L2 | 습도 ×100 |
 | `0x12` | L1 → L2 | 속도 ×1000 |
+| `0x13` | L1 → L2 | 가동 상태: 0=정지, 1=가동 중, 2=보류, 3=이상 |
 | `0x20` | 검사기 → L2 | 0=정상, 1=실링, 2=수분, 3=중량, 4=이물 |
 | `0x30` | L2 → L1 | START, 남은 목표 수량 |
 | `0x31` | L2 → L1 | HOLD |
@@ -587,6 +588,7 @@ make
 | `MES_BASE_PORT` | `5001` | 첫 L1 장비 포트 |
 | `MES_COMMAND_POLL_MS` | `5000` | 작업지시 조회 주기 |
 | `MES_TELEMETRY_BATCH_MS` | `10000` | 센서·상태 REST 전송 주기 |
+| `MES_PRODUCTION_SYNC_MS` | `10000` | 진행 중 생산수량 백엔드 동기화 주기 |
 | `MES_AGGREGATION_SECONDS` | `3600` | 생산 집계 구간 |
 | `MES_SENSOR_INTERVAL_MS` | `1000` | L1 센서 생성 주기 |
 | `MES_INSPECTION_INTERVAL_MS` | `5000` | 검사기 결과 생성 주기 |

@@ -17,7 +17,6 @@ import {
   Toolbar,
   formatNumber,
   pageContent,
-  toneForStatus,
 } from "../../components/OperationalUi";
 import useDebouncedValue from "../../hooks/useDebouncedValue";
 import StockMovementRegistration from "./StockMovementRegistration";
@@ -36,6 +35,13 @@ import {
 } from "./InventoryManagementCss";
 
 const PAGE_SIZE = 10;
+
+const inventoryToneForStatus = (status) => ({
+  NORMAL: "success",
+  LOW: "warn",
+  EXPIRED: "danger",
+  OUT_OF_STOCK: "neutral",
+}[status] || "neutral");
 
 const localDateValue = () => {
   const now = new Date();
@@ -296,7 +302,7 @@ export default function InventoryManagement({ canManage = false }) {
                       <td>{lot.currentQty} / {lot.safetyStockQty}</td>
                       <td>{lot.unit}</td>
                       <td>{lot.expiryDate}</td>
-                      <td><Badge $tone={toneForStatus(lot.status)}>{lot.statusLabel}</Badge></td>
+                      <td><Badge $tone={inventoryToneForStatus(lot.status)}>{lot.statusLabel}</Badge></td>
                     </tr>
                   ))}
                 </tbody>
@@ -341,7 +347,7 @@ export default function InventoryManagement({ canManage = false }) {
                       <td>{formatNumber(item.currentQty)} / {formatNumber(item.safetyStockQty)}</td>
                       <td>{item.unit}</td>
                       <td>{item.expiryDate || "-"}</td>
-                      <td><Badge $tone={toneForStatus(item.status)}>{item.statusLabel}</Badge></td>
+                      <td><Badge $tone={inventoryToneForStatus(item.status)}>{item.statusLabel}</Badge></td>
                     </tr>
                   ))}
                 </tbody>

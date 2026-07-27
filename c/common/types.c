@@ -11,6 +11,18 @@ const char *machine_type_code(MachineType type)
     return (type >= 0 && type < MES_MACHINE_COUNT) ? codes[type] : "UNKNOWN";
 }
 
+const char *machine_run_state_name(MachineRunState state)
+{
+    switch (state) {
+        case MACHINE_STATE_RUNNING: return "RUNNING";
+        case MACHINE_STATE_ERROR: return "ERROR";
+        case MACHINE_STATE_IDLE:
+        case MACHINE_STATE_HOLD:
+        default:
+            return "STOPPED";
+    }
+}
+
 const char *metric_type_name(MetricType type)
 {
     switch (type) {
@@ -28,6 +40,7 @@ const char *close_reason_name(CloseReason reason)
         case CLOSE_REASON_WORK_ORDER_COMPLETED: return "WORK_ORDER_COMPLETED";
         case CLOSE_REASON_HOLD: return "HOLD";
         case CLOSE_REASON_SHUTDOWN: return "SHUTDOWN";
+        case CLOSE_REASON_IN_PROGRESS: return "IN_PROGRESS";
         default: return "UNKNOWN";
     }
 }

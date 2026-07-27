@@ -40,6 +40,7 @@ static void mark_disconnected(DeviceConnection *device)
     socket_t socket = device->socket;
     device->socket = SOCKET_INVALID;
     device->connected = false;
+    device->operating_status = MACHINE_STATE_IDLE;
     pthread_mutex_unlock(&device->lock);
     net_close(socket);
 }
@@ -62,6 +63,7 @@ static void *device_receive_loop(void *argument)
         pthread_mutex_lock(&device->lock);
         device->socket = socket;
         device->connected = true;
+        device->operating_status = MACHINE_STATE_IDLE;
         device->invalid_packets = 0;
         pthread_mutex_unlock(&device->lock);
         backoff_ms = 1000;
@@ -83,14 +85,24 @@ static void *device_receive_loop(void *argument)
                 if (device->invalid_packets >= 3) break;
                 continue;
             }
-            device->invalid_packets = 0;
             int64_t now = platform_now_ms();
+            int32_t value = protocol_get_value(packet);
+            if (type == MSG_MACHINE_STATE &&
+                (value < MACHINE_STATE_IDLE || value > MACHINE_STATE_ERROR)) {
+                device->invalid_packets++;
+                if (device->invalid_packets >= 3) break;
+                continue;
+            }
+            device->invalid_packets = 0;
             pthread_mutex_lock(&device->lock);
             device->last_received_at_ms = now;
+            if (type == MSG_MACHINE_STATE)
+                device->operating_status = (MachineRunState)value;
             pthread_mutex_unlock(&device->lock);
+            if (type == MSG_MACHINE_STATE) continue;
             if (manager->callback != NULL)
                 manager->callback(manager->callback_context, device->machine, type,
-                                  protocol_get_value(packet), now);
+                                  value, now);
         }
 
         mark_disconnected(device);
@@ -115,6 +127,7 @@ int device_manager_init(DeviceManager *manager, const char *host, int base_port,
         device->machine = (MachineType)i;
         device->port = base_port + i;
         device->socket = SOCKET_INVALID;
+        device->operating_status = MACHINE_STATE_IDLE;
         snprintf(device->equipment_code, sizeof(device->equipment_code), "%s",
                  machine_type_code((MachineType)i));
         if (pthread_mutex_init(&device->lock, NULL) != 0) return -1;
@@ -167,6 +180,9 @@ size_t device_manager_get_statuses(DeviceManager *manager, DeviceStatus *out, si
         snprintf(out[i].equipment_code, sizeof(out[i].equipment_code), "%s", device->equipment_code);
         out[i].port = device->port;
         out[i].connected = device->connected;
+        out[i].operating_status = device->connected
+            ? device->operating_status
+            : MACHINE_STATE_IDLE;
         out[i].last_received_at_ms = device->last_received_at_ms;
         pthread_mutex_unlock(&device->lock);
     }
