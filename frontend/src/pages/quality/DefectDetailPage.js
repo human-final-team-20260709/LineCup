@@ -32,7 +32,6 @@ import {
   EmptyState,
   Eyebrow,
   Field,
-  FieldGrid,
   FormActions,
   HeaderActions,
   InfoGrid,
@@ -92,6 +91,7 @@ export default function DefectDetailPage() {
         : "",
     text: location.state?.notice || "",
   }));
+  const [treatmentStatusDraft, setTreatmentStatusDraft] = useState(null);
 
   const query = useQuery({
     queryKey: queryKeys.defect(defectId),
@@ -156,6 +156,11 @@ export default function DefectDetailPage() {
   const histories = detail.handlingHistories || [];
   const nextDefaultStatus =
     defect.status === "UNHANDLED" ? "IN_PROGRESS" : defect.status;
+  const treatmentDraftKey = `${defectId}:${defect.status}`;
+  const selectedTreatmentStatus =
+    treatmentStatusDraft?.key === treatmentDraftKey
+      ? treatmentStatusDraft.status
+      : nextDefaultStatus;
 
   const handleCauseSubmit = (event) => {
     event.preventDefault();
@@ -169,16 +174,20 @@ export default function DefectDetailPage() {
   const handleTreatmentSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const status = data.get("status");
     run(
       () =>
         handleMutation.mutateAsync({
           handlerId: user.userId,
-          handleMethod: data.get("handleMethod"),
-          status: data.get("status"),
+          handleMethod:
+            status === "COMPLETED" ? data.get("handleMethod") : null,
+          status,
           handlingContent:
             String(data.get("handlingContent") || "").trim() || null,
         }),
-      "처리 상태와 방법을 저장했습니다.",
+      status === "COMPLETED"
+        ? "처리 상태와 방법을 저장했습니다."
+        : "처리 상태를 저장했습니다.",
     );
   };
 
@@ -202,13 +211,6 @@ export default function DefectDetailPage() {
           <Button type="button" onClick={() => navigate("/quality/defects")}>
             <FiArrowLeft aria-hidden="true" />
             목록
-          </Button>
-          <Button
-            type="button"
-            $primary
-            onClick={() => navigate("/quality/defects/new")}
-          >
-            불량 등록
           </Button>
         </HeaderActions>
       </PageHeader>
@@ -417,32 +419,43 @@ export default function DefectDetailPage() {
                 />
               </Field>
 
-              <FieldGrid>
-                <Field>
-                  <Label htmlFor="defect-status-detail">처리 상태</Label>
-                  <Select
-                    id="defect-status-detail"
-                    name="status"
-                    defaultValue={nextDefaultStatus}
-                  >
-                    <option value="IN_PROGRESS">처리 중</option>
-                    <option value="ON_HOLD">보류</option>
-                    <option value="COMPLETED">처리 완료</option>
-                  </Select>
-                </Field>
+              <Field>
+                <Label htmlFor="defect-status-detail">처리 상태</Label>
+                <Select
+                  id="defect-status-detail"
+                  name="status"
+                  value={selectedTreatmentStatus}
+                  onChange={(event) =>
+                    setTreatmentStatusDraft({
+                      key: treatmentDraftKey,
+                      status: event.target.value,
+                    })
+                  }
+                >
+                  <option value="IN_PROGRESS">처리 중</option>
+                  <option value="ON_HOLD">보류</option>
+                  <option value="COMPLETED">처리 완료</option>
+                </Select>
+              </Field>
+
+              {selectedTreatmentStatus === "COMPLETED" && (
                 <Field>
                   <Label htmlFor="defect-method-detail">처리 방법</Label>
                   <Select
                     id="defect-method-detail"
                     name="handleMethod"
-                    defaultValue="NORMAL_APPROVAL"
+                    defaultValue=""
+                    required
                   >
+                    <option value="" disabled>
+                      처리 방법 선택
+                    </option>
                     <option value="NORMAL_APPROVAL">정상 승인</option>
                     <option value="REWORK">재작업</option>
                     <option value="DISPOSAL">폐기</option>
                   </Select>
                 </Field>
-              </FieldGrid>
+              )}
 
               <Field>
                 <Label htmlFor="defect-content-detail">처리 내용</Label>
