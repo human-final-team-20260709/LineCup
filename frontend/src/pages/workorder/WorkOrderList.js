@@ -14,12 +14,11 @@ import {
 } from "recharts";
 import {
   FiActivity,
+  FiCheckCircle,
   FiClipboard,
-  FiPauseCircle,
-  FiPlayCircle,
+  FiClock,
   FiPlus,
   FiSearch,
-  FiTrendingUp,
   FiX,
 } from "react-icons/fi";
 import { referenceApi, usersApi, workOrderApi } from "../../api/services";
@@ -270,37 +269,13 @@ export default function WorkOrderList({ view = "table" }) {
       <KpiGrid>
         <KpiCard $accent={tokens.colors.primary} $delay={0}>
           <KpiHeaderRow>
-            <KpiLabel>진행 중</KpiLabel>
+            <KpiLabel>완료</KpiLabel>
             <KpiIcon $color={tokens.colors.primary}>
-              <FiPlayCircle />
+              <FiCheckCircle />
             </KpiIcon>
           </KpiHeaderRow>
           <KpiValueRow>
-            <KpiValue>{summary.inProgressCount ?? 0}</KpiValue>
-            <KpiUnit>건</KpiUnit>
-          </KpiValueRow>
-          <KpiFootRow>
-            <KpiTrendText>대기 {summary.pendingCount ?? 0}건</KpiTrendText>
-          </KpiFootRow>
-        </KpiCard>
-
-        <KpiCard $accent={tokens.colors.secondary} $delay={70}>
-          <KpiHeaderRow>
-            <KpiLabel>보류</KpiLabel>
-            <KpiIcon $color={tokens.colors.secondary}>
-              <FiPauseCircle />
-            </KpiIcon>
-          </KpiHeaderRow>
-          <KpiValueRow>
-            <KpiValue
-              $color={
-                (summary.holdCount ?? 0) > 0
-                  ? tokens.colors.secondary
-                  : undefined
-              }
-            >
-              {summary.holdCount ?? 0}
-            </KpiValue>
+            <KpiValue>{summary.doneCount ?? 0}</KpiValue>
             <KpiUnit>건</KpiUnit>
           </KpiValueRow>
           <KpiFootRow>
@@ -310,19 +285,38 @@ export default function WorkOrderList({ view = "table" }) {
           </KpiFootRow>
         </KpiCard>
 
-        <KpiCard $accent={tokens.colors.primary} $delay={140}>
+        <KpiCard $accent={tokens.colors.secondary} $delay={70}>
           <KpiHeaderRow>
-            <KpiLabel>평균 달성률</KpiLabel>
-            <KpiIcon $color={tokens.colors.primary}>
-              <FiTrendingUp />
+            <KpiLabel>대기</KpiLabel>
+            <KpiIcon $color={tokens.colors.secondary}>
+              <FiClock />
             </KpiIcon>
           </KpiHeaderRow>
           <KpiValueRow>
-            <KpiValue>{Math.round(summary.averageProgressRate ?? 0)}</KpiValue>
-            <KpiUnit>%</KpiUnit>
+            <KpiValue>{summary.pendingCount ?? 0}</KpiValue>
+            <KpiUnit>건</KpiUnit>
           </KpiValueRow>
           <KpiFootRow>
-            <KpiTrendText>완료 {summary.doneCount ?? 0}건</KpiTrendText>
+            <KpiTrendText>착수 전 작업지시</KpiTrendText>
+          </KpiFootRow>
+        </KpiCard>
+
+        <KpiCard $accent={tokens.colors.onSurfaceVariant} $delay={140}>
+          <KpiHeaderRow>
+            <KpiLabel>전체 작업지시</KpiLabel>
+            <KpiIcon $color={tokens.colors.onSurfaceVariant}>
+              <FiClipboard />
+            </KpiIcon>
+          </KpiHeaderRow>
+          <KpiValueRow>
+            <KpiValue>{summary.totalCount ?? totalElements}</KpiValue>
+            <KpiUnit>건</KpiUnit>
+          </KpiValueRow>
+          <KpiFootRow>
+            <KpiTrendText>
+              진행·보류{" "}
+              {(summary.inProgressCount ?? 0) + (summary.holdCount ?? 0)}건
+            </KpiTrendText>
           </KpiFootRow>
         </KpiCard>
       </KpiGrid>
