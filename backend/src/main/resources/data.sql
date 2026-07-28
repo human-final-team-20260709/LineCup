@@ -517,30 +517,27 @@ SELECT
     CASE
         WHEN w.status = 'PENDING' THEN 'PENDING'
         WHEN w.status = 'DONE' THEN 'COMPLETED'
-        WHEN mp.sequence_no <= 3 THEN 'COMPLETED'
-        WHEN mp.sequence_no = 4 THEN 'IN_PROGRESS'
-        ELSE 'PENDING'
+        ELSE 'IN_PROGRESS'
     END,
     w.target_qty,
     CASE
-        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 4) THEN w.current_qty
+        WHEN w.status = 'DONE' THEN w.current_qty
         ELSE 0
     END,
     CASE
-        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 4) THEN w.good_qty
+        WHEN w.status = 'DONE' THEN w.good_qty
         ELSE 0
     END,
     CASE
-        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 4) THEN w.defect_qty
+        WHEN w.status = 'DONE' THEN w.defect_qty
         ELSE 0
     END,
     CASE
-        WHEN w.status = 'PENDING' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no > 4) THEN NULL
-        ELSE TIMESTAMPADD(MINUTE, (mp.sequence_no - 1) * 30, w.started_at)
+        WHEN w.status = 'PENDING' THEN NULL
+        ELSE w.started_at
     END,
     CASE
-        WHEN w.status = 'DONE' OR (w.status = 'IN_PROGRESS' AND mp.sequence_no <= 3)
-            THEN TIMESTAMPADD(MINUTE, mp.sequence_no * 30 - 5, w.started_at)
+        WHEN w.status = 'DONE' THEN w.completed_at
         ELSE NULL
     END
 FROM production_lot pl

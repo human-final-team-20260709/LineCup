@@ -37,7 +37,6 @@ import {
   KpiValue,
   LiveDot,
   LiveStatus,
-  MetricPair,
   Mono,
   OverviewGrid,
   Page,
@@ -51,8 +50,6 @@ import {
   ProcessList,
   ProcessPageButton,
   ProcessPager,
-  ProgressFill,
-  ProgressTrack,
   StatusChip,
   Table,
   TableWrap,
@@ -138,6 +135,10 @@ export default function ProductionOverviewPage() {
     [hourlyQuery.data],
   );
   const processes = activeQuery.data?.processes || [];
+  const activeSummary = activeQuery.data?.summary || null;
+  const activeProgressRate = activeSummary?.targetQty
+    ? Math.round((activeSummary.currentQty / activeSummary.targetQty) * 1000) / 10
+    : 0;
   const processPageCount = Math.max(
     1,
     Math.ceil(processes.length / PROCESS_PAGE_SIZE),
@@ -202,7 +203,7 @@ export default function ProductionOverviewPage() {
 
   useEffect(() => {
     setProcessPage(0);
-  }, [activeQuery.data?.summary.workOrderId]);
+  }, [activeSummary?.workOrderId]);
 
   useEffect(() => {
     setProcessPage((current) => Math.min(current, processPageCount - 1));
@@ -319,11 +320,18 @@ export default function ProductionOverviewPage() {
         <Panel $span={4} $tabletSpan={12} aria-labelledby="process-performance-title">
           <PanelHeader>
             <div>
-              <PanelLabel>Process Performance</PanelLabel>
-              <h2 id="process-performance-title">활성 공정별 달성 현황</h2>
+              <PanelLabel>Process Status</PanelLabel>
+              <h2 id="process-performance-title">활성 작업 공정 현황</h2>
+              {activeSummary && (
+                <PanelMeta>
+                  작업지시 전체 {formatNumber(activeSummary.currentQty)}
+                  {" / "}
+                  {formatNumber(activeSummary.targetQty)} EA · {activeProgressRate}%
+                </PanelMeta>
+              )}
             </div>
             {processes.length ? (
-              <ProcessPager aria-label="활성 공정 페이지 이동">
+              <ProcessPager aria-label="작업 공정 페이지 이동">
                 <ProcessPageButton
                   type="button"
                   aria-label="이전 공정 3개 보기"
@@ -356,46 +364,35 @@ export default function ProductionOverviewPage() {
           </PanelHeader>
           {processes.length ? (
             <ProcessList>
-              {visibleProcesses.map((process) => {
-                const rate = process.targetQty
-                  ? Math.round((process.productionQty / process.targetQty) * 1000) / 10
-                  : 0;
-                return (
-                  <ProcessItem key={process.processProgressId}>
-                    <ProcessHead>
-                      <div>
-                        <strong>{process.processName}</strong>
-                        <small>
-                          {process.equipmentCode} · 정상 {formatNumber(process.goodQty)}
-                          {" · "}불량 {formatNumber(process.defectQty)} EA
-                        </small>
-                      </div>
-                      <MetricPair $tone={percentTone(rate)}>
-                        <strong>{formatNumber(process.productionQty)}</strong>
-                        <span>{rate}%</span>
-                      </MetricPair>
-                    </ProcessHead>
-                    <ProgressTrack
-                      role="progressbar"
-                      aria-label={`${process.processName} 목표 달성률`}
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      aria-valuenow={Math.min(rate, 100)}
+              {visibleProcesses.map((process) => (
+                <ProcessItem key={process.processProgressId}>
+                  <ProcessHead>
+                    <div>
+                      <strong>{process.processName}</strong>
+                      <small>
+                        {process.equipmentCode || "설비 미지정"}
+                        {process.equipmentName ? ` · ${process.equipmentName}` : ""}
+                      </small>
+                    </div>
+                    <StatusChip
+                      $tone={{
+                        IN_PROGRESS: "info",
+                        HOLD: "warning",
+                        COMPLETED: "success",
+                      }[process.status] || "neutral"}
                     >
-                      <ProgressFill $value={rate} $tone={percentTone(rate)} />
-                    </ProgressTrack>
-                    <small>
-                      목표 {formatNumber(process.targetQty)} EA · {process.statusLabel}
-                    </small>
-                  </ProcessItem>
-                );
-              })}
+                      {process.statusLabel}
+                    </StatusChip>
+                  </ProcessHead>
+                  <small>공정 코드 {process.processCode}</small>
+                </ProcessItem>
+              ))}
             </ProcessList>
           ) : (
             <EmptyState>
               <FiActivity aria-hidden="true" />
               <strong>활성 공정이 없습니다.</strong>
-              <span>작업지시를 시작하면 공정별 달성률이 표시됩니다.</span>
+              <span>작업지시를 시작하면 연결된 공정과 설비 상태가 표시됩니다.</span>
             </EmptyState>
           )}
         </Panel>

@@ -1,5 +1,6 @@
 package com.human.linecup.service;
 
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.ProductionLot;
 import com.human.linecup.entity.ProductionProcessProgress;
 import com.human.linecup.entity.ProductionProcessProgress.ProcessProgressStatus;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -77,6 +79,41 @@ class ProductionLotServiceTest {
         verify(held).resume();
         verify(completed, never()).resume();
         verify(pending, never()).resume();
+    }
+
+    @Test
+    void completeTransitionsInProgressAndSkipsCompletedProcesses() {
+        ProductionLot lot = activeLot(10L);
+        ProductionProcessProgress completed = progress(ProcessProgressStatus.COMPLETED);
+        ProductionProcessProgress inProgress = progress(ProcessProgressStatus.IN_PROGRESS);
+        stubLotAndProgresses(lot, List.of(completed, inProgress));
+        Instant completedAt = Instant.now();
+
+        productionLotService.applyWorkOrderAction(1L, WorkOrder.Action.COMPLETE, completedAt);
+
+        verify(lot).complete(completedAt);
+        verify(inProgress).complete(completedAt);
+        verify(completed, never()).complete(completedAt);
+    }
+
+    @Test
+    void completeRejectsPendingProcessBeforeLotTransition() {
+        ProductionLot lot = activeLot(10L);
+        ProductionProcessProgress pending = progress(ProcessProgressStatus.PENDING);
+        stubLotAndProgresses(lot, List.of(pending));
+        Instant completedAt = Instant.now();
+
+        assertThrows(
+                BusinessConflictException.class,
+                () -> productionLotService.applyWorkOrderAction(
+                        1L,
+                        WorkOrder.Action.COMPLETE,
+                        completedAt
+                )
+        );
+
+        verify(lot, never()).complete(completedAt);
+        verify(pending, never()).complete(completedAt);
     }
 
     private ProductionLot activeLot(Long productionLotId) {

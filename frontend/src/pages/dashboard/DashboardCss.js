@@ -1411,15 +1411,9 @@ export const WorkerAvatarCard = styled.div`
     linear-gradient(90deg, rgba(75, 226, 119, 0.07), transparent 45%),
     ${colors.surfaceLow};
   opacity: 0;
-  cursor: pointer;
+  cursor: default;
   animation: ${fadeIn} 0.3s ease both;
   animation-delay: ${({ $delay = 0 }) => `${$delay}ms`};
-  transition: transform 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    border-color: ${colors.primary};
-  }
 `;
 
 export const WorkerAvatar = styled.div`

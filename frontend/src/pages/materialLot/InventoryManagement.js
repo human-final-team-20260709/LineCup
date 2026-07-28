@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { materialApi, referenceApi } from "../../api/services";
 import { POLLING, queryKeys } from "../../api/config";
@@ -88,11 +88,6 @@ export default function InventoryManagement({ canManage = false }) {
   const [movementPage, setMovementPage] = useState(0);
   const [dialog, setDialog] = useState(null);
   const [rawLotForm, setRawLotForm] = useState(emptyRawLotForm);
-  const [productInventoryForm, setProductInventoryForm] = useState({
-    productionLotId: "",
-    safetyStockQty: "0",
-    expiryDate: "",
-  });
   const [message, setMessage] = useState("");
   const keyword = useDebouncedValue(keywordDraft.trim());
   const rawParams = {
@@ -134,52 +129,17 @@ export default function InventoryManagement({ canManage = false }) {
     queryFn: () => referenceApi.rawMaterials({ status: "ACTIVE", page: 0, size: 100 }),
     enabled: dialog === "raw-lot",
   });
-  const completedLotsQuery = useQuery({
-    queryKey: queryKeys.productionLots({ statuses: "COMPLETED", page: 0, size: 100 }),
-    queryFn: () => materialApi.productionLots({ statuses: "COMPLETED", page: 0, size: 100 }),
-    enabled: dialog === "product-inventory",
-  });
-  const registeredProductInventoriesQuery = useQuery({
-    queryKey: queryKeys.productInventories({ page: 0, size: 100, purpose: "candidate-filter" }),
-    queryFn: () => materialApi.productInventories({ page: 0, size: 100 }),
-    enabled: dialog === "product-inventory",
-  });
 
   const invalidateInventory = () => queryClient.invalidateQueries({ queryKey: ["materials"] });
   const receiveRawLotMutation = useMutation({
     mutationFn: materialApi.receiveRawMaterialLot,
     onSuccess: invalidateInventory,
   });
-  const createProductInventoryMutation = useMutation({
-    mutationFn: materialApi.createProductInventory,
-    onSuccess: invalidateInventory,
-  });
-
-  const eligibleProductionLots = useMemo(() => {
-    const registeredLotIds = new Set(
-      pageContent(registeredProductInventoriesQuery.data)
-        .map((inventory) => Number(inventory.productionLotId)),
-    );
-    return pageContent(completedLotsQuery.data).filter((lot) => (
-      lot.status === "COMPLETED"
-      && Number(lot.goodQty) > 0
-      && !registeredLotIds.has(Number(lot.productionLotId))
-    ));
-  }, [completedLotsQuery.data, registeredProductInventoriesQuery.data]);
 
   const openRawLotDialog = () => {
     setRawLotForm(emptyRawLotForm());
     setMessage("");
     setDialog("raw-lot");
-  };
-  const openProductInventoryDialog = () => {
-    setProductInventoryForm({
-      productionLotId: "",
-      safetyStockQty: "0",
-      expiryDate: "",
-    });
-    setMessage("");
-    setDialog("product-inventory");
   };
 
   const receiveRawLot = async (event) => {
@@ -199,23 +159,6 @@ export default function InventoryManagement({ canManage = false }) {
       });
       setDialog(null);
       setMessage("원자재 LOT 입고를 등록했습니다.");
-    } catch (error) {
-      setMessage(extractApiError(error));
-    }
-  };
-
-  const createProductInventory = async (event) => {
-    event.preventDefault();
-    setMessage("");
-    try {
-      await createProductInventoryMutation.mutateAsync({
-        productionLotId: Number(productInventoryForm.productionLotId),
-        safetyStockQty: Number(productInventoryForm.safetyStockQty),
-        expiryDate: productInventoryForm.expiryDate || null,
-        handledById: user.userId,
-      });
-      setDialog(null);
-      setMessage("완제품 입고를 등록했습니다.");
     } catch (error) {
       setMessage(extractApiError(error));
     }
@@ -248,7 +191,6 @@ export default function InventoryManagement({ canManage = false }) {
       {canManage && (
         <Toolbar>
           <Button type="button" onClick={openRawLotDialog}>원자재 LOT 입고</Button>
-          <Button type="button" onClick={openProductInventoryDialog}>완제품 입고</Button>
           <Button
             type="button"
             $secondary
@@ -517,88 +459,6 @@ export default function InventoryManagement({ canManage = false }) {
               <Button type="button" $secondary onClick={() => setDialog(null)}>취소</Button>
               <Button disabled={receiveRawLotMutation.isPending || activeMaterials.length === 0}>
                 {receiveRawLotMutation.isPending ? "저장 중..." : "입고 등록"}
-              </Button>
-            </InventoryModalActions>
-          </InventoryModalForm>
-        </Modal>
-      )}
-
-      {dialog === "product-inventory" && (
-        <Modal
-          labelledBy="product-inventory-modal-title"
-          onClose={() => setDialog(null)}
-        >
-          <InventoryModalHeader>
-            <InventoryModalTitle id="product-inventory-modal-title">
-              완제품 최초 입고
-            </InventoryModalTitle>
-            <InventoryModalDescription>
-              완료된 생산 LOT의 정상 생산수량을 완제품 현재고로 등록합니다.
-            </InventoryModalDescription>
-          </InventoryModalHeader>
-          <InventoryModalForm onSubmit={createProductInventory}>
-            <InventoryModalBody>
-              <ApiErrors queries={[completedLotsQuery, registeredProductInventoriesQuery]} />
-              {completedLotsQuery.isSuccess
-                && registeredProductInventoriesQuery.isSuccess
-                && eligibleProductionLots.length === 0
-                && <EmptyState>입고할 수 있는 완료 생산 LOT가 없습니다.</EmptyState>}
-              <InventoryModalFields>
-                <InventoryModalField $wide>
-                  완료 생산 LOT
-                  <select
-                    value={productInventoryForm.productionLotId}
-                    onChange={(event) => setProductInventoryForm({
-                      ...productInventoryForm,
-                      productionLotId: event.target.value,
-                    })}
-                    required
-                  >
-                    <option value="">생산 LOT 선택</option>
-                    {eligibleProductionLots.map((lot) => (
-                      <option key={lot.productionLotId} value={lot.productionLotId}>
-                        {lot.lotNo} · {lot.productName} · 정상 {lot.goodQty}
-                      </option>
-                    ))}
-                  </select>
-                </InventoryModalField>
-                <InventoryModalField>
-                  안전재고
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={productInventoryForm.safetyStockQty}
-                    onChange={(event) => setProductInventoryForm({
-                      ...productInventoryForm,
-                      safetyStockQty: event.target.value,
-                    })}
-                    required
-                  />
-                </InventoryModalField>
-                <InventoryModalField>
-                  유통기한
-                  <input
-                    type="date"
-                    value={productInventoryForm.expiryDate}
-                    onChange={(event) => setProductInventoryForm({
-                      ...productInventoryForm,
-                      expiryDate: event.target.value,
-                    })}
-                  />
-                </InventoryModalField>
-              </InventoryModalFields>
-              {message && <p role="alert">{message}</p>}
-            </InventoryModalBody>
-            <InventoryModalActions>
-              <Button type="button" $secondary onClick={() => setDialog(null)}>취소</Button>
-              <Button
-                disabled={
-                  createProductInventoryMutation.isPending
-                  || eligibleProductionLots.length === 0
-                }
-              >
-                {createProductInventoryMutation.isPending ? "저장 중..." : "완제품 입고"}
               </Button>
             </InventoryModalActions>
           </InventoryModalForm>

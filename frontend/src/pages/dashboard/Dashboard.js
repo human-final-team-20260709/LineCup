@@ -726,7 +726,6 @@ export default function Dashboard() {
                 <WorkerAvatarCard
                   key={worker.workerProfileId}
                   $delay={index * 40}
-                  onClick={() => navigate("/settings/workers")}
                 >
                   <WorkerAvatar>{worker.name?.slice(0, 1)}</WorkerAvatar>
                   <WorkerCardBody>

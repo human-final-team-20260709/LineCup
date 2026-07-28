@@ -135,6 +135,11 @@ public class ProductionLotService {
                         "작업 상태 변경에 필요한 생산 LOT가 없습니다: workOrderId=" + workOrderId
                                 + ", requiredStatus=" + requiredStatus
                 ));
+        List<ProductionProcessProgress> progresses = processProgressRepository
+                .findByProductionLotProductionLotIdOrderByManufacturingProcessSequenceAsc(
+                        lot.getProductionLotId()
+                );
+        validateProgressTransition(progresses, action);
 
         switch (action) {
             case START -> lot.start(effectiveAt);
@@ -143,7 +148,7 @@ public class ProductionLotService {
             case COMPLETE -> lot.complete(effectiveAt);
             case REGISTERED -> throw new IllegalArgumentException("등록 액션은 생산 LOT 전환에 사용할 수 없습니다.");
         }
-        transitionProgresses(lot.getProductionLotId(), action, effectiveAt);
+        transitionProgresses(progresses, action, effectiveAt);
     }
 
     public ProductionLot getActiveProductionLot(Long workOrderId) {
@@ -263,12 +268,10 @@ public class ProductionLotService {
     }
 
     private void transitionProgresses(
-            Long productionLotId,
+            List<ProductionProcessProgress> progresses,
             WorkOrder.Action action,
             Instant occurredAt
     ) {
-        List<ProductionProcessProgress> progresses = processProgressRepository
-                .findByProductionLotProductionLotIdOrderByManufacturingProcessSequenceAsc(productionLotId);
         int transitionedCount = 0;
         for (ProductionProcessProgress progress : progresses) {
             switch (action) {
@@ -289,8 +292,10 @@ public class ProductionLotService {
                     }
                 }
                 case COMPLETE -> {
-                    progress.complete(occurredAt);
-                    transitionedCount++;
+                    if (progress.getStatus() == ProcessProgressStatus.IN_PROGRESS) {
+                        progress.complete(occurredAt);
+                        transitionedCount++;
+                    }
                 }
                 case REGISTERED -> throw new IllegalArgumentException("등록 액션은 공정 전환에 사용할 수 없습니다.");
             }
@@ -301,6 +306,24 @@ public class ProductionLotService {
                     action == WorkOrder.Action.HOLD
                             ? "보류할 수 있는 진행 중 공정이 없습니다."
                             : "재개할 수 있는 보류 공정이 없습니다."
+            );
+        }
+    }
+
+    private void validateProgressTransition(
+            List<ProductionProcessProgress> progresses,
+            WorkOrder.Action action
+    ) {
+        if (action != WorkOrder.Action.COMPLETE) {
+            return;
+        }
+        boolean hasIncompleteProcess = progresses.stream().anyMatch(progress ->
+                progress.getStatus() == ProcessProgressStatus.PENDING
+                        || progress.getStatus() == ProcessProgressStatus.HOLD
+        );
+        if (hasIncompleteProcess) {
+            throw new BusinessConflictException(
+                    "대기 또는 보류 중인 공정이 남아 있어 작업지시를 완료할 수 없습니다."
             );
         }
     }

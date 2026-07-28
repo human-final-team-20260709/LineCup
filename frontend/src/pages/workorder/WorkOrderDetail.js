@@ -314,6 +314,9 @@ export default function WorkOrderDetail() {
 
   const unit = detail.productUnit || "EA";
   const totalProgressRate = progressRate(order.currentQty, order.targetQty);
+  const completionBlocked =
+    order.status === "IN_PROGRESS" &&
+    Number(order.currentQty) < Number(order.targetQty);
   const approvedSupervisors = pageContent(supervisorsQuery.data).filter(
     (entry) => entry.active && entry.approvalStatus === "approved",
   );
@@ -371,12 +374,18 @@ export default function WorkOrderDetail() {
         <ActionRow>
           {(actionForStatus[order.status] || []).map((action) => {
             const ActionIcon = actionIcon[action];
+            const actionDisabled = action === "COMPLETE" && completionBlocked;
             return (
               <StyledButton
                 key={action}
                 type="button"
                 $variant={actionVariant[action]}
-                disabled={mutationPending}
+                disabled={mutationPending || actionDisabled}
+                title={
+                  actionDisabled
+                    ? `목표 수량 도달 후 완료할 수 있습니다. 현재 ${order.currentQty} / 목표 ${order.targetQty}`
+                    : undefined
+                }
                 onClick={() => openStatusModal(action)}
               >
                 <ActionIcon />
@@ -387,6 +396,12 @@ export default function WorkOrderDetail() {
         </ActionRow>
       </HeaderRow>
 
+      {completionBlocked && (
+        <StatusMessage role="status">
+          완료 대기: 목표 수량 도달 후 완료할 수 있습니다. 현재 {order.currentQty}
+          {" / "}목표 {order.targetQty} {unit}
+        </StatusMessage>
+      )}
       {message && <StatusMessage role="status">{message}</StatusMessage>}
       <ApiErrors queries={[supervisorsQuery, operatorsQuery]} />
 
