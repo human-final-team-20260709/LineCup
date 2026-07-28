@@ -509,7 +509,11 @@ export default function WorkOrderDetail() {
           <CardHeaderRow>
             <div>
               <CardTitle>목표 수량 변경</CardTitle>
-              <CardDescription>전체 목표와 시간당 생산 목표를 조정합니다.</CardDescription>
+              <CardDescription>
+                {order.status === "DONE"
+                  ? "완료된 작업지시의 목표 수량은 변경할 수 없습니다."
+                  : "전체 목표와 시간당 생산 목표를 조정합니다."}
+              </CardDescription>
             </div>
             <FiTarget />
           </CardHeaderRow>
@@ -531,8 +535,9 @@ export default function WorkOrderDetail() {
               <Input
                 name="targetQty"
                 type="number"
-                min="1"
+                min={Math.max(1, order.currentQty)}
                 defaultValue={order.targetQty}
+                disabled={order.status === "DONE"}
                 required
               />
             </Field>
@@ -543,10 +548,15 @@ export default function WorkOrderDetail() {
                 type="number"
                 min="1"
                 defaultValue={order.hourlyTargetQty}
+                disabled={order.status === "DONE"}
                 required
               />
             </Field>
-            <StyledButton type="submit" $variant="primary" disabled={mutationPending}>
+            <StyledButton
+              type="submit"
+              $variant="primary"
+              disabled={mutationPending || order.status === "DONE"}
+            >
               저장
             </StyledButton>
           </ControlForm>

@@ -17,6 +17,7 @@ int main(void)
     HourlyAggregate closed;
     assert(!hourly_aggregator_add_result_at(&aggregator, DEFECT_OK, 20000, &closed));
     assert(!hourly_aggregator_add_result_at(&aggregator, DEFECT_SEALING, 30000, &closed));
+    hourly_aggregator_update_target(&aggregator, 900);
     HourlyAggregate snapshot;
     assert(hourly_aggregator_snapshot(&aggregator, 40000, &snapshot));
     assert(snapshot.work_order_id == 101);
@@ -25,6 +26,7 @@ int main(void)
     assert(snapshot.production_qty == 2);
     assert(snapshot.good_qty == 1);
     assert(snapshot.defect_qty == 1);
+    assert(snapshot.target_qty == 900);
     assert(snapshot.is_partial);
     assert(snapshot.close_reason == CLOSE_REASON_IN_PROGRESS);
     assert(hourly_aggregator_is_active(&aggregator));
@@ -34,6 +36,7 @@ int main(void)
     assert(closed.production_qty == 2);
     assert(closed.good_qty == 1);
     assert(closed.defect_qty == 1);
+    assert(closed.target_qty == 900);
     assert(closed.close_reason == CLOSE_REASON_HOURLY);
     assert(closed.is_partial);
 

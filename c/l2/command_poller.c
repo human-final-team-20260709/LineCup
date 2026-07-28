@@ -59,8 +59,14 @@ static void apply_same_order(CommandPoller *poller, const WorkOrder *old_order,
             device_manager_broadcast(poller->devices, old_order->equipment_mask, MSG_COMMAND_STOP, 0);
         }
     } else if (new_order->status == ORDER_STATUS_IN_PROGRESS) {
-        device_manager_cache_command(poller->devices, new_order->equipment_mask,
+        if (old_order->hourly_target_qty != new_order->hourly_target_qty)
+            hourly_aggregator_update_target(poller->aggregator, new_order->hourly_target_qty);
+        if (old_order->target_qty != new_order->target_qty)
+            device_manager_broadcast(poller->devices, new_order->equipment_mask,
                                      MSG_COMMAND_START, remaining_target(new_order));
+        else
+            device_manager_cache_command(poller->devices, new_order->equipment_mask,
+                                         MSG_COMMAND_START, remaining_target(new_order));
     }
     collector_set_order(poller->collector, new_order, true);
 }
