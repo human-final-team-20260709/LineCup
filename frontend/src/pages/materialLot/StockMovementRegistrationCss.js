@@ -395,6 +395,147 @@ export const Select = styled.select`
   white-space: nowrap;
 `;
 
+export const TargetSearchSelectBox = styled.div`
+  position: relative;
+  min-width: 0;
+`;
+
+export const TargetSearchSelectTrigger = styled.button`
+  position: relative;
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 0 34px 0 12px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: #060e20;
+  color: ${({ $placeholder }) => ($placeholder ? '#869585' : '#dae2fd')};
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+
+  &::after {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    color: #869585;
+    content: '⌄';
+    transform: translateY(-58%);
+  }
+
+  &:hover {
+    border-color: #3d4a3d;
+  }
+
+  &:focus-visible {
+    border-color: #4be277;
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
+  }
+`;
+
+export const TargetSearchSelectDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #3d4a3d;
+  border-radius: 4px;
+  background: #060e20;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+
+  > input {
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 0;
+    border-bottom: 1px solid #334155;
+    outline: 0;
+    background: #060e20;
+    color: #dae2fd;
+    font-size: 13px;
+  }
+
+  > p[role='alert'] {
+    margin: 8px;
+  }
+`;
+
+export const TargetSearchOptions = styled.div`
+  max-height: 230px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+`;
+
+export const TargetSearchOption = styled.button`
+  display: grid;
+  width: 100%;
+  min-height: 62px;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid #222a3d;
+  background: ${({ $selected }) =>
+    $selected ? 'rgba(75, 226, 119, 0.12)' : 'transparent'};
+  color: #dae2fd;
+  text-align: left;
+  cursor: pointer;
+
+  strong {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  span,
+  small {
+    color: ${({ $selected }) => ($selected ? '#4be277' : '#869585')};
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  &:hover {
+    background: #222a3d;
+  }
+
+  &:focus-visible {
+    position: relative;
+    outline: 2px solid #4be277;
+    outline-offset: -2px;
+  }
+`;
+
+export const TargetSearchEmpty = styled.p`
+  margin: 0;
+  padding: 18px 12px;
+  color: #869585;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+`;
+
+export const TargetSearchMore = styled.button`
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: #131b2e;
+  color: #4be277;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #222a3d;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+`;
+
 export const TextArea = styled.textarea`
   ${fieldStyle}
   min-height: 80px;

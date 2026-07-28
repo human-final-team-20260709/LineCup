@@ -53,8 +53,14 @@ static MachineRunState apply_command(MachineConnection *connection, uint8_t type
     } else if (type == MSG_COMMAND_HOLD) {
         if (connection->state == MACHINE_STATE_RUNNING) connection->state = MACHINE_STATE_HOLD;
     } else if (type == MSG_COMMAND_RESUME) {
-        if (value > 0) connection->target_qty = value;
-        connection->state = connection->target_qty > 0 ? MACHINE_STATE_RUNNING : MACHINE_STATE_IDLE;
+        /* Preserve progress only when this connection actually received HOLD. */
+        if (connection->state != MACHINE_STATE_HOLD) {
+            connection->target_qty = value > 0 ? value : 0;
+            connection->processed_qty = 0;
+        }
+        connection->state = value > 0 && connection->processed_qty < connection->target_qty
+            ? MACHINE_STATE_RUNNING
+            : MACHINE_STATE_IDLE;
     } else if (type == MSG_COMMAND_STOP) {
         connection->state = MACHINE_STATE_IDLE;
         connection->target_qty = 0;

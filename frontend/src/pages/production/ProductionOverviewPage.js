@@ -121,22 +121,40 @@ export default function ProductionOverviewPage() {
   });
 
   const summary = summaryQuery.data || {};
-  const hourlyChartData = useMemo(
-    () =>
-      (hourlyQuery.data || [])
-        .slice()
-        .sort((first, second) =>
-          String(first.bucketStart).localeCompare(String(second.bucketStart)),
-        )
-        .slice(-12)
-        .map((row) => ({
-          id: row.hourlyProductionId,
-          time: toKst(row.bucketStart, "HH:mm"),
-          target: Number(row.targetQty) || 0,
-          production: Number(row.productionQty) || 0,
-        })),
-    [hourlyQuery.data],
-  );
+  const hourlyChartData = useMemo(() => {
+    const grouped = new Map();
+
+    (hourlyQuery.data || []).forEach((row) => {
+      const hour = toKst(row.bucketStart, "YYYY-MM-DD HH:00");
+      const current = grouped.get(hour) || {
+        id: hour,
+        time: toKst(row.bucketStart, "HH:00"),
+        targetTotal: 0,
+        targetWeight: 0,
+        production: 0,
+      };
+      const bucketDuration =
+        (new Date(row.bucketEnd).getTime() - new Date(row.bucketStart).getTime()) /
+        (60 * 60 * 1000);
+      const targetRatio =
+        Number.isFinite(bucketDuration) && bucketDuration > 0
+          ? Math.min(bucketDuration, 1)
+          : 1;
+
+      current.targetTotal += (Number(row.targetQty) || 0) * targetRatio;
+      current.targetWeight += targetRatio;
+      current.production += Number(row.productionQty) || 0;
+      grouped.set(hour, current);
+    });
+
+    return [...grouped.entries()]
+      .sort(([firstHour], [secondHour]) => firstHour.localeCompare(secondHour))
+      .slice(-12)
+      .map(([, { targetTotal, targetWeight, ...row }]) => ({
+        ...row,
+        target: targetWeight ? Math.round(targetTotal / targetWeight) : 0,
+      }));
+  }, [hourlyQuery.data]);
   const processes = activeQuery.data?.processes || [];
   const activeSummary = activeQuery.data?.summary || null;
   const activeProgressRate = activeSummary?.targetQty

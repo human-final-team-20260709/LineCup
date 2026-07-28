@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { materialApi, referenceApi } from "../../api/services";
 import { queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
 import { ApiErrors, QueryStatus } from "../../components/ApiState";
 import CommonPagination from "../../components/CommonPagination";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
 import {
   Badge,
   Button,
@@ -27,6 +33,8 @@ import {
   BomListCount,
   BomListHeader,
   BomListSection,
+  BomSearchArea,
+  BomSearchInput,
   BomOverviewTable,
   BomPageContent,
   BomTableShell,
@@ -54,10 +62,18 @@ import {
   ModalTitle,
   RowActions,
   RowDeleteButton,
+  SearchOption,
+  SearchOptionEmpty,
+  SearchOptionList,
+  SearchOptionMore,
+  SearchSelectBox,
+  SearchSelectDropdown,
+  SearchSelectTrigger,
   StatusMessage,
 } from "./BomManagementCss";
 
 const PAGE_SIZE = 10;
+const OPTION_PAGE_SIZE = 20;
 const toneForBomStatus = (status) => (
   status === "INACTIVE" ? "danger" : toneForStatus(status)
 );
@@ -79,14 +95,148 @@ const emptyForm = {
   items: [{ ...emptyItem }],
 };
 
+function MaterialSearchSelect({ item, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const [keywordDraft, setKeywordDraft] = useState("");
+  const selectRef = useRef(null);
+  const keyword = useDebouncedValue(keywordDraft.trim());
+  const params = {
+    keyword: keyword || undefined,
+    status: "ACTIVE",
+    size: OPTION_PAGE_SIZE,
+  };
+  const query = useInfiniteQuery({
+    queryKey: [...queryKeys.materials(params), "bom-material-options"],
+    queryFn: ({ pageParam }) => referenceApi.rawMaterials({
+      ...params,
+      page: pageParam,
+    }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (
+      lastPage.last ? undefined : lastPage.number + 1
+    ),
+    enabled: open,
+  });
+  const options = query.data?.pages.flatMap(pageContent) || [];
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick, true);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick, true);
+  }, [open]);
+
+  return (
+    <SearchSelectBox
+      ref={selectRef}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.stopPropagation();
+          setOpen(false);
+        }
+      }}
+    >
+      <SearchSelectTrigger
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        $placeholder={!item.materialId}
+        onClick={() => {
+          setKeywordDraft("");
+          setOpen((current) => !current);
+        }}
+      >
+        {item.materialId
+          ? `${item.materialCode} · ${item.materialName}`
+          : "원자재 선택"}
+      </SearchSelectTrigger>
+      {open && (
+        <SearchSelectDropdown>
+          <input
+            type="search"
+            value={keywordDraft}
+            placeholder="원자재 코드·원자재명 검색"
+            aria-label="BOM 원자재 검색"
+            autoFocus
+            onChange={(event) => setKeywordDraft(event.target.value)}
+          />
+          <SearchOptionList role="listbox" aria-label="BOM 원자재 검색 결과">
+            {query.isPending && (
+              <SearchOptionEmpty>원자재를 불러오는 중입니다.</SearchOptionEmpty>
+            )}
+            {query.isError && (
+              <SearchOptionEmpty>원자재를 불러오지 못했습니다.</SearchOptionEmpty>
+            )}
+            {!query.isPending && !query.isError && options.length === 0 && (
+              <SearchOptionEmpty>검색된 사용 중 원자재가 없습니다.</SearchOptionEmpty>
+            )}
+            {options.map((material) => {
+              const selected = String(material.materialId)
+                === String(item.materialId);
+              return (
+                <SearchOption
+                  key={material.materialId}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  $selected={selected}
+                  onClick={() => {
+                    onSelect(material);
+                    setOpen(false);
+                  }}
+                >
+                  <strong>{material.materialName}</strong>
+                  <span>{material.materialCode} · {material.unit}</span>
+                </SearchOption>
+              );
+            })}
+            {query.hasNextPage && (
+              <SearchOptionMore
+                type="button"
+                disabled={query.isFetchingNextPage}
+                onClick={() => query.fetchNextPage()}
+              >
+                {query.isFetchingNextPage ? "불러오는 중..." : "원자재 더 보기"}
+              </SearchOptionMore>
+            )}
+          </SearchOptionList>
+        </SearchSelectDropdown>
+      )}
+    </SearchSelectBox>
+  );
+}
+
 export default function BomManagement({ canManage = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [bomPage, setBomPage] = useState(0);
+  const [bomKeywordDraft, setBomKeywordDraft] = useState("");
+  const [productKeywordDraft, setProductKeywordDraft] = useState("");
+  const [productOptionsOpen, setProductOptionsOpen] = useState(false);
   const [form, setForm] = useState(null);
   const [materialDetailBom, setMaterialDetailBom] = useState(null);
   const [message, setMessage] = useState("");
-  const bomParams = { page: bomPage, size: PAGE_SIZE };
+  const productSelectRef = useRef(null);
+  const bomKeyword = useDebouncedValue(bomKeywordDraft.trim());
+  const productKeyword = useDebouncedValue(productKeywordDraft.trim());
+  const bomParams = {
+    keyword: bomKeyword || undefined,
+    page: bomPage,
+    size: PAGE_SIZE,
+  };
+  const productOptionParams = {
+    keyword: productKeyword || undefined,
+    status: "ACTIVE",
+    size: OPTION_PAGE_SIZE,
+  };
 
   useEffect(() => {
     if (!form && !materialDetailBom) {
@@ -95,6 +245,10 @@ export default function BomManagement({ canManage = false }) {
 
     const closeOnEscape = (event) => {
       if (event.key !== "Escape") {
+        return;
+      }
+      if (productOptionsOpen) {
+        setProductOptionsOpen(false);
         return;
       }
       if (form) {
@@ -106,20 +260,50 @@ export default function BomManagement({ canManage = false }) {
 
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [form, materialDetailBom]);
+  }, [form, materialDetailBom, productOptionsOpen]);
+
+  useEffect(() => {
+    if (!productOptionsOpen) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (
+        productSelectRef.current
+        && !productSelectRef.current.contains(event.target)
+      ) {
+        setProductOptionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick, true);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick, true);
+  }, [productOptionsOpen]);
 
   const bomsQuery = useQuery({
     queryKey: queryKeys.boms(bomParams),
     queryFn: () => materialApi.boms(bomParams),
     placeholderData: (previous) => previous,
   });
-  const productsQuery = useQuery({
-    queryKey: queryKeys.products({ size: 100 }),
-    queryFn: () => referenceApi.products({ size: 100 }),
+  const productAvailabilityQuery = useQuery({
+    queryKey: queryKeys.products({ status: "ACTIVE", size: 1 }),
+    queryFn: () => referenceApi.products({ status: "ACTIVE", size: 1 }),
   });
-  const materialsQuery = useQuery({
-    queryKey: queryKeys.materials({ size: 100 }),
-    queryFn: () => referenceApi.rawMaterials({ size: 100 }),
+  const productOptionsQuery = useInfiniteQuery({
+    queryKey: [...queryKeys.products(productOptionParams), "bom-product-options"],
+    queryFn: ({ pageParam }) => referenceApi.products({
+      ...productOptionParams,
+      page: pageParam,
+    }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (
+      lastPage.last ? undefined : lastPage.number + 1
+    ),
+    enabled: Boolean(form && !form.bomId && productOptionsOpen),
+  });
+  const materialAvailabilityQuery = useQuery({
+    queryKey: queryKeys.materials({ status: "ACTIVE", size: 1 }),
+    queryFn: () => referenceApi.rawMaterials({ status: "ACTIVE", size: 1 }),
   });
   const processesQuery = useQuery({
     queryKey: queryKeys.processes(),
@@ -143,11 +327,10 @@ export default function BomManagement({ canManage = false }) {
     onSuccess: invalidate,
   });
 
-  const products = pageContent(productsQuery.data);
-  const materials = pageContent(materialsQuery.data);
+  const products = productOptionsQuery.data?.pages.flatMap(pageContent) || [];
   const processes = Array.isArray(processesQuery.data) ? processesQuery.data : [];
-  const activeProducts = products.filter((product) => product.status === "ACTIVE");
-  const activeMaterials = materials.filter((material) => material.status === "ACTIVE");
+  const hasActiveProducts = (productAvailabilityQuery.data?.totalElements ?? 0) > 0;
+  const hasActiveMaterials = (materialAvailabilityQuery.data?.totalElements ?? 0) > 0;
   const boms = pageContent(bomsQuery.data);
 
   const updateItem = (index, key, value) => {
@@ -162,6 +345,7 @@ export default function BomManagement({ canManage = false }) {
   const edit = (bom) => {
     setMessage("");
     setMaterialDetailBom(null);
+    setProductOptionsOpen(false);
     setForm({
       ...bom,
       items: bom.items.map((item) => ({
@@ -180,6 +364,10 @@ export default function BomManagement({ canManage = false }) {
   const save = async (event) => {
     event.preventDefault();
     setMessage("");
+    if (!form.productId || form.items.some((item) => !item.materialId)) {
+      setMessage("제품과 모든 원자재를 선택해 주세요.");
+      return;
+    }
     const payload = {
       bomCode: form.bomCode.trim(),
       version: form.version.trim(),
@@ -221,15 +409,6 @@ export default function BomManagement({ canManage = false }) {
     }
   };
 
-  const selectableProducts = products.filter((product) => (
-    product.status === "ACTIVE" || String(product.productId) === String(form?.productId)
-  ));
-  const selectableMaterials = (selectedMaterialId) => materials.filter((material) => (
-    material.status === "ACTIVE" || String(material.materialId) === String(selectedMaterialId)
-  ));
-  const hasSelectedProduct = selectableProducts.some(
-    (product) => String(product.productId) === String(form?.productId),
-  );
   const totalBoms = bomsQuery.data?.totalElements ?? boms.length;
 
   return (
@@ -242,9 +421,11 @@ export default function BomManagement({ canManage = false }) {
         {canManage && (
           <Button
             type="button"
-            disabled={activeProducts.length === 0 || activeMaterials.length === 0}
+            disabled={!hasActiveProducts || !hasActiveMaterials}
             onClick={() => {
               setMessage("");
+              setProductKeywordDraft("");
+              setProductOptionsOpen(false);
               setForm({
                 ...emptyForm,
                 items: [{ ...emptyItem }],
@@ -257,9 +438,16 @@ export default function BomManagement({ canManage = false }) {
       </BomActionBar>
 
       {message && <StatusMessage role="status">{message}</StatusMessage>}
-      <ApiErrors queries={[productsQuery, materialsQuery, processesQuery]} />
+      <ApiErrors
+        queries={[
+          productAvailabilityQuery,
+          productOptionsQuery,
+          materialAvailabilityQuery,
+          processesQuery,
+        ]}
+      />
 
-      {(activeProducts.length === 0 || activeMaterials.length === 0) && (
+      {(!hasActiveProducts || !hasActiveMaterials) && (
         <Notice>
           BOM 등록에 필요한 사용 중 제품 또는 원자재가 없습니다.{" "}
           <Button type="button" $secondary onClick={() => navigate("/materials/reference")}>
@@ -341,31 +529,91 @@ export default function BomManagement({ canManage = false }) {
                         required
                       />
                     </BomField>
-                    <BomField $span={3}>
-                      기존 제품
-                      <Select
-                        value={form.productId}
-                        disabled={Boolean(form.bomId)}
-                        onChange={(event) => setForm({ ...form, productId: event.target.value })}
-                        required
-                      >
-                        <option value="">제품 선택</option>
-                        {form.bomId && !hasSelectedProduct && (
-                          <option value={form.productId}>
-                            {form.productCode} · {form.productName} (현재 선택)
-                          </option>
-                        )}
-                        {selectableProducts.map((product) => (
-                          <option
-                            key={product.productId}
-                            value={product.productId}
-                            disabled={product.status !== "ACTIVE"}
+                    <BomField as="div" $span={3}>
+                      <span>기존 제품</span>
+                      {form.bomId ? (
+                        <input
+                          value={`${form.productCode} · ${form.productName}`}
+                          disabled
+                          readOnly
+                        />
+                      ) : (
+                        <SearchSelectBox ref={productSelectRef}>
+                          <SearchSelectTrigger
+                            type="button"
+                            aria-haspopup="listbox"
+                            aria-expanded={productOptionsOpen}
+                            $placeholder={!form.productId}
+                            onClick={() => {
+                              setProductKeywordDraft("");
+                              setProductOptionsOpen((current) => !current);
+                            }}
                           >
-                            {product.productCode} · {product.productName}
-                            {product.status !== "ACTIVE" ? ` (${product.statusLabel})` : ""}
-                          </option>
-                        ))}
-                      </Select>
+                            {form.productId
+                              ? `${form.productCode} · ${form.productName}`
+                              : "제품 선택"}
+                          </SearchSelectTrigger>
+                          {productOptionsOpen && (
+                            <SearchSelectDropdown>
+                              <input
+                                type="search"
+                                value={productKeywordDraft}
+                                placeholder="제품 코드·제품명 검색"
+                                aria-label="BOM 적용 제품 검색"
+                                autoFocus
+                                onChange={(event) => setProductKeywordDraft(event.target.value)}
+                              />
+                              <SearchOptionList
+                                role="listbox"
+                                aria-label="BOM 적용 제품 검색 결과"
+                              >
+                                {productOptionsQuery.isPending && (
+                                  <SearchOptionEmpty>제품을 불러오는 중입니다.</SearchOptionEmpty>
+                                )}
+                                {!productOptionsQuery.isPending && products.length === 0 && (
+                                  <SearchOptionEmpty>검색된 사용 중 제품이 없습니다.</SearchOptionEmpty>
+                                )}
+                                {products.map((product) => {
+                                  const selected = String(product.productId)
+                                    === String(form.productId);
+                                  return (
+                                    <SearchOption
+                                      key={product.productId}
+                                      type="button"
+                                      role="option"
+                                      aria-selected={selected}
+                                      $selected={selected}
+                                      onClick={() => {
+                                        setForm({
+                                          ...form,
+                                          productId: String(product.productId),
+                                          productCode: product.productCode,
+                                          productName: product.productName,
+                                        });
+                                        setProductOptionsOpen(false);
+                                      }}
+                                    >
+                                      <strong>{product.productName}</strong>
+                                      <span>{product.productCode}</span>
+                                    </SearchOption>
+                                  );
+                                })}
+                                {productOptionsQuery.hasNextPage && (
+                                  <SearchOptionMore
+                                    type="button"
+                                    disabled={productOptionsQuery.isFetchingNextPage}
+                                    onClick={() => productOptionsQuery.fetchNextPage()}
+                                  >
+                                    {productOptionsQuery.isFetchingNextPage
+                                      ? "불러오는 중..."
+                                      : "제품 더 보기"}
+                                  </SearchOptionMore>
+                                )}
+                              </SearchOptionList>
+                            </SearchSelectDropdown>
+                          )}
+                        </SearchSelectBox>
+                      )}
                     </BomField>
                     <BomField $span={2}>
                       상태
@@ -410,13 +658,6 @@ export default function BomManagement({ canManage = false }) {
 
                   <MaterialRows $modal>
                     {form.items.map((item, index) => {
-                      const selectedMaterial = materials.find(
-                        (material) => String(material.materialId) === String(item.materialId),
-                      );
-                      const materialOptions = selectableMaterials(item.materialId);
-                      const hasSelectedMaterial = materialOptions.some(
-                        (material) => String(material.materialId) === String(item.materialId),
-                      );
                       return (
                         <MaterialRow key={`${item.bomItemId || "new"}-${index}`}>
                           <MaterialRowHeader>
@@ -434,34 +675,25 @@ export default function BomManagement({ canManage = false }) {
                           </MaterialRowHeader>
 
                           <MaterialFields>
-                            <MaterialField>
+                            <MaterialField as="div">
                               원자재
-                              <Select
-                                value={item.materialId}
-                                onChange={(event) => (
-                                  updateItem(index, "materialId", event.target.value)
-                                )}
-                                required
-                              >
-                                <option value="">원자재 선택</option>
-                                {!hasSelectedMaterial && item.materialId && (
-                                  <option value={item.materialId}>
-                                    {item.materialCode} · {item.materialName} (현재 선택)
-                                  </option>
-                                )}
-                                {materialOptions.map((material) => (
-                                  <option
-                                    key={material.materialId}
-                                    value={material.materialId}
-                                    disabled={material.status !== "ACTIVE"}
-                                  >
-                                    {material.materialCode} · {material.materialName}
-                                    {material.status !== "ACTIVE"
-                                      ? ` (${material.statusLabel})`
-                                      : ""}
-                                  </option>
-                                ))}
-                              </Select>
+                              <MaterialSearchSelect
+                                item={item}
+                                onSelect={(material) => setForm((current) => ({
+                                  ...current,
+                                  items: current.items.map((currentItem, itemIndex) => (
+                                    itemIndex === index
+                                      ? {
+                                        ...currentItem,
+                                        materialId: String(material.materialId),
+                                        materialCode: material.materialCode,
+                                        materialName: material.materialName,
+                                        unit: material.unit,
+                                      }
+                                      : currentItem
+                                  )),
+                                }))}
+                              />
                             </MaterialField>
                             <MaterialField>
                               투입 공정
@@ -493,7 +725,7 @@ export default function BomManagement({ canManage = false }) {
                             </MaterialField>
                             <MaterialField>
                               제품 1개당 소요량
-                              {selectedMaterial ? ` (${selectedMaterial.unit})` : ""}
+                              {item.unit ? ` (${item.unit})` : ""}
                               <input
                                 type="number"
                                 step="0.001"
@@ -539,7 +771,13 @@ export default function BomManagement({ canManage = false }) {
                 <Button type="button" $secondary onClick={() => setForm(null)}>
                   취소
                 </Button>
-                <Button disabled={saveMutation.isPending}>
+                <Button
+                  disabled={
+                    saveMutation.isPending
+                    || !form.productId
+                    || form.items.some((item) => !item.materialId)
+                  }
+                >
                   {saveMutation.isPending ? "저장 중..." : "저장"}
                 </Button>
               </ModalActions>
@@ -549,6 +787,18 @@ export default function BomManagement({ canManage = false }) {
       )}
 
       <BomListSection>
+        <BomSearchArea>
+          <BomSearchInput
+            type="search"
+            value={bomKeywordDraft}
+            placeholder="BOM 코드·버전·제품 검색"
+            aria-label="BOM 검색"
+            onChange={(event) => {
+              setBomKeywordDraft(event.target.value);
+              setBomPage(0);
+            }}
+          />
+        </BomSearchArea>
         <BomListHeader>
           <div>
             <h2>등록된 BOM</h2>

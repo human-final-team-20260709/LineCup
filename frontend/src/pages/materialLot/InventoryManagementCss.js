@@ -642,6 +642,140 @@ export const InventoryModalField = styled.label`
   }
 `;
 
+export const InventorySearchSelectBox = styled.div`
+  position: relative;
+  min-width: 0;
+`;
+
+export const InventorySearchSelectTrigger = styled.button`
+  position: relative;
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 9px 34px 9px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface-lowest);
+  color: ${({ $placeholder }) =>
+    $placeholder ? 'var(--color-text-dim)' : 'var(--color-text)'};
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+
+  &::after {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    color: var(--color-text-muted);
+    content: '⌄';
+    transform: translateY(-58%);
+  }
+
+  &:hover {
+    border-color: var(--color-border-soft);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
+  }
+`;
+
+export const InventorySearchSelectDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 4px;
+  background: var(--color-surface-lowest);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+
+  > input {
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+  }
+`;
+
+export const InventorySearchOptions = styled.div`
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+`;
+
+export const InventorySearchOption = styled.button`
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  gap: 2px;
+  padding: 7px 11px;
+  border: 0;
+  border-bottom: 1px solid var(--color-surface-high);
+  background: ${({ $selected }) =>
+    $selected ? 'rgba(75, 226, 119, 0.12)' : 'transparent'};
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  strong {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  span {
+    color: ${({ $selected }) =>
+      $selected ? 'var(--color-primary)' : 'var(--color-text-dim)'};
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas,
+      monospace;
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  &:hover {
+    background: var(--color-surface-high);
+  }
+
+  &:focus-visible {
+    position: relative;
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+`;
+
+export const InventorySearchEmpty = styled.p`
+  margin: 0;
+  padding: 18px 11px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  text-align: center;
+`;
+
+export const InventorySearchMore = styled.button`
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: var(--color-surface-low);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-high);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+`;
+
 export const InventoryModalActions = styled.footer`
   display: flex;
   flex-shrink: 0;

@@ -1,5 +1,9 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { materialApi } from "../../api/services";
 import { queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
@@ -7,6 +11,7 @@ import { toUtcInstant } from "../../api/time";
 import { useAuth } from "../../context/AuthContext";
 import { ApiErrors } from "../../components/ApiState";
 import { pageContent } from "../../components/OperationalUi";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
 import {
   Field,
   FieldLabel,
@@ -22,48 +27,196 @@ import {
   PrimaryButton,
   SecondaryButton,
   Select,
+  TargetSearchEmpty,
+  TargetSearchMore,
+  TargetSearchOption,
+  TargetSearchOptions,
+  TargetSearchSelectBox,
+  TargetSearchSelectDropdown,
+  TargetSearchSelectTrigger,
   TextArea,
   TextInput,
 } from "./StockMovementRegistrationCss";
+
+const OPTION_PAGE_SIZE = 20;
+
+function MovementTargetSearchSelect({ itemType, selected, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const [keywordDraft, setKeywordDraft] = useState("");
+  const selectRef = useRef(null);
+  const keyword = useDebouncedValue(keywordDraft.trim());
+  const params = {
+    keyword: keyword || undefined,
+    size: OPTION_PAGE_SIZE,
+  };
+  const rawMaterial = itemType === "RAW_MATERIAL";
+  const query = useInfiniteQuery({
+    queryKey: [
+      ...(rawMaterial
+        ? queryKeys.rawMaterialLots(params)
+        : queryKeys.productInventories(params)),
+      "movement-target-options",
+    ],
+    queryFn: ({ pageParam }) => {
+      const requestParams = { ...params, page: pageParam };
+      return rawMaterial
+        ? materialApi.rawMaterialLots(requestParams)
+        : materialApi.productInventories(requestParams);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (
+      lastPage.last ? undefined : lastPage.number + 1
+    ),
+    enabled: open,
+  });
+  const options = query.data?.pages.flatMap(pageContent) || [];
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick, true);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick, true);
+  }, [open]);
+
+  const optionInfo = (item) => ({
+    id: rawMaterial ? item.materialLotId : item.inventoryId,
+    lotNo: rawMaterial ? item.materialLotNo : item.lotNo,
+    itemCode: rawMaterial ? item.materialCode : item.productCode,
+    itemName: rawMaterial ? item.materialName : item.productName,
+    currentQty: item.currentQty,
+    unit: item.unit,
+  });
+
+  return (
+    <TargetSearchSelectBox
+      ref={selectRef}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.stopPropagation();
+          setOpen(false);
+        }
+      }}
+    >
+      <TargetSearchSelectTrigger
+        id="movement-target"
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        $placeholder={!selected}
+        onClick={() => {
+          setKeywordDraft("");
+          setOpen((current) => !current);
+        }}
+      >
+        {selected ? `${selected.lotNo} · ${selected.itemName}` : "대상 선택"}
+      </TargetSearchSelectTrigger>
+      {open && (
+        <TargetSearchSelectDropdown>
+          <input
+            type="search"
+            value={keywordDraft}
+            placeholder={
+              rawMaterial
+                ? "원자재 LOT·원자재 검색"
+                : "완제품 LOT·제품 검색"
+            }
+            aria-label="재고이동 대상 검색"
+            autoFocus
+            onChange={(event) => setKeywordDraft(event.target.value)}
+          />
+          <ApiErrors queries={[query]} />
+          <TargetSearchOptions role="listbox" aria-label="재고이동 대상 검색 결과">
+            {query.isPending && (
+              <TargetSearchEmpty>대상을 불러오는 중입니다.</TargetSearchEmpty>
+            )}
+            {!query.isPending && !query.isError && options.length === 0 && (
+              <TargetSearchEmpty>검색된 대상이 없습니다.</TargetSearchEmpty>
+            )}
+            {options.map((item) => {
+              const info = optionInfo(item);
+              const isSelected = String(info.id) === String(selected?.id);
+              return (
+                <TargetSearchOption
+                  key={info.id}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  $selected={isSelected}
+                  onClick={() => {
+                    onSelect(info);
+                    setOpen(false);
+                  }}
+                >
+                  <strong>{info.lotNo} · {info.itemName}</strong>
+                  <span>{info.itemCode}</span>
+                  <small>현재 {info.currentQty}{info.unit}</small>
+                </TargetSearchOption>
+              );
+            })}
+            {query.hasNextPage && (
+              <TargetSearchMore
+                type="button"
+                disabled={query.isFetchingNextPage}
+                onClick={() => query.fetchNextPage()}
+              >
+                {query.isFetchingNextPage ? "불러오는 중..." : "대상 더 보기"}
+              </TargetSearchMore>
+            )}
+          </TargetSearchOptions>
+        </TargetSearchSelectDropdown>
+      )}
+    </TargetSearchSelectBox>
+  );
+}
 
 export default function StockMovementRegistration({ isOpen, onClose }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [itemType, setItemType] = useState("RAW_MATERIAL");
+  const [selectedTarget, setSelectedTarget] = useState(null);
   const [message, setMessage] = useState("");
-  const rawQuery = useQuery({
-    queryKey: queryKeys.rawMaterialLots({ size: 100 }),
-    queryFn: () => materialApi.rawMaterialLots({ size: 100 }),
-    enabled: isOpen,
-  });
-  const productQuery = useQuery({
-    queryKey: queryKeys.productInventories({ size: 100 }),
-    queryFn: () => materialApi.productInventories({ size: 100 }),
-    enabled: isOpen,
-  });
   const mutation = useMutation({
     mutationFn: materialApi.createMovement,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["materials"] }),
   });
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedTarget(null);
+      setMessage("");
+    }
+  }, [isOpen]);
 
-  const targetOptions = itemType === "RAW_MATERIAL"
-    ? pageContent(rawQuery.data)
-    : pageContent(productQuery.data);
+  if (!isOpen) return null;
 
   const submit = async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const targetId = Number(data.get("targetId"));
     setMessage("");
+
+    if (!selectedTarget) {
+      setMessage("재고이동 대상을 선택해 주세요.");
+      return;
+    }
 
     try {
       await mutation.mutateAsync({
         itemType,
         movementType: data.get("movementType"),
-        rawMaterialLotId: itemType === "RAW_MATERIAL" ? targetId : null,
-        productInventoryId: itemType === "FINISHED_PRODUCT" ? targetId : null,
+        rawMaterialLotId: itemType === "RAW_MATERIAL"
+          ? Number(selectedTarget.id)
+          : null,
+        productInventoryId: itemType === "FINISHED_PRODUCT"
+          ? Number(selectedTarget.id)
+          : null,
         quantity: Number(data.get("quantity")),
         handledById: user.userId,
         occurredAt: data.get("occurredAt") ? toUtcInstant(data.get("occurredAt")) : null,
@@ -96,7 +249,6 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
         </ModalHeader>
 
         <ModalBody>
-          <ApiErrors queries={[rawQuery, productQuery]} />
           {message && <ModalFeedback role="alert">{message}</ModalFeedback>}
 
           <FormGrid>
@@ -105,7 +257,10 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
               <Select
                 id="movement-item-type"
                 value={itemType}
-                onChange={(event) => setItemType(event.target.value)}
+                onChange={(event) => {
+                  setItemType(event.target.value);
+                  setSelectedTarget(null);
+                }}
               >
                 <option value="RAW_MATERIAL">원자재</option>
                 <option value="FINISHED_PRODUCT">완제품</option>
@@ -123,26 +278,12 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
 
             <Field $wide>
               <FieldLabel htmlFor="movement-target">대상 LOT/재고</FieldLabel>
-              <Select id="movement-target" name="targetId" required>
-                <option value="">대상 선택</option>
-                {targetOptions.map((item) => {
-                  const id = itemType === "RAW_MATERIAL"
-                    ? item.materialLotId
-                    : item.inventoryId;
-                  const lotNo = itemType === "RAW_MATERIAL"
-                    ? item.materialLotNo
-                    : item.lotNo;
-                  const itemName = itemType === "RAW_MATERIAL"
-                    ? item.materialName
-                    : item.productName;
-
-                  return (
-                    <option key={id} value={id}>
-                      {lotNo} · {itemName}
-                    </option>
-                  );
-                })}
-              </Select>
+              <MovementTargetSearchSelect
+                key={itemType}
+                itemType={itemType}
+                selected={selectedTarget}
+                onSelect={setSelectedTarget}
+              />
             </Field>
 
             <Field>
@@ -175,7 +316,7 @@ export default function StockMovementRegistration({ isOpen, onClose }) {
 
         <ModalActions>
           <SecondaryButton type="button" onClick={onClose}>취소</SecondaryButton>
-          <PrimaryButton disabled={mutation.isPending}>
+          <PrimaryButton disabled={mutation.isPending || !selectedTarget}>
             {mutation.isPending ? "저장 중..." : "저장"}
           </PrimaryButton>
         </ModalActions>
