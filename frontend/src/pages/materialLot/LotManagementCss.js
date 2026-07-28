@@ -624,6 +624,125 @@ export const FormField = styled.label`
   }
 `;
 
+export const MaterialLotSearchBox = styled.div`
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface-lowest);
+
+  > input {
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+  }
+`;
+
+export const SelectedMaterialLot = styled.div`
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(75, 226, 119, 0.28);
+  background: rgba(75, 226, 119, 0.1);
+
+  span {
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 15px;
+  }
+
+  strong {
+    color: var(--color-text);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas,
+      monospace;
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  small {
+    color: var(--color-text-muted);
+    font-size: 11px;
+    line-height: 16px;
+  }
+`;
+
+export const MaterialLotOptions = styled.div`
+  max-height: 230px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+`;
+
+export const MaterialLotOption = styled.button`
+  display: grid;
+  width: 100%;
+  min-height: 60px;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--color-surface-high);
+  background: ${({ $selected }) =>
+    $selected ? "rgba(75, 226, 119, 0.12)" : "transparent"};
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  strong {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas,
+      monospace;
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  span,
+  small {
+    color: var(--color-text-dim);
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 16px;
+  }
+
+  &:hover {
+    background: var(--color-surface-high);
+  }
+
+  &:focus-visible {
+    position: relative;
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+`;
+
+export const MaterialLotEmpty = styled.p`
+  margin: 0;
+  padding: 18px 10px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  text-align: center;
+`;
+
+export const MaterialLotMore = styled.button`
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: var(--color-surface-low);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-high);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+`;
+
 export const StatusMessage = styled.p`
   margin: 14px 0 0;
   padding: 10px 11px;

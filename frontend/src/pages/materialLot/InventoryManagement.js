@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { materialApi, referenceApi } from "../../api/services";
 import { POLLING, queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
@@ -29,12 +34,20 @@ import {
   InventoryModalForm,
   InventoryModalHeader,
   InventoryModalPanel,
+  InventorySearchEmpty,
+  InventorySearchMore,
+  InventorySearchOption,
+  InventorySearchOptions,
+  InventorySearchSelectBox,
+  InventorySearchSelectDropdown,
+  InventorySearchSelectTrigger,
   InventoryModalTitle,
   InventoryTableShell,
   InventoryTableViewport,
 } from "./InventoryManagementCss";
 
 const PAGE_SIZE = 10;
+const OPTION_PAGE_SIZE = 20;
 
 const inventoryToneForStatus = (status) => ({
   NORMAL: "success",
@@ -51,6 +64,9 @@ const localDateValue = () => {
 
 const emptyRawLotForm = () => ({
   materialId: "",
+  materialCode: "",
+  materialName: "",
+  unit: "",
   materialLotNo: "",
   supplierName: "",
   supplierLotNo: "",
@@ -59,6 +75,125 @@ const emptyRawLotForm = () => ({
   receivedQty: "",
   receivedDate: localDateValue(),
 });
+
+function RawMaterialSearchSelect({ selected, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const [keywordDraft, setKeywordDraft] = useState("");
+  const selectRef = useRef(null);
+  const keyword = useDebouncedValue(keywordDraft.trim());
+  const params = {
+    keyword: keyword || undefined,
+    status: "ACTIVE",
+    size: OPTION_PAGE_SIZE,
+  };
+  const query = useInfiniteQuery({
+    queryKey: [...queryKeys.materials(params), "raw-lot-receipt-options"],
+    queryFn: ({ pageParam }) => referenceApi.rawMaterials({
+      ...params,
+      page: pageParam,
+    }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (
+      lastPage.last ? undefined : lastPage.number + 1
+    ),
+    enabled: open,
+  });
+  const options = query.data?.pages.flatMap(pageContent) || [];
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick, true);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick, true);
+  }, [open]);
+
+  return (
+    <InventorySearchSelectBox
+      ref={selectRef}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.stopPropagation();
+          setOpen(false);
+        }
+      }}
+    >
+      <InventorySearchSelectTrigger
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        $placeholder={!selected.materialId}
+        onClick={() => {
+          setKeywordDraft("");
+          setOpen((current) => !current);
+        }}
+      >
+        {selected.materialId
+          ? `${selected.materialCode} · ${selected.materialName}`
+          : "원자재 선택"}
+      </InventorySearchSelectTrigger>
+      {open && (
+        <InventorySearchSelectDropdown>
+          <input
+            type="search"
+            value={keywordDraft}
+            placeholder="원자재 코드·원자재명 검색"
+            aria-label="입고 원자재 검색"
+            autoFocus
+            onChange={(event) => setKeywordDraft(event.target.value)}
+          />
+          <InventorySearchOptions role="listbox" aria-label="입고 원자재 검색 결과">
+            {query.isPending && (
+              <InventorySearchEmpty>원자재를 불러오는 중입니다.</InventorySearchEmpty>
+            )}
+            {query.isError && (
+              <InventorySearchEmpty>원자재를 불러오지 못했습니다.</InventorySearchEmpty>
+            )}
+            {!query.isPending && !query.isError && options.length === 0 && (
+              <InventorySearchEmpty>검색된 사용 중 원자재가 없습니다.</InventorySearchEmpty>
+            )}
+            {options.map((material) => {
+              const isSelected = String(material.materialId)
+                === String(selected.materialId);
+              return (
+                <InventorySearchOption
+                  key={material.materialId}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  $selected={isSelected}
+                  onClick={() => {
+                    onSelect(material);
+                    setOpen(false);
+                  }}
+                >
+                  <strong>{material.materialName}</strong>
+                  <span>{material.materialCode} · {material.unit}</span>
+                </InventorySearchOption>
+              );
+            })}
+            {query.hasNextPage && (
+              <InventorySearchMore
+                type="button"
+                disabled={query.isFetchingNextPage}
+                onClick={() => query.fetchNextPage()}
+              >
+                {query.isFetchingNextPage ? "불러오는 중..." : "원자재 더 보기"}
+              </InventorySearchMore>
+            )}
+          </InventorySearchOptions>
+        </InventorySearchSelectDropdown>
+      )}
+    </InventorySearchSelectBox>
+  );
+}
 
 function Modal({ children, labelledBy, onClose }) {
   return (
@@ -125,8 +260,8 @@ export default function InventoryManagement({ canManage = false }) {
     placeholderData: (previous) => previous,
   });
   const activeMaterialsQuery = useQuery({
-    queryKey: queryKeys.materials({ status: "ACTIVE", page: 0, size: 100 }),
-    queryFn: () => referenceApi.rawMaterials({ status: "ACTIVE", page: 0, size: 100 }),
+    queryKey: queryKeys.materials({ status: "ACTIVE", page: 0, size: 1 }),
+    queryFn: () => referenceApi.rawMaterials({ status: "ACTIVE", page: 0, size: 1 }),
     enabled: dialog === "raw-lot",
   });
 
@@ -145,6 +280,10 @@ export default function InventoryManagement({ canManage = false }) {
   const receiveRawLot = async (event) => {
     event.preventDefault();
     setMessage("");
+    if (!rawLotForm.materialId) {
+      setMessage("입고할 원자재를 선택해 주세요.");
+      return;
+    }
     try {
       await receiveRawLotMutation.mutateAsync({
         materialLotNo: rawLotForm.materialLotNo.trim(),
@@ -167,7 +306,7 @@ export default function InventoryManagement({ canManage = false }) {
   const rawRows = pageContent(rawQuery.data);
   const productRows = pageContent(productQuery.data);
   const movementRows = pageContent(movementQuery.data);
-  const activeMaterials = pageContent(activeMaterialsQuery.data);
+  const hasActiveMaterials = (activeMaterialsQuery.data?.totalElements ?? 0) > 0;
   const rawTotalItems = rawQuery.data?.totalElements ?? rawRows.length;
   const productTotalItems = productQuery.data?.totalElements ?? productRows.length;
   const movementTotalItems = movementQuery.data?.totalElements ?? movementRows.length;
@@ -366,24 +505,22 @@ export default function InventoryManagement({ canManage = false }) {
           <InventoryModalForm onSubmit={receiveRawLot}>
             <InventoryModalBody>
               <ApiErrors queries={[activeMaterialsQuery]} />
-              {activeMaterialsQuery.isSuccess && activeMaterials.length === 0 && (
+              {activeMaterialsQuery.isSuccess && !hasActiveMaterials && (
                 <EmptyState>사용 중인 원자재가 없습니다. 기준정보에서 먼저 등록해주세요.</EmptyState>
               )}
               <InventoryModalFields>
-                <InventoryModalField>
-                  원자재
-                  <select
-                    value={rawLotForm.materialId}
-                    onChange={(event) => setRawLotForm({ ...rawLotForm, materialId: event.target.value })}
-                    required
-                  >
-                    <option value="">원자재 선택</option>
-                    {activeMaterials.map((material) => (
-                      <option key={material.materialId} value={material.materialId}>
-                        {material.materialCode} · {material.materialName} ({material.unit})
-                      </option>
-                    ))}
-                  </select>
+                <InventoryModalField as="div">
+                  <span>원자재</span>
+                  <RawMaterialSearchSelect
+                    selected={rawLotForm}
+                    onSelect={(material) => setRawLotForm({
+                      ...rawLotForm,
+                      materialId: String(material.materialId),
+                      materialCode: material.materialCode,
+                      materialName: material.materialName,
+                      unit: material.unit,
+                    })}
+                  />
                 </InventoryModalField>
                 <InventoryModalField>
                   내부 LOT 번호
@@ -457,7 +594,13 @@ export default function InventoryManagement({ canManage = false }) {
             </InventoryModalBody>
             <InventoryModalActions>
               <Button type="button" $secondary onClick={() => setDialog(null)}>취소</Button>
-              <Button disabled={receiveRawLotMutation.isPending || activeMaterials.length === 0}>
+              <Button
+                disabled={
+                  receiveRawLotMutation.isPending
+                  || !hasActiveMaterials
+                  || !rawLotForm.materialId
+                }
+              >
                 {receiveRawLotMutation.isPending ? "저장 중..." : "입고 등록"}
               </Button>
             </InventoryModalActions>

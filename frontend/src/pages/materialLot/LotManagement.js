@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { materialApi } from "../../api/services";
 import { POLLING, queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
@@ -11,7 +16,6 @@ import {
   Badge,
   Button,
   Input,
-  Select,
   formatNumber,
   pageContent,
   toneForStatus,
@@ -43,6 +47,12 @@ import {
   LotTable,
   MaterialTable,
   MaterialTableViewport,
+  MaterialLotEmpty,
+  MaterialLotMore,
+  MaterialLotOption,
+  MaterialLotOptions,
+  MaterialLotSearchBox,
+  SelectedMaterialLot,
   ProcessIdentity,
   ProcessTable,
   ProcessTableViewport,
@@ -63,6 +73,7 @@ import {
 } from "./LotManagementCss";
 
 const PAGE_SIZE = 10;
+const OPTION_PAGE_SIZE = 20;
 const toneForProductionLotStatus = (status) => (
   status === "IN_PROGRESS" ? "warn" : toneForStatus(status)
 );
@@ -73,8 +84,11 @@ export default function LotManagement() {
   const [keywordDraft, setKeywordDraft] = useState("");
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState(null);
+  const [materialLotKeywordDraft, setMaterialLotKeywordDraft] = useState("");
+  const [selectedMaterialLot, setSelectedMaterialLot] = useState(null);
   const [message, setMessage] = useState("");
   const keyword = useDebouncedValue(keywordDraft.trim());
+  const materialLotKeyword = useDebouncedValue(materialLotKeywordDraft.trim());
   const params = {
     keyword: keyword || undefined,
     page,
@@ -93,9 +107,21 @@ export default function LotManagement() {
     enabled: Boolean(selectedId),
     refetchInterval: POLLING.INVENTORY,
   });
-  const materialLotsQuery = useQuery({
-    queryKey: queryKeys.rawMaterialLots({ size: 100 }),
-    queryFn: () => materialApi.rawMaterialLots({ size: 100 }),
+  const materialLotParams = {
+    keyword: materialLotKeyword || undefined,
+    size: OPTION_PAGE_SIZE,
+  };
+  const materialLotsQuery = useInfiniteQuery({
+    queryKey: [...queryKeys.rawMaterialLots(materialLotParams), "usage-options"],
+    queryFn: ({ pageParam }) => materialApi.rawMaterialLots({
+      ...materialLotParams,
+      page: pageParam,
+    }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (
+      lastPage.last ? undefined : lastPage.number + 1
+    ),
+    enabled: Boolean(detailQuery.data),
   });
   const usageMutation = useMutation({
     mutationFn: ({ id, body }) => materialApi.addUsage(id, body),
@@ -106,7 +132,7 @@ export default function LotManagement() {
   const detail = detailQuery.data;
   const processes = detail?.processes || [];
   const materials = detail?.materials || [];
-  const availableMaterialLots = pageContent(materialLotsQuery.data)
+  const availableMaterialLots = (materialLotsQuery.data?.pages.flatMap(pageContent) || [])
     .filter((lot) => Number(lot.currentQty) > 0);
   const totalItems = lotsQuery.data?.totalElements ?? lots.length;
   const totalPages = lotsQuery.data?.totalPages ?? (lots.length > 0 ? 1 : 0);
@@ -114,11 +140,15 @@ export default function LotManagement() {
 
   const closeDetail = () => {
     setSelectedId(null);
+    setMaterialLotKeywordDraft("");
+    setSelectedMaterialLot(null);
     setMessage("");
   };
 
   const selectLot = (productionLotId) => {
     setSelectedId(productionLotId);
+    setMaterialLotKeywordDraft("");
+    setSelectedMaterialLot(null);
     setMessage("");
   };
 
@@ -146,16 +176,23 @@ export default function LotManagement() {
     const data = new FormData(form);
     setMessage("");
 
+    if (!selectedMaterialLot) {
+      setMessage("사용할 원자재 LOT을 선택해 주세요.");
+      return;
+    }
+
     try {
       await usageMutation.mutateAsync({
         id: selectedId,
         body: {
-          materialLotId: Number(data.get("materialLotId")),
+          materialLotId: Number(selectedMaterialLot.materialLotId),
           usedQty: Number(data.get("usedQty")),
           handledById: user.userId,
         },
       });
       form.reset();
+      setMaterialLotKeywordDraft("");
+      setSelectedMaterialLot(null);
       setMessage("사용 자재를 등록했습니다.");
     } catch (error) {
       setMessage(extractApiError(error));
@@ -427,16 +464,73 @@ export default function LotManagement() {
                 재고가 남아 있는 원자재 LOT와 실제 사용 수량을 입력합니다.
               </FormDescription>
               <UsageForm onSubmit={registerUsage}>
-                <FormField>
-                  원자재 LOT
-                  <Select name="materialLotId" required>
-                    <option value="">LOT 선택</option>
-                    {availableMaterialLots.map((lot) => (
-                      <option key={lot.materialLotId} value={lot.materialLotId}>
-                        {lot.materialLotNo} · {lot.materialName} ({lot.currentQty}{lot.unit})
-                      </option>
-                    ))}
-                  </Select>
+                <FormField as="div">
+                  <span>원자재 LOT</span>
+                  <MaterialLotSearchBox>
+                    <input
+                      type="search"
+                      value={materialLotKeywordDraft}
+                      placeholder="LOT 번호·원자재·공급사 검색"
+                      aria-label="사용할 원자재 LOT 검색"
+                      onChange={(event) => setMaterialLotKeywordDraft(event.target.value)}
+                    />
+                    {selectedMaterialLot && (
+                      <SelectedMaterialLot>
+                        <span>선택됨</span>
+                        <strong>{selectedMaterialLot.materialLotNo}</strong>
+                        <small>
+                          {selectedMaterialLot.materialName}
+                          {" · "}
+                          {selectedMaterialLot.currentQty}{selectedMaterialLot.unit}
+                        </small>
+                      </SelectedMaterialLot>
+                    )}
+                    <MaterialLotOptions
+                      role="listbox"
+                      aria-label="사용할 원자재 LOT 검색 결과"
+                    >
+                      {materialLotsQuery.isPending && (
+                        <MaterialLotEmpty>원자재 LOT을 불러오는 중입니다.</MaterialLotEmpty>
+                      )}
+                      {!materialLotsQuery.isPending
+                        && availableMaterialLots.length === 0 && (
+                          <MaterialLotEmpty>
+                            재고가 남은 원자재 LOT이 없습니다.
+                          </MaterialLotEmpty>
+                        )}
+                      {availableMaterialLots.map((lot) => {
+                        const selected = String(lot.materialLotId)
+                          === String(selectedMaterialLot?.materialLotId);
+                        return (
+                          <MaterialLotOption
+                            key={lot.materialLotId}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            $selected={selected}
+                            onClick={() => setSelectedMaterialLot(lot)}
+                          >
+                            <strong>{lot.materialLotNo}</strong>
+                            <span>{lot.materialName} · {lot.materialCode}</span>
+                            <small>
+                              가용 {lot.currentQty}{lot.unit} · {lot.supplierName}
+                            </small>
+                          </MaterialLotOption>
+                        );
+                      })}
+                      {materialLotsQuery.hasNextPage && (
+                        <MaterialLotMore
+                          type="button"
+                          disabled={materialLotsQuery.isFetchingNextPage}
+                          onClick={() => materialLotsQuery.fetchNextPage()}
+                        >
+                          {materialLotsQuery.isFetchingNextPage
+                            ? "불러오는 중..."
+                            : "원자재 LOT 더 보기"}
+                        </MaterialLotMore>
+                      )}
+                    </MaterialLotOptions>
+                  </MaterialLotSearchBox>
                 </FormField>
                 <FormField>
                   사용 수량
@@ -449,7 +543,10 @@ export default function LotManagement() {
                     required
                   />
                 </FormField>
-                <Button type="submit" disabled={usageMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={usageMutation.isPending || !selectedMaterialLot}
+                >
                   {usageMutation.isPending ? "등록 중..." : "사용 자재 등록"}
                 </Button>
               </UsageForm>
