@@ -14,9 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -33,6 +35,7 @@ public class EquipmentTelemetryService {
     private final EquipmentTelemetryRepository telemetryRepository;
     private final EquipmentRepository equipmentRepository;
     private final WorkOrderRepository workOrderRepository;
+    private final AlarmService alarmService;
 
     /**
      * 배치 내 동일 설비/작업지시가 여러 샘플에 걸쳐 반복 등장하는 경우가 많아
@@ -60,6 +63,7 @@ public class EquipmentTelemetryService {
                     sample.unit(),
                     sample.measuredAt()
             );
+            createAlarmIfNecessary(equipment, sample);
         }
     }
 
@@ -91,6 +95,49 @@ public class EquipmentTelemetryService {
     private WorkOrder getWorkOrder(Long workOrderId) {
         return workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 작업지시입니다: " + workOrderId));
+    }
+
+    private void createAlarmIfNecessary(
+            Equipment equipment,
+            TelemetrySampleRequest sample
+    ) {
+        TelemetryAlarmPolicy.evaluate(
+                        equipment.getEquipmentCode(),
+                        sample.metricType(),
+                        sample.value()
+                )
+                .ifPresent(condition -> {
+                    String metricLabel = sample.metricType().getLabel();
+                    String message = equipment.getEquipmentName()
+                            + " "
+                            + metricLabel
+                            + " "
+                            + condition.messageLabel();
+                    TelemetryAlarmPolicy.OperatingRange range = condition.operatingRange();
+                    String description = String.format(
+                            Locale.ROOT,
+                            "%s에서 %s %s 상태가 감지되었습니다. 측정값은 %s %s이며 정상 범위는 %s~%s %s입니다.",
+                            equipment.getEquipmentCode(),
+                            metricLabel,
+                            condition.conditionLabel(),
+                            displayValue(sample.value()),
+                            sample.unit(),
+                            displayValue(range.minimum()),
+                            displayValue(range.maximum()),
+                            sample.unit()
+                    );
+                    alarmService.createTelemetryAlarmIfAbsent(
+                            equipment,
+                            message,
+                            description,
+                            condition.severity(),
+                            sample.measuredAt()
+                    );
+                });
+    }
+
+    private String displayValue(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 
     private TelemetryResponse toResponse(EquipmentTelemetry telemetry) {

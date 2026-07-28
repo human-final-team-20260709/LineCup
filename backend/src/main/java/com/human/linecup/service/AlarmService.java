@@ -6,8 +6,9 @@ import com.human.linecup.dto.request.AlarmSearchRequest;
 import com.human.linecup.dto.response.AlarmDetailResponse;
 import com.human.linecup.dto.response.AlarmSummaryResponse;
 import com.human.linecup.entity.Alarm;
-import com.human.linecup.entity.BusinessConflictException;
+import com.human.linecup.entity.AlarmSeverity;
 import com.human.linecup.entity.AlarmStatus;
+import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.Equipment;
 import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.User;
@@ -97,6 +98,48 @@ public class AlarmService {
         );
 
         return toDetail(alarmRepository.save(alarm));
+    }
+
+    @Transactional
+    public boolean createTelemetryAlarmIfAbsent(
+            Equipment equipment,
+            String message,
+            String description,
+            AlarmSeverity severity,
+            Instant occurredAt
+    ) {
+        Objects.requireNonNull(equipment, "설비는 필수입니다.");
+        String normalizedMessage = requireText(message, "알람 메시지");
+        Instant now = clock.instant();
+        Instant effectiveOccurredAt = occurredAt == null || occurredAt.isAfter(now)
+                ? now
+                : occurredAt;
+
+        if (alarmRepository.existsByEquipmentEquipmentIdAndMessageAndOccurredAt(
+                equipment.getEquipmentId(),
+                normalizedMessage,
+                effectiveOccurredAt
+        )) {
+            return false;
+        }
+        if (alarmRepository.existsByEquipmentEquipmentIdAndMessageAndStatusNot(
+                equipment.getEquipmentId(),
+                normalizedMessage,
+                AlarmStatus.RESOLVED
+        )) {
+            return false;
+        }
+
+        Alarm alarm = Alarm.create(
+                generateAlarmNo(effectiveOccurredAt),
+                equipment,
+                normalizedMessage,
+                description,
+                Objects.requireNonNull(severity, "알람 심각도는 필수입니다."),
+                effectiveOccurredAt
+        );
+        alarmRepository.save(alarm);
+        return true;
     }
 
     public Page<AlarmSummaryResponse> getAlarms(

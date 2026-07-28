@@ -16,6 +16,18 @@ public interface AlarmRepository
 
     Optional<Alarm> findByAlarmNo(String alarmNo);
 
+    boolean existsByEquipmentEquipmentIdAndMessageAndOccurredAt(
+            Long equipmentId,
+            String message,
+            Instant occurredAt
+    );
+
+    boolean existsByEquipmentEquipmentIdAndMessageAndStatusNot(
+            Long equipmentId,
+            String message,
+            AlarmStatus status
+    );
+
     Page<Alarm> findByStatusNotOrderByOccurredAtDescAlarmIdDesc(
             AlarmStatus status,
             Pageable pageable
