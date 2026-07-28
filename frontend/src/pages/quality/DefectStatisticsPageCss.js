@@ -279,6 +279,7 @@ export const StatsGrid = styled.section`
 
 export const Panel = styled.article`
   grid-column: span ${({ $span }) => $span || 12};
+  height: ${({ $comparison }) => ($comparison ? "460px" : "auto")};
   min-width: 0;
   overflow: hidden;
   border: 1px solid ${c.border};
@@ -287,6 +288,7 @@ export const Panel = styled.article`
 
   @media (max-width: 1040px) {
     grid-column: 1;
+    height: auto;
   }
 `;
 
@@ -331,6 +333,51 @@ export const PanelLabel = styled.span`
   line-height: 16px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+`;
+
+export const PanelPager = styled.div`
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+
+  ${Mono} {
+    min-width: 38px;
+    color: ${c.text};
+    text-align: center;
+  }
+`;
+
+export const PagerButton = styled.button`
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid ${c.border};
+  border-radius: 4px;
+  background: ${c.lowest};
+  color: ${c.text};
+  cursor: pointer;
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: ${c.green};
+    color: ${c.green};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${c.green};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 `;
 
 export const PanelDescription = styled.p`
@@ -419,6 +466,8 @@ export const BarFill = styled.div`
 
 export const HorizontalList = styled.div`
   display: grid;
+  min-height: ${({ $paged }) => ($paged ? "330px" : "auto")};
+  align-content: start;
   gap: 18px;
   margin: 0;
   padding: 20px 16px;

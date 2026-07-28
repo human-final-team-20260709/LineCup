@@ -310,6 +310,7 @@ public class WorkOrderService {
 
         Instant now = Instant.now();
         validateSingleActiveWorkOrder(workOrderId, request.action());
+        validateCompletionQuantity(workOrder, request.action());
         WorkOrder.Status prevStatus = workOrder.applyAction(request.action(), now);
         productionLotService.applyWorkOrderAction(workOrderId, request.action(), now);
 
@@ -385,6 +386,16 @@ public class WorkOrderService {
                 .anyMatch(order -> !order.getWorkOrderId().equals(workOrderId));
         if (anotherActiveOrderExists) {
             throw new BusinessConflictException("이미 진행 중이거나 보류된 작업지시가 있습니다.");
+        }
+    }
+
+    private void validateCompletionQuantity(WorkOrder workOrder, WorkOrder.Action action) {
+        if (action == WorkOrder.Action.COMPLETE
+                && workOrder.getCurrentQty() < workOrder.getTargetQty()) {
+            throw new BusinessConflictException(
+                    "목표 수량에 도달한 작업지시만 완료할 수 있습니다. 현재 "
+                            + workOrder.getCurrentQty() + " / 목표 " + workOrder.getTargetQty()
+            );
         }
     }
 

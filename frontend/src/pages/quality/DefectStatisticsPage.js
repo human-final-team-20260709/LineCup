@@ -6,6 +6,8 @@ import {
   FiBarChart2,
   FiCalendar,
   FiCheckCircle,
+  FiChevronLeft,
+  FiChevronRight,
   FiClock,
 } from "react-icons/fi";
 import { defectApi } from "../../api/services";
@@ -40,6 +42,8 @@ import {
   PanelEmpty,
   PanelHeader,
   PanelLabel,
+  PanelPager,
+  PagerButton,
   ProgressFill,
   ProgressTrack,
   QueryRegion,
@@ -62,6 +66,8 @@ const PERIOD_OPTIONS = [
   { value: 7, label: "최근 7일" },
   { value: 30, label: "최근 30일" },
 ];
+
+const PRODUCT_PAGE_SIZE = 4;
 
 const asNumber = (value) => {
   const number = Number(value);
@@ -96,6 +102,7 @@ const scaleToMax = (value, maximum) =>
 
 export default function DefectStatisticsPage() {
   const [days, setDays] = useState(7);
+  const [productPage, setProductPage] = useState(0);
   const activePeriodLabel =
     PERIOD_OPTIONS.find((option) => option.value === days)?.label ||
     "선택 기간";
@@ -114,6 +121,15 @@ export default function DefectStatisticsPage() {
   const handlingRate = asNumber(stats.handlingRate);
   const dailyRates = asList(stats.dailyRates);
   const productRates = asList(stats.productRates);
+  const productPageCount = Math.max(
+    1,
+    Math.ceil(productRates.length / PRODUCT_PAGE_SIZE),
+  );
+  const currentProductPage = Math.min(productPage, productPageCount - 1);
+  const visibleProductRates = productRates.slice(
+    currentProductPage * PRODUCT_PAGE_SIZE,
+    (currentProductPage + 1) * PRODUCT_PAGE_SIZE,
+  );
   const processRates = asList(stats.processQuantities).map((item) => ({
     ...item,
     derivedRate:
@@ -160,7 +176,10 @@ export default function DefectStatisticsPage() {
           <select
             aria-label="통계 조회 기간"
             value={days}
-            onChange={(event) => setDays(Number(event.target.value))}
+            onChange={(event) => {
+              setDays(Number(event.target.value));
+              setProductPage(0);
+            }}
           >
             {PERIOD_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -241,13 +260,18 @@ export default function DefectStatisticsPage() {
             </EmptyState>
           ) : (
             <StatsGrid aria-label="불량 통계 상세">
-              <Panel $span={8} aria-labelledby="daily-rate-title">
+              <Panel
+                $span={8}
+                $comparison
+                aria-labelledby="daily-rate-title"
+              >
                 <PanelHeader>
                   <div>
                     <PanelLabel>Daily rate</PanelLabel>
                     <h2 id="daily-rate-title">일별 불량률</h2>
                     <PanelDescription>
-                      일별 생산 수량 대비 불량 수량
+                      일별 생산 수량 대비 불량률 · 높이는 최고값 대비 · 주황은
+                      기간 평균 초과
                     </PanelDescription>
                   </div>
                   <Mono>최고 {formatPercent(maxDailyRate)}</Mono>
@@ -294,21 +318,62 @@ export default function DefectStatisticsPage() {
                 )}
               </Panel>
 
-              <Panel $span={4} aria-labelledby="product-rate-title">
+              <Panel
+                $span={4}
+                $comparison
+                aria-labelledby="product-rate-title"
+              >
                 <PanelHeader>
                   <div>
                     <PanelLabel>By product</PanelLabel>
                     <h2 id="product-rate-title">제품별 불량률</h2>
                     <PanelDescription>
-                      제품별 생산 수량을 분모로 계산
+                      제품별 생산 수량을 분모로 계산 · 막대 길이는 최고값 대비
                     </PanelDescription>
                   </div>
+                  {productPageCount > 1 && (
+                    <PanelPager
+                      role="group"
+                      aria-label="제품별 불량률 페이지 이동"
+                    >
+                      <PagerButton
+                        type="button"
+                        aria-label="이전 제품 목록"
+                        disabled={currentProductPage === 0}
+                        onClick={() =>
+                          setProductPage(Math.max(0, currentProductPage - 1))
+                        }
+                      >
+                        <FiChevronLeft aria-hidden="true" />
+                      </PagerButton>
+                      <Mono aria-live="polite">
+                        {currentProductPage + 1} / {productPageCount}
+                      </Mono>
+                      <PagerButton
+                        type="button"
+                        aria-label="다음 제품 목록"
+                        disabled={
+                          currentProductPage === productPageCount - 1
+                        }
+                        onClick={() =>
+                          setProductPage(
+                            Math.min(
+                              productPageCount - 1,
+                              currentProductPage + 1,
+                            ),
+                          )
+                        }
+                      >
+                        <FiChevronRight aria-hidden="true" />
+                      </PagerButton>
+                    </PanelPager>
+                  )}
                 </PanelHeader>
                 {productRates.length === 0 ? (
                   <PanelEmpty>제품별 집계 데이터가 없습니다.</PanelEmpty>
                 ) : (
-                  <HorizontalList as="ul">
-                    {productRates.map((item) => {
+                  <HorizontalList as="ul" $paged>
+                    {visibleProductRates.map((item) => {
                       const rate = asNumber(item.defectRate);
                       return (
                         <HorizontalItem as="li" key={item.productId}>
