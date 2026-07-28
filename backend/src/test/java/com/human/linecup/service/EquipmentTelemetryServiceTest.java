@@ -43,7 +43,7 @@ class EquipmentTelemetryServiceTest {
     private EquipmentTelemetryService equipmentTelemetryService;
 
     @Test
-    void ingestCreatesWarningAlarmWhenTelemetryApproachesOperatingBoundary() {
+    void ingestCreatesCautionAlarmWhenTelemetryApproachesOperatingBoundary() {
         Instant measuredAt = Instant.parse("2026-07-28T02:30:00Z");
         Equipment equipment = equipment();
         WorkOrder workOrder = workOrder();
@@ -57,7 +57,47 @@ class EquipmentTelemetryServiceTest {
                 eq(equipment),
                 eq("혼합기 1호 온도 기준값 접근"),
                 contains("상한 접근 상태"),
+                eq(AlarmSeverity.CAUTION),
+                eq(measuredAt)
+        );
+    }
+
+    @Test
+    void ingestCreatesWarningAlarmAtTwoPercentOutsideOperatingRange() {
+        Instant measuredAt = Instant.parse("2026-07-28T02:30:00Z");
+        Equipment equipment = equipment();
+        WorkOrder workOrder = workOrder();
+        when(equipmentRepository.findByEquipmentCode("MIXER-01"))
+                .thenReturn(Optional.of(equipment));
+        when(workOrderRepository.findById(1L)).thenReturn(Optional.of(workOrder));
+
+        equipmentTelemetryService.ingest(batch("40.4", measuredAt));
+
+        verify(alarmService).createTelemetryAlarmIfAbsent(
+                eq(equipment),
+                eq("혼합기 1호 온도 허용 범위 경미 이탈"),
+                contains("상한 경미 이탈 상태"),
                 eq(AlarmSeverity.WARNING),
+                eq(measuredAt)
+        );
+    }
+
+    @Test
+    void ingestCreatesCriticalAlarmBeyondTwoPercentOutsideOperatingRange() {
+        Instant measuredAt = Instant.parse("2026-07-28T02:30:00Z");
+        Equipment equipment = equipment();
+        WorkOrder workOrder = workOrder();
+        when(equipmentRepository.findByEquipmentCode("MIXER-01"))
+                .thenReturn(Optional.of(equipment));
+        when(workOrderRepository.findById(1L)).thenReturn(Optional.of(workOrder));
+
+        equipmentTelemetryService.ingest(batch("40.41", measuredAt));
+
+        verify(alarmService).createTelemetryAlarmIfAbsent(
+                eq(equipment),
+                eq("혼합기 1호 온도 허용 범위 심각 이탈"),
+                contains("상한 심각 이탈 상태"),
+                eq(AlarmSeverity.CRITICAL),
                 eq(measuredAt)
         );
     }

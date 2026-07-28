@@ -46,7 +46,7 @@ const DEFAULT_END_DATE = currentKstDate();
 const DEFAULT_START_DATE = toKst(kstPeriod(30).from, "YYYY-MM-DD");
 
 const severityClass = (severity) =>
-  String(severity || "INFO").toLowerCase();
+  String(severity || "CAUTION").toLowerCase();
 
 export default function AlarmHistoryPage() {
   const navigate = useNavigate();
@@ -233,7 +233,7 @@ export default function AlarmHistoryPage() {
             <option value="">전체 심각도</option>
             <option value="CRITICAL">심각</option>
             <option value="WARNING">경고</option>
-            <option value="INFO">정보</option>
+            <option value="CAUTION">주의</option>
           </select>
         </SelectField>
       </FilterPanel>

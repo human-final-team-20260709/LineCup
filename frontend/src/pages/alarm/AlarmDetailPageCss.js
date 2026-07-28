@@ -122,7 +122,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-detail-page' })`
   border-color: rgba(255, 185, 95, 0.34);
 }
 
-& .alarm-hero-panel--info {
+& .alarm-hero-panel--caution {
   border-color: rgba(56, 189, 248, 0.32);
 }
 
@@ -611,7 +611,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-detail-page' })`
   color: #ffb4ab;
 }
 
-& .alarm-severity-chip--info,
+& .alarm-severity-chip--caution,
 & .alarm-status-pill--active {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);

@@ -61,7 +61,7 @@ import {
 const EQUIPMENT_PAGE_SIZE = 3;
 const RECENT_ALARM_PAGE_SIZE = 10;
 
-const severityKey = (severity) => String(severity || "INFO").toLowerCase();
+const severityKey = (severity) => String(severity || "CAUTION").toLowerCase();
 const isOpenAlarm = (alarm) => alarm.status !== "RESOLVED" && !alarm.handled;
 
 const byLatest = (left, right) =>
@@ -201,7 +201,7 @@ export default function EquipmentAlarmPage() {
 
   const criticalCount = countBySeverity(allSelectedAlarms, "CRITICAL");
   const warningCount = countBySeverity(allSelectedAlarms, "WARNING");
-  const infoCount = countBySeverity(allSelectedAlarms, "INFO");
+  const cautionCount = countBySeverity(allSelectedAlarms, "CAUTION");
   const openCount = allSelectedAlarms.filter(isOpenAlarm).length;
   const topMessages = messageFrequency(allSelectedAlarms);
   const maxFrequency = Math.max(1, ...topMessages.map((item) => item.count));
@@ -254,7 +254,7 @@ export default function EquipmentAlarmPage() {
             <option value="">전체 심각도</option>
             <option value="CRITICAL">심각</option>
             <option value="WARNING">경고</option>
-            <option value="INFO">정보</option>
+            <option value="CAUTION">주의</option>
           </select>
         </SelectBox>
         <SelectBox>
@@ -424,8 +424,8 @@ export default function EquipmentAlarmPage() {
                       <strong>{warningCount}</strong>
                     </SplitItem>
                     <SplitItem>
-                      <span>정보</span>
-                      <strong>{infoCount}</strong>
+                      <span>주의</span>
+                      <strong>{cautionCount}</strong>
                     </SplitItem>
                     <SplitItem>
                       <span>미처리</span>

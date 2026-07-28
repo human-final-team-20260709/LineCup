@@ -59,7 +59,7 @@ import {
   TitleBlock,
 } from "./AlarmDetailPageCss";
 
-const severityKey = (severity) => String(severity || "INFO").toLowerCase();
+const severityKey = (severity) => String(severity || "CAUTION").toLowerCase();
 
 const statusKey = (status) => {
   if (status === "RESOLVED") return "resolved";

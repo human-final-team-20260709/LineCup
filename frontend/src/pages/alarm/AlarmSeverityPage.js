@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FiAlertCircle,
   FiAlertOctagon,
+  FiAlertTriangle,
   FiCheck,
-  FiInfo,
   FiSearch,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -46,24 +46,24 @@ import {
 } from "./AlarmSeverityPageCss";
 
 const severityDefinitions = {
-  INFO: {
-    key: "info",
-    label: "정보",
-    icon: FiInfo,
-    summary: "설비 상태를 기록하는 참고용 알람",
-    bullets: ["단순 상태 알림", "참고용 알람", "생산 영향 낮음"],
+  CAUTION: {
+    key: "caution",
+    label: "주의",
+    icon: FiAlertCircle,
+    summary: "정상 범위 경계 2% 이내에 접근한 알람",
+    bullets: ["경계 2% 이내", "추세 확인 필요", "사전 점검 대상"],
     rules: [
-      "공정 상태 변화를 운영 이력으로 기록합니다.",
-      "즉시 조치보다 추세 확인과 참고에 활용합니다.",
-      "반복 발생 시 경고 단계 전환 여부를 점검합니다.",
+      "측정값이 정상 범위 경계에 접근하는지 추세를 확인합니다.",
+      "허용 범위를 벗어나기 전에 설비와 공정 조건을 점검합니다.",
+      "경고 단계로 전환되는지 지속적으로 관찰합니다.",
     ],
   },
   WARNING: {
     key: "warning",
     label: "경고",
-    icon: FiAlertCircle,
-    summary: "점검이 필요한 설비 이상 징후",
-    bullets: ["점검 필요", "품질 영향 가능", "설비 이상 징후"],
+    icon: FiAlertTriangle,
+    summary: "허용 범위를 2% 이내로 벗어난 경고 알람",
+    bullets: ["범위 경미 이탈", "점검 필요", "품질 영향 가능"],
     rules: [
       "설비 이상 징후를 확인하고 점검 일정을 지정합니다.",
       "생산 품질과 공정 편차에 미치는 영향을 추적합니다.",
@@ -85,7 +85,7 @@ const severityDefinitions = {
 };
 
 const isOpenAlarm = (alarm) => alarm.status !== "RESOLVED" && !alarm.handled;
-const severityKey = (severity) => String(severity || "INFO").toLowerCase();
+const severityKey = (severity) => String(severity || "CAUTION").toLowerCase();
 const PAGE_SIZE = 10;
 
 export default function AlarmSeverityPage() {
@@ -186,7 +186,7 @@ export default function AlarmSeverityPage() {
           <Eyebrow>Severity classification</Eyebrow>
           <h1>심각도별 알람 조회</h1>
           <p>
-            정보·경고·심각 단계의 의미와 대응 기준을 확인하고 최근 30일
+            주의·경고·심각 단계의 의미와 대응 기준을 확인하고 최근 30일
             발생 내역을 심각도별로 조회합니다.
           </p>
         </TitleBlock>

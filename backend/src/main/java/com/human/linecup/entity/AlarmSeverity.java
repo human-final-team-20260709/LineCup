@@ -1,7 +1,7 @@
 package com.human.linecup.entity;
 
 public enum AlarmSeverity {
-    INFO("정보"),
+    CAUTION("주의"),
     WARNING("경고"),
     CRITICAL("심각");
 

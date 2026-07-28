@@ -149,7 +149,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   cursor: pointer;
 }
 
-& .alarm-severity-card--info.is-active {
+& .alarm-severity-card--caution.is-active {
   border-color: #8bd5ff;
   background: rgba(56, 189, 248, 0.14);
 }
@@ -192,7 +192,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   color: #4be277;
 }
 
-& .alarm-severity-card--info .alarm-severity-card-top svg {
+& .alarm-severity-card--caution .alarm-severity-card-top svg {
   color: #8bd5ff;
 }
 
@@ -261,7 +261,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   padding: 20px;
 }
 
-& .alarm-definition-panel--info {
+& .alarm-definition-panel--caution {
   border-color: rgba(56, 189, 248, 0.32);
 }
 
@@ -310,7 +310,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   background: #4be277;
 }
 
-& .alarm-definition-panel--info .alarm-rule-item span {
+& .alarm-definition-panel--caution .alarm-rule-item span {
   background: #8bd5ff;
 }
 
@@ -474,7 +474,7 @@ export const PageShell = styled.main.attrs({ className: 'alarm-severity-page' })
   color: #ffb95f;
 }
 
-& .alarm-severity-chip--info {
+& .alarm-severity-chip--caution {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
   color: #8bd5ff;

@@ -57,7 +57,7 @@ const PERIOD_OPTIONS = [
   { value: 30, label: "최근 30일" },
 ];
 
-const SEVERITY_ORDER = ["CRITICAL", "WARNING", "INFO"];
+const SEVERITY_ORDER = ["CRITICAL", "WARNING", "CAUTION"];
 
 const asNumber = (value) => {
   const number = Number(value);
@@ -78,7 +78,7 @@ const shortDate = (value) => {
 };
 
 const normalizeSeverity = (severity) =>
-  String(severity || "INFO").toLowerCase();
+  String(severity || "CAUTION").toLowerCase();
 
 const updatedTime = (timestamp) => {
   if (!timestamp) {
@@ -145,7 +145,7 @@ export default function AlarmStatisticsPage() {
             ? "심각"
             : severity === "WARNING"
               ? "경고"
-              : "정보",
+              : "주의",
         count: 0,
         ratio: 0,
       },
