@@ -37,6 +37,7 @@ import {
   KpiValue,
   LiveDot,
   LiveStatus,
+  MetricPair,
   Mono,
   OverviewGrid,
   Page,
@@ -50,6 +51,8 @@ import {
   ProcessList,
   ProcessPageButton,
   ProcessPager,
+  ProgressFill,
+  ProgressTrack,
   StatusChip,
   Table,
   TableWrap,
@@ -364,29 +367,41 @@ export default function ProductionOverviewPage() {
           </PanelHeader>
           {processes.length ? (
             <ProcessList>
-              {visibleProcesses.map((process) => (
-                <ProcessItem key={process.processProgressId}>
-                  <ProcessHead>
-                    <div>
-                      <strong>{process.processName}</strong>
-                      <small>
-                        {process.equipmentCode || "설비 미지정"}
-                        {process.equipmentName ? ` · ${process.equipmentName}` : ""}
-                      </small>
-                    </div>
-                    <StatusChip
-                      $tone={{
-                        IN_PROGRESS: "info",
-                        HOLD: "warning",
-                        COMPLETED: "success",
-                      }[process.status] || "neutral"}
+              {visibleProcesses.map((process) => {
+                const rate = activeProgressRate;
+
+                return (
+                  <ProcessItem key={process.processProgressId}>
+                    <ProcessHead>
+                      <div>
+                        <strong>{process.processName}</strong>
+                        <small>
+                          {process.equipmentCode || "설비 미지정"}
+                          {process.equipmentName ? ` · ${process.equipmentName}` : ""}
+                        </small>
+                      </div>
+                      <MetricPair $tone={percentTone(rate)}>
+                        <strong>{formatNumber(activeSummary?.currentQty)}</strong>
+                        <span>{rate}%</span>
+                      </MetricPair>
+                    </ProcessHead>
+                    <ProgressTrack
+                      role="progressbar"
+                      aria-label={`${process.processName} 목표 달성률`}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow={Math.min(rate, 100)}
                     >
-                      {process.statusLabel}
-                    </StatusChip>
-                  </ProcessHead>
-                  <small>공정 코드 {process.processCode}</small>
-                </ProcessItem>
-              ))}
+                      <ProgressFill $value={rate} $tone={percentTone(rate)} />
+                    </ProgressTrack>
+                    <small>
+                      전체 목표 {formatNumber(activeSummary?.targetQty)} EA · 정상{" "}
+                      {formatNumber(activeSummary?.goodQty)} · 불량{" "}
+                      {formatNumber(activeSummary?.defectQty)} EA · {process.statusLabel}
+                    </small>
+                  </ProcessItem>
+                );
+              })}
             </ProcessList>
           ) : (
             <EmptyState>
