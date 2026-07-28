@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Bar,
@@ -27,6 +32,7 @@ import { extractApiError } from "../../api/client";
 import { ApiErrors, QueryStatus } from "../../components/ApiState";
 import CommonPagination from "../../components/CommonPagination";
 import { formatNumber, pageContent } from "../../components/OperationalUi";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
 import {
   Badge,
   ChartCard,
@@ -80,6 +86,13 @@ import {
   ProgressRate,
   ProgressRow,
   ProgressTrack,
+  ProductOption,
+  ProductOptionEmpty,
+  ProductOptionList,
+  ProductOptionMore,
+  ProductSelectBox,
+  ProductSelectDropdown,
+  ProductSelectTrigger,
   QtyCell,
   QtySub,
   SearchBox,
@@ -110,6 +123,8 @@ const statusOptions = [
   ["HOLD", "보류"],
   ["DONE", "완료"],
 ];
+
+const PRODUCT_OPTION_PAGE_SIZE = 20;
 
 const statusAccent = {
   "": tokens.colors.primary,
@@ -152,8 +167,26 @@ export default function WorkOrderList({ view = "table" }) {
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productKeywordDraft, setProductKeywordDraft] = useState("");
+  const [productOptionsOpen, setProductOptionsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [toast, setToast] = useState("");
+  const productSelectRef = useRef(null);
+  const productKeyword = useDebouncedValue(productKeywordDraft.trim());
+
+  const openCreateForm = () => {
+    setSelectedProduct(null);
+    setProductKeywordDraft("");
+    setProductOptionsOpen(false);
+    setMessage("");
+    setShowForm(true);
+  };
+
+  const closeCreateForm = () => {
+    setProductOptionsOpen(false);
+    setShowForm(false);
+  };
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -170,6 +203,24 @@ export default function WorkOrderList({ view = "table" }) {
     const timeout = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  useEffect(() => {
+    if (!productOptionsOpen) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (
+        productSelectRef.current
+        && !productSelectRef.current.contains(event.target)
+      ) {
+        setProductOptionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick, true);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick, true);
+  }, [productOptionsOpen]);
 
   const params = {
     status: status || undefined,
@@ -188,9 +239,25 @@ export default function WorkOrderList({ view = "table" }) {
     queryFn: workOrderApi.summary,
     refetchInterval: POLLING.WORK_ORDER,
   });
-  const productsQuery = useQuery({
-    queryKey: queryKeys.products({ status: "ACTIVE", size: 100 }),
-    queryFn: () => referenceApi.products({ status: "ACTIVE", size: 100 }),
+  const productOptionParams = {
+    keyword: productKeyword || undefined,
+    status: "ACTIVE",
+    size: PRODUCT_OPTION_PAGE_SIZE,
+  };
+  const productOptionsQuery = useInfiniteQuery({
+    queryKey: [
+      ...queryKeys.products(productOptionParams),
+      "work-order-product-options",
+    ],
+    queryFn: ({ pageParam }) => referenceApi.products({
+      ...productOptionParams,
+      page: pageParam,
+    }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (
+      lastPage.last ? undefined : lastPage.number + 1
+    ),
+    enabled: showForm && productOptionsOpen,
   });
   const supervisorsQuery = useQuery({
     queryKey: queryKeys.users({ role: "SUPERVISOR", size: 100 }),
@@ -201,7 +268,7 @@ export default function WorkOrderList({ view = "table" }) {
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["work-orders"] });
       setToast(`${created.workOrderNo} 작업지시를 등록했습니다.`);
-      setShowForm(false);
+      closeCreateForm();
     },
   });
 
@@ -209,9 +276,14 @@ export default function WorkOrderList({ view = "table" }) {
     event.preventDefault();
     setMessage("");
     const data = new FormData(event.currentTarget);
+    const productId = Number(data.get("productId"));
+    if (!productId) {
+      setMessage("제품을 선택해 주세요.");
+      return;
+    }
     try {
       await createMutation.mutateAsync({
-        productId: Number(data.get("productId")),
+        productId,
         targetQty: Number(data.get("targetQty")),
         hourlyTargetQty: Number(data.get("hourlyTargetQty")),
         plannedStartDate: data.get("plannedStartDate"),
@@ -230,6 +302,8 @@ export default function WorkOrderList({ view = "table" }) {
   const totalElements = workOrdersQuery.data?.totalElements ?? rows.length;
   const totalPages = workOrdersQuery.data?.totalPages || 1;
   const isEmpty = !workOrdersQuery.isPending && rows.length === 0;
+  const productOptions =
+    productOptionsQuery.data?.pages.flatMap(pageContent) || [];
 
   const chartData = rows.slice(0, 10).map((order) => {
     const shortCode = order.workOrderNo.split("-").pop();
@@ -259,7 +333,7 @@ export default function WorkOrderList({ view = "table" }) {
           <StyledButton
             type="button"
             $variant="primary"
-            onClick={() => setShowForm(true)}
+            onClick={openCreateForm}
           >
             <FiPlus /> 작업지시 등록
           </StyledButton>
@@ -348,7 +422,7 @@ export default function WorkOrderList({ view = "table" }) {
         </SearchBox>
       </ToolBar>
 
-      <ApiErrors queries={[productsQuery, supervisorsQuery, summaryQuery]} />
+      <ApiErrors queries={[supervisorsQuery, summaryQuery]} />
       <QueryStatus query={workOrdersQuery} />
 
       {isEmpty ? (
@@ -361,7 +435,7 @@ export default function WorkOrderList({ view = "table" }) {
             <EmptyDesc>
               검색어나 상태 필터를 변경하거나 새 작업지시를 등록해보세요.
             </EmptyDesc>
-            <EmptyActionBtn type="button" onClick={() => setShowForm(true)}>
+            <EmptyActionBtn type="button" onClick={openCreateForm}>
               작업지시 등록
             </EmptyActionBtn>
           </EmptyWrap>
@@ -502,13 +576,13 @@ export default function WorkOrderList({ view = "table" }) {
 
       {showForm &&
         createPortal(
-          <ModalOverlay onClick={() => setShowForm(false)}>
+          <ModalOverlay onClick={closeCreateForm}>
             <ModalPanel onClick={(event) => event.stopPropagation()}>
               <ModalHeader>
                 <ModalTitle>새 작업지시 등록</ModalTitle>
                 <ModalCloseBtn
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={closeCreateForm}
                   aria-label="닫기"
                 >
                   <FiX />
@@ -519,19 +593,109 @@ export default function WorkOrderList({ view = "table" }) {
                   <FieldGrid>
                     <Field $span2>
                       <Label>제품</Label>
-                      <Select name="productId" required defaultValue="">
-                        <option value="" disabled>
-                          제품 선택
-                        </option>
-                        {pageContent(productsQuery.data).map((product) => (
-                          <option
-                            key={product.productId}
-                            value={product.productId}
-                          >
-                            {product.productName}
-                          </option>
-                        ))}
-                      </Select>
+                      <input
+                        type="hidden"
+                        name="productId"
+                        value={selectedProduct?.productId || ""}
+                        readOnly
+                      />
+                      <ProductSelectBox
+                        ref={productSelectRef}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape" && productOptionsOpen) {
+                            event.stopPropagation();
+                            setProductOptionsOpen(false);
+                          }
+                        }}
+                      >
+                        <ProductSelectTrigger
+                          type="button"
+                          aria-haspopup="listbox"
+                          aria-expanded={productOptionsOpen}
+                          $placeholder={!selectedProduct}
+                          onClick={() => {
+                            setProductKeywordDraft("");
+                            setProductOptionsOpen((current) => !current);
+                          }}
+                        >
+                          {selectedProduct
+                            ? `${selectedProduct.productCode} · ${selectedProduct.productName}`
+                            : "제품 선택"}
+                        </ProductSelectTrigger>
+                        {productOptionsOpen && (
+                          <ProductSelectDropdown>
+                            <input
+                              type="search"
+                              value={productKeywordDraft}
+                              placeholder="제품 코드·제품명 검색"
+                              aria-label="작업지시 제품 검색"
+                              autoFocus
+                              onChange={(event) =>
+                                setProductKeywordDraft(event.target.value)
+                              }
+                            />
+                            <ProductOptionList
+                              role="listbox"
+                              aria-label="작업지시 제품 검색 결과"
+                            >
+                              {productOptionsQuery.isPending && (
+                                <ProductOptionEmpty>
+                                  제품을 불러오는 중입니다.
+                                </ProductOptionEmpty>
+                              )}
+                              {productOptionsQuery.isError && (
+                                <ProductOptionEmpty>
+                                  제품을 불러오지 못했습니다.
+                                </ProductOptionEmpty>
+                              )}
+                              {!productOptionsQuery.isPending
+                                && !productOptionsQuery.isError
+                                && productOptions.length === 0 && (
+                                  <ProductOptionEmpty>
+                                    검색된 사용 중 제품이 없습니다.
+                                  </ProductOptionEmpty>
+                                )}
+                              {productOptions.map((product) => {
+                                const selected =
+                                  String(product.productId)
+                                  === String(selectedProduct?.productId);
+                                return (
+                                  <ProductOption
+                                    key={product.productId}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={selected}
+                                    $selected={selected}
+                                    onClick={() => {
+                                      setSelectedProduct(product);
+                                      setProductOptionsOpen(false);
+                                      setMessage("");
+                                    }}
+                                  >
+                                    <strong>{product.productName}</strong>
+                                    <span>{product.productCode}</span>
+                                  </ProductOption>
+                                );
+                              })}
+                              {productOptionsQuery.hasNextPage && (
+                                <ProductOptionMore
+                                  type="button"
+                                  disabled={
+                                    productOptionsQuery.isFetchingNextPage
+                                  }
+                                  onClick={() =>
+                                    productOptionsQuery.fetchNextPage()
+                                  }
+                                >
+                                  {productOptionsQuery.isFetchingNextPage
+                                    ? "불러오는 중..."
+                                    : "제품 더 보기"}
+                                </ProductOptionMore>
+                              )}
+                            </ProductOptionList>
+                          </ProductSelectDropdown>
+                        )}
+                      </ProductSelectBox>
                     </Field>
                     <Field>
                       <Label>목표 수량</Label>
@@ -587,7 +751,7 @@ export default function WorkOrderList({ view = "table" }) {
                   <StyledButton
                     type="button"
                     $variant="outline"
-                    onClick={() => setShowForm(false)}
+                    onClick={closeCreateForm}
                   >
                     취소
                   </StyledButton>
