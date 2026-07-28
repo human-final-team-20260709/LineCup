@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +13,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { defectApi, materialApi, referenceApi } from "../../api/services";
-import { queryKeys } from "../../api/config";
+import { POLLING, queryKeys } from "../../api/config";
 import { extractApiError } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { ApiErrors } from "../../components/ApiState";
@@ -78,6 +78,13 @@ const statusLabels = {
   COMPLETED: "처리 완료",
 };
 
+const activeLotStatuses = new Set(["IN_PROGRESS", "HOLD"]);
+const activeLotQuery = {
+  statuses: "IN_PROGRESS,HOLD",
+  page: 0,
+  size: 100,
+};
+
 const emptyForm = {
   workOrderId: "",
   productionLotId: "",
@@ -85,7 +92,7 @@ const emptyForm = {
   defectType: "",
   quantity: "",
   cause: "",
-  handleMethod: "NORMAL_APPROVAL",
+  handleMethod: "",
   status: "UNHANDLED",
   handlingContent: "",
 };
@@ -99,8 +106,9 @@ export default function DefectFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const lotsQuery = useQuery({
-    queryKey: queryKeys.productionLots({ size: 100 }),
-    queryFn: () => materialApi.productionLots({ size: 100 }),
+    queryKey: queryKeys.productionLots(activeLotQuery),
+    queryFn: () => materialApi.productionLots(activeLotQuery),
+    refetchInterval: POLLING.WORK_ORDER,
   });
   const equipmentsQuery = useQuery({
     queryKey: queryKeys.equipments(),
@@ -112,7 +120,30 @@ export default function DefectFormPage() {
   });
   const createMutation = useMutation({ mutationFn: defectApi.create });
 
-  const lots = useMemo(() => pageContent(lotsQuery.data), [lotsQuery.data]);
+  const lots = useMemo(
+    () =>
+      pageContent(lotsQuery.data).filter((lot) =>
+        activeLotStatuses.has(lot.status),
+      ),
+    [lotsQuery.data],
+  );
+  useEffect(() => {
+    if (
+      !form.productionLotId ||
+      lots.some(
+        (lot) =>
+          String(lot.productionLotId) === String(form.productionLotId),
+      )
+    ) {
+      return;
+    }
+    setForm((current) => ({
+      ...current,
+      workOrderId: "",
+      productionLotId: "",
+      equipmentId: "",
+    }));
+  }, [form.productionLotId, lots]);
   const equipments = useMemo(
     () => pageContent(equipmentsQuery.data),
     [equipmentsQuery.data],
@@ -182,6 +213,15 @@ export default function DefectFormPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleStatusChange = (event) => {
+    const status = event.target.value;
+    setForm((current) => ({
+      ...current,
+      status,
+      handleMethod: status === "COMPLETED" ? current.handleMethod : "",
+    }));
+  };
+
   const handleWorkOrderChange = (event) => {
     setForm((current) => ({
       ...current,
@@ -220,7 +260,8 @@ export default function DefectFormPage() {
         try {
           await defectApi.handle(defectId, {
             handlerId: user.userId,
-            handleMethod: form.handleMethod,
+            handleMethod:
+              form.status === "COMPLETED" ? form.handleMethod : null,
             status: form.status,
             handlingContent: form.handlingContent.trim() || null,
           });
@@ -414,37 +455,6 @@ export default function DefectFormPage() {
 
           <Section>
             <SectionTitle>초기 처리</SectionTitle>
-            <MethodGrid role="radiogroup" aria-label="처리 방법">
-              {methodOptions.map((method) => {
-                const Icon = method.icon;
-                const isActive = form.handleMethod === method.value;
-                return (
-                  <MethodOption key={method.value} $active={isActive}>
-                    <input
-                      type="radio"
-                      name="handleMethod"
-                      value={method.value}
-                      checked={isActive}
-                      onChange={(event) =>
-                        updateForm("handleMethod", event.target.value)
-                      }
-                    />
-                    <RadioMark $active={isActive}>
-                      {isActive ? (
-                        <FiCheck aria-hidden="true" />
-                      ) : (
-                        <Icon aria-hidden="true" />
-                      )}
-                    </RadioMark>
-                    <span>
-                      <strong>{method.label}</strong>
-                      <small>{method.description}</small>
-                    </span>
-                  </MethodOption>
-                );
-              })}
-            </MethodGrid>
-
             <FieldGrid>
               <Field>
                 <Label htmlFor="defect-handler">처리 담당자</Label>
@@ -461,9 +471,7 @@ export default function DefectFormPage() {
                 <Select
                   id="defect-status"
                   value={form.status}
-                  onChange={(event) =>
-                    updateForm("status", event.target.value)
-                  }
+                  onChange={handleStatusChange}
                 >
                   <option value="UNHANDLED">미처리</option>
                   <option value="IN_PROGRESS">처리 중</option>
@@ -471,10 +479,50 @@ export default function DefectFormPage() {
                   <option value="COMPLETED">처리 완료</option>
                 </Select>
                 <HelpText>
-                  미처리 선택 시 처리 방법은 저장하지 않고 등록만 합니다.
+                  처리 방법은 처리 완료 상태에서만 선택합니다.
                 </HelpText>
               </Field>
             </FieldGrid>
+
+            {form.status === "COMPLETED" && (
+              <Field $full>
+                <Label as="span">
+                  처리 방법 <Required aria-hidden="true">*</Required>
+                </Label>
+                <MethodGrid role="radiogroup" aria-label="처리 방법">
+                  {methodOptions.map((method) => {
+                    const Icon = method.icon;
+                    const isActive = form.handleMethod === method.value;
+                    return (
+                      <MethodOption key={method.value} $active={isActive}>
+                        <input
+                          type="radio"
+                          name="handleMethod"
+                          value={method.value}
+                          checked={isActive}
+                          onChange={(event) =>
+                            updateForm("handleMethod", event.target.value)
+                          }
+                          required
+                        />
+                        <RadioMark $active={isActive}>
+                          {isActive ? (
+                            <FiCheck aria-hidden="true" />
+                          ) : (
+                            <Icon aria-hidden="true" />
+                          )}
+                        </RadioMark>
+                        <span>
+                          <strong>{method.label}</strong>
+                          <small>{method.description}</small>
+                        </span>
+                      </MethodOption>
+                    );
+                  })}
+                </MethodGrid>
+                <HelpText>처리 완료 결과를 반드시 선택해 주세요.</HelpText>
+              </Field>
+            )}
 
             <Field $full>
               <Label htmlFor="defect-handling-content">처리 내용</Label>
@@ -540,10 +588,12 @@ export default function DefectFormPage() {
               <span>불량 수량</span>
               <strong>{form.quantity ? `${form.quantity} EA` : "미입력"}</strong>
             </SummaryRow>
-            <SummaryRow>
-              <span>처리 방법</span>
-              <strong>{selectedMethod?.label || "미선택"}</strong>
-            </SummaryRow>
+            {form.status === "COMPLETED" && (
+              <SummaryRow>
+                <span>처리 방법</span>
+                <strong>{selectedMethod?.label || "미선택"}</strong>
+              </SummaryRow>
+            )}
             <SummaryRow>
               <span>처리 상태</span>
               <StatusChip $status={form.status}>

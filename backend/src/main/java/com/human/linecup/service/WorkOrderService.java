@@ -19,6 +19,7 @@ import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.Product;
 import com.human.linecup.entity.ProductionProcessProgress;
+import com.human.linecup.entity.ProductionResultStatus;
 import com.human.linecup.entity.User;
 import com.human.linecup.entity.UserRole;
 import com.human.linecup.entity.WorkOrder;
@@ -28,6 +29,7 @@ import com.human.linecup.entity.WorkOrderWorker;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.ProductRepository;
 import com.human.linecup.repository.ProductionProcessProgressRepository;
+import com.human.linecup.repository.ProductionResultRepository;
 import com.human.linecup.repository.UserRepository;
 import com.human.linecup.repository.WorkOrderEquipmentRepository;
 import com.human.linecup.repository.WorkOrderRepository;
@@ -73,6 +75,7 @@ public class WorkOrderService {
     private final WorkOrderWorkerRepository workOrderWorkerRepository;
     private final WorkOrderStatusHistoryRepository workOrderStatusHistoryRepository;
     private final ProductionProcessProgressRepository productionProcessProgressRepository;
+    private final ProductionResultRepository productionResultRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final EquipmentRepository equipmentRepository;
@@ -84,6 +87,7 @@ public class WorkOrderService {
             WorkOrderWorkerRepository workOrderWorkerRepository,
             WorkOrderStatusHistoryRepository workOrderStatusHistoryRepository,
             ProductionProcessProgressRepository productionProcessProgressRepository,
+            ProductionResultRepository productionResultRepository,
             ProductRepository productRepository,
             UserRepository userRepository,
             EquipmentRepository equipmentRepository,
@@ -94,6 +98,7 @@ public class WorkOrderService {
         this.workOrderWorkerRepository = workOrderWorkerRepository;
         this.workOrderStatusHistoryRepository = workOrderStatusHistoryRepository;
         this.productionProcessProgressRepository = productionProcessProgressRepository;
+        this.productionResultRepository = productionResultRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.equipmentRepository = equipmentRepository;
@@ -386,7 +391,24 @@ public class WorkOrderService {
     @Transactional
     public WorkOrderSummaryResponse changeTargetQuantities(Long workOrderId, WorkOrderTargetQtyUpdateRequest request) {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
+        if (workOrder.getStatus() == WorkOrder.Status.DONE) {
+            throw new BusinessConflictException("완료된 작업지시의 목표 수량은 변경할 수 없습니다.");
+        }
+        if (request.targetQty() < workOrder.getCurrentQty()) {
+            throw new BusinessConflictException(
+                    "목표 수량은 현재 생산 수량보다 작게 변경할 수 없습니다."
+            );
+        }
         workOrder.changeTargetQuantities(request.targetQty(), request.hourlyTargetQty());
+        productionProcessProgressRepository
+                .findByProductionLotWorkOrderWorkOrderIdOrderByManufacturingProcessSequenceAsc(workOrderId)
+                .forEach(progress -> progress.changeTargetQty(request.targetQty()));
+        productionResultRepository
+                .findFirstByProductionLotWorkOrderWorkOrderIdAndStatusOrderByStartedAtDesc(
+                        workOrderId,
+                        ProductionResultStatus.COLLECTING
+                )
+                .ifPresent(result -> result.changeTargetQty(request.targetQty()));
         return toSummary(workOrder);
     }
 

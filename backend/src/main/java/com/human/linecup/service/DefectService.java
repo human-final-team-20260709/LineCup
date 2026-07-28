@@ -138,6 +138,12 @@ public class DefectService {
 
         Instant occurredAt = effectiveOccurredAt(request.occurredAt());
         ProductionLot productionLot = findProductionLot(request.productionLotId());
+        if (productionLot.getStatus() != ProductionLot.ProductionLotStatus.IN_PROGRESS
+                && productionLot.getStatus() != ProductionLot.ProductionLotStatus.HOLD) {
+            throw new BusinessConflictException(
+                    "생산 중이거나 보류된 생산 LOT에만 수동 불량을 등록할 수 있습니다."
+            );
+        }
         Equipment equipment = findEquipment(request.equipmentId());
         DefectType defectType = findActiveDefectType(request.defectType());
         String defectNo = generateDefectNo(occurredAt);

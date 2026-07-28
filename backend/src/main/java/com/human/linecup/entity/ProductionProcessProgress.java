@@ -119,6 +119,10 @@ public class ProductionProcessProgress {
         this.defectQty = defectQty;
     }
 
+    public void changeTargetQty(int targetQty) {
+        this.targetQty = ProductionQuantityPolicy.requirePositive(targetQty, "공정 목표 수량");
+    }
+
     public void complete(Instant completedAt) {
         requireStatus(ProcessProgressStatus.IN_PROGRESS, "진행 중인 공정만 완료할 수 있습니다.");
         Instant effectiveAt = completedAt == null ? Instant.now() : completedAt;

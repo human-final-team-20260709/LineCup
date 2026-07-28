@@ -36,6 +36,14 @@ void hourly_aggregator_start(HourlyAggregator *aggregator, const WorkOrder *orde
     pthread_mutex_unlock(&aggregator->lock);
 }
 
+void hourly_aggregator_update_target(HourlyAggregator *aggregator, int target_qty)
+{
+    if (aggregator == NULL || target_qty < 0) return;
+    pthread_mutex_lock(&aggregator->lock);
+    if (aggregator->active) aggregator->current.target_qty = target_qty;
+    pthread_mutex_unlock(&aggregator->lock);
+}
+
 int hourly_aggregator_add_result_at(HourlyAggregator *aggregator, DefectCode result,
                                     int64_t occurred_at_ms, HourlyAggregate *closed)
 {

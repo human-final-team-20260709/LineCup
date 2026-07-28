@@ -16,6 +16,7 @@ typedef struct {
 int hourly_aggregator_init(HourlyAggregator *aggregator, int aggregation_seconds);
 void hourly_aggregator_destroy(HourlyAggregator *aggregator);
 void hourly_aggregator_start(HourlyAggregator *aggregator, const WorkOrder *order, int64_t now_ms);
+void hourly_aggregator_update_target(HourlyAggregator *aggregator, int target_qty);
 int hourly_aggregator_add_result_at(HourlyAggregator *aggregator, DefectCode result,
                                     int64_t occurred_at_ms, HourlyAggregate *closed);
 int hourly_aggregator_snapshot(HourlyAggregator *aggregator, int64_t now_ms,

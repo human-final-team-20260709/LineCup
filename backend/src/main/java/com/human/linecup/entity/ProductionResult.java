@@ -110,6 +110,10 @@ public class ProductionResult {
         this.lastAggregatedAt = Objects.requireNonNull(aggregatedAt, "최종 집계 시각은 필수입니다.");
     }
 
+    public void changeTargetQty(int targetQty) {
+        this.targetQty = ProductionQuantityPolicy.requirePositive(targetQty, "목표 수량");
+    }
+
     public void complete(Instant completedAt) {
         Instant effectiveAt = completedAt == null ? Instant.now() : completedAt;
         if (effectiveAt.isBefore(startedAt)) {
