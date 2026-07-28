@@ -1009,7 +1009,7 @@ SELECT
         e.equipment_code,
         '에서 기준값 편차가 감지되었습니다. 현장 작업표준에 따라 설비 상태와 생산품 영향을 확인합니다.'
     ),
-    CASE WHEN MOD(s.seq, 10) = 0 THEN 'CRITICAL' WHEN MOD(s.seq, 3) = 0 THEN 'WARNING' ELSE 'INFO' END,
+    CASE WHEN MOD(s.seq, 10) = 0 THEN 'CRITICAL' WHEN MOD(s.seq, 3) = 0 THEN 'WARNING' ELSE 'CAUTION' END,
     CASE MOD(s.seq, 5)
         WHEN 0 THEN 'PENDING_CONFIRMATION'
         WHEN 1 THEN 'IN_PROGRESS'

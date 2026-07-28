@@ -481,7 +481,7 @@ export const PageShell = styled.main.attrs({ className: 'equipment-alarm-page' }
   line-height: 16px;
 }
 
-& .alarm-severity-chip--info {
+& .alarm-severity-chip--caution {
   border-color: rgba(56, 189, 248, 0.32);
   background: rgba(56, 189, 248, 0.14);
   color: #8bd5ff;

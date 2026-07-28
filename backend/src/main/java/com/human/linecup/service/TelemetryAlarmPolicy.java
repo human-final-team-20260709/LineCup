@@ -10,7 +10,7 @@ import java.util.Optional;
 
 final class TelemetryAlarmPolicy {
 
-    private static final BigDecimal WARNING_BOUNDARY_RATIO = new BigDecimal("0.02");
+    private static final BigDecimal BOUNDARY_RATIO = new BigDecimal("0.02");
     private static final Map<String, Map<TelemetryMetricType, OperatingRange>> OPERATING_RANGES = Map.ofEntries(
             Map.entry("MIXER", Map.of(
                     TelemetryMetricType.TEMPERATURE, range("20", "40"),
@@ -72,37 +72,57 @@ final class TelemetryAlarmPolicy {
             return Optional.empty();
         }
 
-        if (value.compareTo(range.minimum()) < 0) {
+        BigDecimal boundaryMargin = range.maximum()
+                .subtract(range.minimum())
+                .multiply(BOUNDARY_RATIO);
+        BigDecimal criticalMinimum = range.minimum().subtract(boundaryMargin);
+        BigDecimal criticalMaximum = range.maximum().add(boundaryMargin);
+
+        if (value.compareTo(criticalMinimum) < 0) {
             return Optional.of(new AlarmCondition(
                     AlarmSeverity.CRITICAL,
-                    "허용 범위 이탈",
-                    "하한 이탈",
+                    "허용 범위 심각 이탈",
+                    "하한 심각 이탈",
+                    range
+            ));
+        }
+        if (value.compareTo(criticalMaximum) > 0) {
+            return Optional.of(new AlarmCondition(
+                    AlarmSeverity.CRITICAL,
+                    "허용 범위 심각 이탈",
+                    "상한 심각 이탈",
+                    range
+            ));
+        }
+
+        if (value.compareTo(range.minimum()) < 0) {
+            return Optional.of(new AlarmCondition(
+                    AlarmSeverity.WARNING,
+                    "허용 범위 경미 이탈",
+                    "하한 경미 이탈",
                     range
             ));
         }
         if (value.compareTo(range.maximum()) > 0) {
             return Optional.of(new AlarmCondition(
-                    AlarmSeverity.CRITICAL,
-                    "허용 범위 이탈",
-                    "상한 이탈",
+                    AlarmSeverity.WARNING,
+                    "허용 범위 경미 이탈",
+                    "상한 경미 이탈",
                     range
             ));
         }
 
-        BigDecimal warningMargin = range.maximum()
-                .subtract(range.minimum())
-                .multiply(WARNING_BOUNDARY_RATIO);
-        if (value.compareTo(range.minimum().add(warningMargin)) <= 0) {
+        if (value.compareTo(range.minimum().add(boundaryMargin)) <= 0) {
             return Optional.of(new AlarmCondition(
-                    AlarmSeverity.WARNING,
+                    AlarmSeverity.CAUTION,
                     "기준값 접근",
                     "하한 접근",
                     range
             ));
         }
-        if (value.compareTo(range.maximum().subtract(warningMargin)) >= 0) {
+        if (value.compareTo(range.maximum().subtract(boundaryMargin)) >= 0) {
             return Optional.of(new AlarmCondition(
-                    AlarmSeverity.WARNING,
+                    AlarmSeverity.CAUTION,
                     "기준값 접근",
                     "상한 접근",
                     range

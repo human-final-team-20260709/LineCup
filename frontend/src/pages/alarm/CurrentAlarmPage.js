@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   FiActivity,
+  FiAlertCircle,
   FiAlertOctagon,
   FiAlertTriangle,
   FiCheckCircle,
   FiFilter,
-  FiInfo,
   FiMapPin,
   FiSearch,
   FiTool,
@@ -54,13 +54,13 @@ const PAGE_SIZE = 20;
 const severityLabels = {
   CRITICAL: "심각",
   WARNING: "경고",
-  INFO: "정보",
+  CAUTION: "주의",
 };
 
 const severityPriority = {
   CRITICAL: 3,
   WARNING: 2,
-  INFO: 1,
+  CAUTION: 1,
 };
 
 const statusLabels = {
@@ -78,7 +78,7 @@ const severityTone = (severity) => {
   if (severity === "WARNING") {
     return "warning";
   }
-  return "info";
+  return "caution";
 };
 
 const statusTone = (status) => {
@@ -143,7 +143,7 @@ export default function CurrentAlarmPage() {
           }
           return counts;
         },
-        { CRITICAL: 0, WARNING: 0, INFO: 0 },
+        { CRITICAL: 0, WARNING: 0, CAUTION: 0 },
       ),
     [pageRows],
   );
@@ -241,13 +241,13 @@ export default function CurrentAlarmPage() {
           <strong>{metricValue(severityCounts.WARNING)}</strong>
           <small>현재 페이지 점검 필요</small>
         </MetricCard>
-        <MetricCard $tone="info">
+        <MetricCard $tone="caution">
           <MetricHeader>
-            <FiInfo aria-hidden="true" />
-            <span>정보</span>
+            <FiAlertCircle aria-hidden="true" />
+            <span>주의</span>
           </MetricHeader>
-          <strong>{metricValue(severityCounts.INFO)}</strong>
-          <small>현재 페이지 상태 알림</small>
+          <strong>{metricValue(severityCounts.CAUTION)}</strong>
+          <small>현재 페이지 기준값 접근</small>
         </MetricCard>
       </MetricGrid>
 
@@ -272,7 +272,7 @@ export default function CurrentAlarmPage() {
             <option value="">전체 심각도</option>
             <option value="CRITICAL">심각</option>
             <option value="WARNING">경고</option>
-            <option value="INFO">정보</option>
+            <option value="CAUTION">주의</option>
           </select>
         </SelectGroup>
         <SelectGroup>

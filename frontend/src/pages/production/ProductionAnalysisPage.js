@@ -199,7 +199,6 @@ export default function ProductionAnalysisPage() {
             value={days}
             onChange={(event) => setDays(Number(event.target.value))}
           >
-            <option value={1}>오늘</option>
             <option value={7}>최근 7일</option>
             <option value={30}>최근 30일</option>
           </select>

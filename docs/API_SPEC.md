@@ -46,7 +46,7 @@ Page 응답 예시:
 |---|---|---|
 | 작업지시 | `PENDING`, `IN_PROGRESS`, `HOLD`, `DONE` | 대기, 진행 중, 보류, 완료 |
 | 작업지시 액션 | `REGISTERED`, `START`, `HOLD`, `RESUME`, `COMPLETE` | 등록, 시작, 보류, 재개, 완료 |
-| 알람 심각도 | `INFO`, `WARNING`, `CRITICAL` | 정보, 경고, 심각 |
+| 알람 심각도 | `CAUTION`, `WARNING`, `CRITICAL` | 주의, 경고, 심각 |
 | 알람 상태 | `PENDING_CONFIRMATION`, `IN_PROGRESS`, `INSPECTION_RESERVED`, `MONITORING`, `RESOLVED` | 확인 대기, 처리 중, 점검 예정, 모니터링, 처리 완료 |
 | 불량 상태 | `UNHANDLED`, `IN_PROGRESS`, `ON_HOLD`, `COMPLETED` | 미처리, 처리 중, 보류, 처리 완료 |
 | 불량 처리 | `NORMAL_APPROVAL`, `REWORK`, `DISPOSAL` | 정상 승인, 재작업, 폐기 |

@@ -148,7 +148,7 @@ export const PageShell = styled.main.attrs({
     --metric-color: var(--color-warning);
   }
 
-  & .alarm-current-metric-card--info {
+  & .alarm-current-metric-card--caution {
     --metric-color: #8bd5ff;
   }
 
@@ -534,7 +534,7 @@ export const PageShell = styled.main.attrs({
     line-height: 16px;
   }
 
-  & .alarm-severity-chip--info {
+  & .alarm-severity-chip--caution {
     border-color: rgba(139, 213, 255, 0.34);
     background: rgba(139, 213, 255, 0.1);
     color: #8bd5ff;
