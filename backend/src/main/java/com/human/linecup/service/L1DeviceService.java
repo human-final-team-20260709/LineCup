@@ -9,10 +9,13 @@ import com.human.linecup.entity.Equipment.EquipmentStatus;
 import com.human.linecup.entity.L1Device;
 import com.human.linecup.repository.EquipmentRepository;
 import com.human.linecup.repository.L1DeviceRepository;
+import com.human.linecup.repository.L2CollectorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -29,17 +32,22 @@ public class L1DeviceService {
 
     private final L1DeviceRepository l1DeviceRepository;
     private final EquipmentRepository equipmentRepository;
+    private final L2CollectorRepository l2CollectorRepository;
     private final CommunicationLogService communicationLogService;
 
+    @Value("${mes.l2.stale-after:30s}")
+    private Duration l2StaleAfter;
+
     public List<L1DeviceResponse> getAll() {
+        boolean l2Fresh = isL2Fresh();
         return l1DeviceRepository.findAllByOrderByEquipmentEquipmentIdAsc()
                 .stream()
-                .map(this::toResponse)
+                .map(device -> toResponse(device, l2Fresh))
                 .toList();
     }
 
     public L1DeviceResponse getByEquipmentId(Long equipmentId) {
-        return toResponse(findByEquipmentId(equipmentId));
+        return toResponse(findByEquipmentId(equipmentId), isL2Fresh());
     }
 
     /**
@@ -78,8 +86,15 @@ public class L1DeviceService {
                 .orElseThrow(() -> new NoSuchElementException("L1 장비 연결 정보를 찾을 수 없습니다. equipmentId=" + equipmentId));
     }
 
-    private L1DeviceResponse toResponse(L1Device device) {
+    private boolean isL2Fresh() {
+        return l2CollectorRepository.existsByLastSentAtAfter(Instant.now().minus(l2StaleAfter));
+    }
+
+    private L1DeviceResponse toResponse(L1Device device, boolean l2Fresh) {
         Equipment equipment = device.getEquipment();
+        ConnectionStatus effectiveConnectionStatus = l2Fresh
+                ? device.getConnectionStatus()
+                : ConnectionStatus.DISCONNECTED;
         return new L1DeviceResponse(
                 device.getDeviceId(),
                 equipment.getEquipmentId(),
@@ -87,8 +102,8 @@ public class L1DeviceService {
                 equipment.getEquipmentName(),
                 device.getIpAddress(),
                 device.getPort(),
-                device.getConnectionStatus(),
-                device.getConnectionStatus().getLabel(),
+                effectiveConnectionStatus,
+                effectiveConnectionStatus.getLabel(),
                 device.getLastReceivedAt()
         );
     }
