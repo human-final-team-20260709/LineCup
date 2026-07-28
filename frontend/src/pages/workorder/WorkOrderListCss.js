@@ -1017,6 +1017,146 @@ export const ErrorText = styled.span`
   color: ${colors.tertiary};
 `;
 
+export const ProductSelectBox = styled.div`
+  position: relative;
+  min-width: 0;
+`;
+
+export const ProductSelectTrigger = styled.button`
+  ${baseControl};
+  ${typography.bodySm};
+  position: relative;
+  width: 100%;
+  min-height: 42px;
+  padding-right: 34px;
+  color: ${({ $placeholder }) =>
+    $placeholder ? colors.onSurfaceVariant : colors.onSurface};
+  text-align: left;
+  cursor: pointer;
+
+  &::after {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    color: ${colors.onSurfaceVariant};
+    content: "⌄";
+    transform: translateY(-58%);
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: ${colors.primary};
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px ${hexToRgba(colors.primary, 0.14)};
+  }
+`;
+
+export const ProductSelectDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid ${colors.outlineVariant};
+  border-radius: ${radius.DEFAULT};
+  background: ${colors.surfaceContainerLowest};
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+
+  > input {
+    ${baseControl};
+    ${typography.bodySm};
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    border-bottom: 1px solid ${colors.outlineVariant};
+    border-radius: 0;
+
+    &:focus {
+      border-bottom-color: ${colors.primary};
+    }
+
+    &::placeholder {
+      color: ${colors.onSurfaceVariant};
+    }
+  }
+`;
+
+export const ProductOptionList = styled.div`
+  max-height: 210px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+`;
+
+export const ProductOption = styled.button`
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  gap: 2px;
+  padding: 7px 10px;
+  border: 0;
+  border-bottom: 1px solid ${colors.surfaceContainerHigh};
+  background: ${({ $selected }) =>
+    $selected ? hexToRgba(colors.primary, 0.12) : "transparent"};
+  color: ${colors.onSurface};
+  text-align: left;
+  cursor: pointer;
+
+  strong {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  span {
+    color: ${({ $selected }) =>
+      $selected ? colors.primary : colors.onSurfaceVariant};
+    font-family: ${font.mono};
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  &:hover {
+    background: ${colors.surfaceContainerHigh};
+  }
+
+  &:focus-visible {
+    position: relative;
+    outline: 2px solid ${colors.primary};
+    outline-offset: -2px;
+  }
+`;
+
+export const ProductOptionEmpty = styled.p`
+  margin: 0;
+  padding: 18px 10px;
+  color: ${colors.onSurfaceVariant};
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+`;
+
+export const ProductOptionMore = styled.button`
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: ${colors.surfaceContainerLow};
+  color: ${colors.primary};
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: ${colors.surfaceContainerHigh};
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+`;
+
 export const PickerRow = styled.div`
   display: flex;
   align-items: center;
