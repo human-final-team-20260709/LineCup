@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import {
   FiAlertCircle,
   FiBarChart2,
@@ -8,8 +7,6 @@ import {
   FiClock,
   FiGrid,
   FiLayers,
-  FiList,
-  FiPlus,
   FiTrendingUp,
 } from "react-icons/fi";
 import { defectApi } from "../../api/services";
@@ -19,11 +16,9 @@ import { QueryStatus } from "../../components/ApiState";
 import { formatNumber } from "../../components/OperationalUi";
 import DefectDataTable from "./DefectDataTable";
 import {
-  Button,
   DashboardGrid,
   EmptyState,
   Eyebrow,
-  HeaderActions,
   MetricCard,
   MetricFoot,
   MetricGrid,
@@ -61,7 +56,6 @@ const asNumber = (value) => {
 };
 
 export default function DefectDashboardPage() {
-  const navigate = useNavigate();
   const periodKey = { scope: "today", date: currentKstDate() };
   const dashboardQuery = useQuery({
     queryKey: queryKeys.defectDashboard(),
@@ -100,23 +94,6 @@ export default function DefectDashboardPage() {
             한눈에 확인합니다.
           </p>
         </TitleGroup>
-        <HeaderActions>
-          <Button
-            type="button"
-            onClick={() => navigate("/quality/defects")}
-          >
-            <FiList aria-hidden="true" />
-            불량 목록
-          </Button>
-          <Button
-            type="button"
-            $primary
-            onClick={() => navigate("/quality/defects/new")}
-          >
-            <FiPlus aria-hidden="true" />
-            불량 등록
-          </Button>
-        </HeaderActions>
       </PageHeader>
 
       <MetricGrid

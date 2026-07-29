@@ -146,56 +146,6 @@ export const Eyebrow = styled.span`
   text-transform: uppercase;
 `;
 
-export const Button = styled.button`
-  display: inline-flex;
-  min-height: 40px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid
-    ${({ $primary }) =>
-      $primary ? "var(--color-primary)" : "var(--color-border)"};
-  border-radius: 4px;
-  background: ${({ $primary }) =>
-    $primary ? "var(--color-primary)" : "var(--color-surface-low)"};
-  color: ${({ $primary }) =>
-    $primary ? "var(--color-primary-ink)" : "var(--color-text)"};
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 20px;
-  cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    border-color 140ms ease,
-    transform 100ms ease;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  &:hover:not(:disabled) {
-    border-color: var(--color-primary);
-    background: ${({ $primary }) =>
-      $primary ? "#6bff8f" : "var(--color-surface-high)"};
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  @media (max-width: 480px) {
-    width: 100%;
-  }
-`;
-
 export const FilterPanel = styled.section`
   display: grid;
   grid-template-columns: minmax(280px, 1fr) 190px;

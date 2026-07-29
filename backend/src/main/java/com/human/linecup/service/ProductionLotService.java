@@ -6,6 +6,9 @@ import com.human.linecup.dto.request.InventoryMovementRequest;
 import com.human.linecup.dto.response.ProcessProgressResponse;
 import com.human.linecup.dto.response.ProductionLotMaterialResponse;
 import com.human.linecup.dto.response.ProductionLotResponse;
+import com.human.linecup.entity.Bom;
+import com.human.linecup.entity.Bom.BomStatus;
+import com.human.linecup.entity.BomItem;
 import com.human.linecup.entity.Equipment;
 import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.InventoryMovement.InventoryItemType;
@@ -21,6 +24,8 @@ import com.human.linecup.entity.RawMaterialLot;
 import com.human.linecup.entity.WorkOrder;
 import com.human.linecup.entity.WorkOrderEquipment;
 import com.human.linecup.repository.ManufacturingProcessRepository;
+import com.human.linecup.repository.BomItemRepository;
+import com.human.linecup.repository.BomRepository;
 import com.human.linecup.repository.ProductionLotMaterialRepository;
 import com.human.linecup.repository.ProductionLotRepository;
 import com.human.linecup.repository.ProductionProcessProgressRepository;
@@ -32,10 +37,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -47,10 +57,14 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ProductionLotService {
 
+    private static final int MATERIAL_QUANTITY_SCALE = 3;
+
     private final ProductionLotRepository productionLotRepository;
     private final ProductionLotMaterialRepository productionLotMaterialRepository;
     private final ProductionProcessProgressRepository processProgressRepository;
     private final RawMaterialLotRepository rawMaterialLotRepository;
+    private final BomRepository bomRepository;
+    private final BomItemRepository bomItemRepository;
     private final WorkOrderEquipmentRepository workOrderEquipmentRepository;
     private final ManufacturingProcessRepository manufacturingProcessRepository;
     private final InventoryMovementService inventoryMovementService;
@@ -118,7 +132,7 @@ public class ProductionLotService {
     }
 
     @Transactional
-    public void applyWorkOrderAction(Long workOrderId, WorkOrder.Action action, Instant occurredAt) {
+    public ProductionLot applyWorkOrderAction(Long workOrderId, WorkOrder.Action action, Instant occurredAt) {
         Instant effectiveAt = occurredAt == null ? Instant.now() : occurredAt;
         ProductionLotStatus requiredStatus = switch (action) {
             case START -> ProductionLotStatus.PENDING;
@@ -149,6 +163,7 @@ public class ProductionLotService {
             case REGISTERED -> throw new IllegalArgumentException("등록 액션은 생산 LOT 전환에 사용할 수 없습니다.");
         }
         transitionProgresses(progresses, action, effectiveAt);
+        return lot;
     }
 
     public ProductionLot getActiveProductionLot(Long workOrderId) {
@@ -163,38 +178,86 @@ public class ProductionLotService {
     }
 
     @Transactional
+    public void registerBomMaterialUsageForStart(
+            ProductionLot lot,
+            int targetQty,
+            Long handledById
+    ) {
+        if (lot.getStatus() != ProductionLotStatus.IN_PROGRESS) {
+            throw new BusinessConflictException("생산 시작 상태의 LOT만 BOM 자재를 자동 투입할 수 있습니다.");
+        }
+        Bom bom = findActiveBom(lot);
+        List<BomItem> items = bomItemRepository
+                .findByBomBomIdOrderByBomItemIdAsc(bom.getBomId())
+                .stream()
+                .sorted(Comparator.comparing(item -> item.getRawMaterial().getMaterialId()))
+                .toList();
+        if (items.isEmpty()) {
+            throw new BusinessConflictException("활성 BOM에 원자재 항목이 없습니다: " + bom.getBomCode());
+        }
+
+        List<ProductionLotMaterial> existingUsages = productionLotMaterialRepository
+                .findByProductionLotProductionLotIdOrderByProductionLotMaterialIdAsc(
+                        lot.getProductionLotId()
+                );
+        Map<Long, BigDecimal> existingQtyByMaterialId = summarizeExistingBomUsage(
+                items,
+                existingUsages
+        );
+        List<MaterialAllocation> allocations = planMaterialAllocations(
+                items,
+                existingQtyByMaterialId,
+                targetQty
+        );
+
+        for (MaterialAllocation allocation : allocations) {
+            recordMaterialUsage(
+                    lot,
+                    allocation.materialLot(),
+                    allocation.quantity(),
+                    handledById,
+                    "생산 LOT BOM 자동 투입: " + lot.getLotNo()
+            );
+        }
+    }
+
+    @Transactional
     public ProductionLotMaterialResponse registerMaterialUsage(
             Long productionLotId,
             ProductionLotMaterialRequest request
     ) {
         ProductionLot lot = findLot(productionLotId);
-        if (lot.getStatus() == ProductionLotStatus.COMPLETED) {
-            throw new BusinessConflictException("완료된 생산 LOT에는 원자재를 추가 투입할 수 없습니다.");
-        }
-        if (productionLotMaterialRepository
-                .existsByProductionLotProductionLotIdAndMaterialLotMaterialLotId(
-                        productionLotId,
-                        request.materialLotId()
-                )) {
-            throw new BusinessConflictException("해당 원자재 LOT가 이미 생산 LOT에 등록되어 있습니다.");
+        if (lot.getStatus() != ProductionLotStatus.IN_PROGRESS
+                && lot.getStatus() != ProductionLotStatus.HOLD) {
+            throw new BusinessConflictException("생산 중이거나 보류 중인 LOT에만 원자재를 추가 투입할 수 있습니다.");
         }
 
-        RawMaterialLot materialLot = rawMaterialLotRepository.findById(request.materialLotId())
+        RawMaterialLot materialLot = rawMaterialLotRepository.findByIdForUpdate(request.materialLotId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "원자재 LOT를 찾을 수 없습니다: " + request.materialLotId()
                 ));
-        inventoryMovementService.registerMovement(new InventoryMovementRequest(
-                InventoryItemType.RAW_MATERIAL,
-                InventoryMovementType.OUTBOUND,
-                request.materialLotId(),
-                null,
+        if (materialLot.getExpiryDate().isBefore(LocalDate.now())) {
+            throw new BusinessConflictException("유통기한이 지난 원자재 LOT는 투입할 수 없습니다.");
+        }
+        Bom bom = findActiveBom(lot);
+        if (!bomItemRepository.existsByBomBomIdAndRawMaterialMaterialId(
+                bom.getBomId(),
+                materialLot.getMaterial().getMaterialId()
+        )) {
+            throw new BusinessConflictException(
+                    "활성 BOM에 포함되지 않은 원자재는 추가 투입할 수 없습니다: "
+                            + materialLot.getMaterial().getMaterialName()
+            );
+        }
+
+        ProductionLotMaterial usage = recordMaterialUsage(
+                lot,
+                materialLot,
                 request.usedQty(),
                 request.handledById(),
-                Instant.now(),
                 "생산 LOT 원자재 투입: " + lot.getLotNo()
-        ));
-        ProductionLotMaterial usage = ProductionLotMaterial.create(lot, materialLot, request.usedQty());
-        return toMaterialResponse(productionLotMaterialRepository.save(usage));
+        );
+        return toMaterialResponse(usage);
     }
 
     @Transactional
@@ -224,6 +287,136 @@ public class ProductionLotService {
                 "생산 LOT 원자재 투입 취소: " + request.reason().trim()
         ));
         productionLotMaterialRepository.delete(usage);
+    }
+
+    private Bom findActiveBom(ProductionLot lot) {
+        Long productId = lot.getWorkOrder().getProduct().getProductId();
+        return bomRepository.findFirstByProductProductIdAndStatusOrderByBomIdDesc(
+                        productId,
+                        BomStatus.ACTIVE
+                )
+                .orElseThrow(() -> new BusinessConflictException(
+                        "제품의 활성 BOM이 없어 작업을 시작하거나 자재를 투입할 수 없습니다: productId="
+                                + productId
+                ));
+    }
+
+    private Map<Long, BigDecimal> summarizeExistingBomUsage(
+            List<BomItem> items,
+            List<ProductionLotMaterial> existingUsages
+    ) {
+        Map<Long, BomItem> itemByMaterialId = items.stream()
+                .collect(Collectors.toMap(
+                        item -> item.getRawMaterial().getMaterialId(),
+                        Function.identity()
+                ));
+        Map<Long, BigDecimal> quantities = new HashMap<>();
+        for (ProductionLotMaterial usage : existingUsages) {
+            Long materialId = usage.getMaterialLot().getMaterial().getMaterialId();
+            if (!itemByMaterialId.containsKey(materialId)) {
+                throw new BusinessConflictException(
+                        "활성 BOM에 포함되지 않은 기존 사용 자재가 있어 작업을 시작할 수 없습니다: "
+                                + usage.getMaterialLot().getMaterial().getMaterialName()
+                );
+            }
+            quantities.merge(materialId, usage.getUsedQty(), BigDecimal::add);
+        }
+        return quantities;
+    }
+
+    private List<MaterialAllocation> planMaterialAllocations(
+            List<BomItem> items,
+            Map<Long, BigDecimal> existingQtyByMaterialId,
+            int targetQty
+    ) {
+        List<MaterialAllocation> allocations = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (BomItem item : items) {
+            RawMaterial material = item.getRawMaterial();
+            BigDecimal requiredQty = calculateRequiredQuantity(item, targetQty);
+            BigDecimal existingQty = existingQtyByMaterialId.getOrDefault(
+                    material.getMaterialId(),
+                    BigDecimal.ZERO
+            );
+            BigDecimal remainingQty = requiredQty.subtract(existingQty);
+            if (remainingQty.signum() <= 0) {
+                continue;
+            }
+
+            List<RawMaterialLot> availableLots = rawMaterialLotRepository
+                    .findAvailableByMaterialIdForUpdate(material.getMaterialId(), today);
+            BigDecimal availableQty = availableLots.stream()
+                    .map(RawMaterialLot::getCurrentQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (availableQty.compareTo(remainingQty) < 0) {
+                throw new BusinessConflictException(
+                        "원자재 재고가 부족하여 작업을 시작할 수 없습니다: "
+                                + material.getMaterialName()
+                                + " (필요 " + formatQuantity(remainingQty)
+                                + material.getUnit()
+                                + ", 가용 " + formatQuantity(availableQty)
+                                + material.getUnit() + ")"
+                );
+            }
+
+            BigDecimal unallocatedQty = remainingQty;
+            for (RawMaterialLot materialLot : availableLots) {
+                if (unallocatedQty.signum() <= 0) {
+                    break;
+                }
+                BigDecimal allocatedQty = materialLot.getCurrentQty().min(unallocatedQty);
+                allocations.add(new MaterialAllocation(materialLot, allocatedQty));
+                unallocatedQty = unallocatedQty.subtract(allocatedQty);
+            }
+        }
+        return allocations;
+    }
+
+    private BigDecimal calculateRequiredQuantity(BomItem item, int targetQty) {
+        BigDecimal lossMultiplier = BigDecimal.ONE.add(
+                item.getLossRate().movePointLeft(2)
+        );
+        return item.getRequiredQty()
+                .multiply(BigDecimal.valueOf(targetQty))
+                .multiply(lossMultiplier)
+                .setScale(MATERIAL_QUANTITY_SCALE, RoundingMode.CEILING);
+    }
+
+    private ProductionLotMaterial recordMaterialUsage(
+            ProductionLot lot,
+            RawMaterialLot materialLot,
+            BigDecimal quantity,
+            Long handledById,
+            String remarks
+    ) {
+        inventoryMovementService.registerMovement(new InventoryMovementRequest(
+                InventoryItemType.RAW_MATERIAL,
+                InventoryMovementType.OUTBOUND,
+                materialLot.getMaterialLotId(),
+                null,
+                quantity,
+                handledById,
+                Instant.now(),
+                remarks
+        ));
+        ProductionLotMaterial usage = productionLotMaterialRepository
+                .findByProductionLotProductionLotIdAndMaterialLotMaterialLotId(
+                        lot.getProductionLotId(),
+                        materialLot.getMaterialLotId()
+                )
+                .map(existing -> {
+                    existing.increaseUsedQty(quantity);
+                    return existing;
+                })
+                .orElseGet(() -> ProductionLotMaterial.create(lot, materialLot, quantity));
+        return productionLotMaterialRepository.save(usage);
+    }
+
+    private String formatQuantity(BigDecimal quantity) {
+        return quantity.stripTrailingZeros().toPlainString();
+    }
+
+    private record MaterialAllocation(RawMaterialLot materialLot, BigDecimal quantity) {
     }
 
     private List<ProductionLotResponse> mapLots(List<ProductionLot> lots) {

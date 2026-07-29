@@ -59,4 +59,11 @@ public class ProductionLotMaterial {
         usage.usedQty = usedQty;
         return usage;
     }
+
+    public void increaseUsedQty(BigDecimal additionalQty) {
+        if (additionalQty == null || additionalQty.signum() <= 0) {
+            throw new IllegalArgumentException("추가 사용 수량은 0보다 커야 합니다.");
+        }
+        usedQty = usedQty.add(additionalQty);
+    }
 }

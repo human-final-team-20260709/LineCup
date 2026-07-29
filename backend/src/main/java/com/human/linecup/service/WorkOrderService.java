@@ -2,6 +2,7 @@ package com.human.linecup.service;
 
 import com.human.linecup.dto.request.WorkOrderCreateRequest;
 import com.human.linecup.dto.request.IdListRequest;
+import com.human.linecup.dto.request.ProductInventoryRequest;
 import com.human.linecup.dto.request.WorkOrderStatusChangeRequest;
 import com.human.linecup.dto.request.WorkOrderSupervisorChangeRequest;
 import com.human.linecup.dto.request.WorkOrderTargetQtyUpdateRequest;
@@ -18,6 +19,7 @@ import com.human.linecup.entity.ApprovalStatus;
 import com.human.linecup.entity.BusinessConflictException;
 import com.human.linecup.entity.ManufacturingProcess;
 import com.human.linecup.entity.Product;
+import com.human.linecup.entity.ProductionLot;
 import com.human.linecup.entity.ProductionProcessProgress;
 import com.human.linecup.entity.ProductionResultStatus;
 import com.human.linecup.entity.User;
@@ -80,6 +82,7 @@ public class WorkOrderService {
     private final UserRepository userRepository;
     private final EquipmentRepository equipmentRepository;
     private final ProductionLotService productionLotService;
+    private final ProductInventoryService productInventoryService;
 
     public WorkOrderService(
             WorkOrderRepository workOrderRepository,
@@ -91,7 +94,8 @@ public class WorkOrderService {
             ProductRepository productRepository,
             UserRepository userRepository,
             EquipmentRepository equipmentRepository,
-            ProductionLotService productionLotService
+            ProductionLotService productionLotService,
+            ProductInventoryService productInventoryService
     ) {
         this.workOrderRepository = workOrderRepository;
         this.workOrderEquipmentRepository = workOrderEquipmentRepository;
@@ -103,6 +107,7 @@ public class WorkOrderService {
         this.userRepository = userRepository;
         this.equipmentRepository = equipmentRepository;
         this.productionLotService = productionLotService;
+        this.productInventoryService = productInventoryService;
     }
 
     // ===== 등록 =====
@@ -312,7 +317,26 @@ public class WorkOrderService {
         validateSingleActiveWorkOrder(workOrderId, request.action());
         validateCompletionQuantity(workOrder, request.action());
         WorkOrder.Status prevStatus = workOrder.applyAction(request.action(), now);
-        productionLotService.applyWorkOrderAction(workOrderId, request.action(), now);
+        ProductionLot productionLot = productionLotService.applyWorkOrderAction(
+                workOrderId,
+                request.action(),
+                now
+        );
+        if (request.action() == WorkOrder.Action.START) {
+            productionLotService.registerBomMaterialUsageForStart(
+                    productionLot,
+                    workOrder.getTargetQty(),
+                    request.changedByUserId()
+            );
+        }
+        if (request.action() == WorkOrder.Action.COMPLETE && productionLot.getGoodQty() > 0) {
+            productInventoryService.createInventory(new ProductInventoryRequest(
+                    productionLot.getProductionLotId(),
+                    0,
+                    null,
+                    request.changedByUserId()
+            ));
+        }
 
         workOrderStatusHistoryRepository.save(WorkOrderStatusHistory.record(
                 workOrder, changedBy, request.action(), prevStatus, workOrder.getStatus(), request.note(), now
@@ -402,8 +426,8 @@ public class WorkOrderService {
     @Transactional
     public WorkOrderSummaryResponse changeTargetQuantities(Long workOrderId, WorkOrderTargetQtyUpdateRequest request) {
         WorkOrder workOrder = getWorkOrderOrThrow(workOrderId);
-        if (workOrder.getStatus() == WorkOrder.Status.DONE) {
-            throw new BusinessConflictException("완료된 작업지시의 목표 수량은 변경할 수 없습니다.");
+        if (workOrder.getStatus() != WorkOrder.Status.PENDING) {
+            throw new BusinessConflictException("대기 중인 작업지시의 목표 수량만 변경할 수 있습니다.");
         }
         if (request.targetQty() < workOrder.getCurrentQty()) {
             throw new BusinessConflictException(

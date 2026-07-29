@@ -29,6 +29,12 @@ public interface ProductionProcessProgressRepository
             Long processId
     );
 
+    @EntityGraph(attributePaths = {"manufacturingProcess", "equipment"})
+    Optional<ProductionProcessProgress> findByProductionLotProductionLotIdAndManufacturingProcessProcessCode(
+            Long productionLotId,
+            String processCode
+    );
+
     boolean existsByProductionLotProductionLotIdAndManufacturingProcessProcessId(
             Long productionLotId,
             Long processId

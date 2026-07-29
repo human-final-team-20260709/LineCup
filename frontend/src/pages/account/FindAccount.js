@@ -50,6 +50,14 @@ function FindAccount({ mode = 'id' }) {
           : { name: formValues.name, email: formValues.email },
       );
       if (isPasswordMode) {
+        if (!response?.verified || !response?.empNo) {
+          setModal({
+            title: '계정 정보 확인 실패',
+            message: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.',
+            tone: 'error',
+          });
+          return;
+        }
         navigate('/account/reset-password', {
           state: { empNo: response.empNo, email: formValues.email },
         });
