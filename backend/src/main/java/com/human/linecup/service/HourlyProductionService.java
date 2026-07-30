@@ -11,6 +11,7 @@ import com.human.linecup.entity.ProductionResultStatus;
 import com.human.linecup.entity.WorkOrder;
 import com.human.linecup.repository.HourlyProductionRepository;
 import com.human.linecup.repository.ProductionLotRepository;
+import com.human.linecup.repository.ProductionProcessProgressRepository;
 import com.human.linecup.repository.ProductionResultRepository;
 import com.human.linecup.repository.WorkOrderRepository;
 import jakarta.persistence.EntityManager;
@@ -33,6 +34,7 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class HourlyProductionService {
 
+    private static final String INSPECTION_PROCESS_CODE = "INSPECTION";
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter RESULT_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
             .withZone(BUSINESS_ZONE);
@@ -44,6 +46,7 @@ public class HourlyProductionService {
     private final HourlyProductionRepository hourlyProductionRepository;
     private final WorkOrderRepository workOrderRepository;
     private final ProductionLotRepository productionLotRepository;
+    private final ProductionProcessProgressRepository processProgressRepository;
     private final ProductionResultRepository productionResultRepository;
     private final EntityManager entityManager;
 
@@ -186,6 +189,16 @@ public class HourlyProductionService {
 
         workOrder.updateQuantities(productionQty, goodQty, defectQty);
         productionLot.updateQuantities(productionQty, goodQty, defectQty);
+        processProgressRepository
+                .findByProductionLotProductionLotIdAndManufacturingProcessProcessCode(
+                        productionLot.getProductionLotId(),
+                        INSPECTION_PROCESS_CODE
+                )
+                .orElseThrow(() -> new IllegalStateException(
+                        "검사 공정 진행 정보를 찾을 수 없습니다: productionLotId="
+                                + productionLot.getProductionLotId()
+                ))
+                .updateQuantities(productionQty, goodQty, defectQty);
 
         ProductionResult productionResult = productionResultRepository
                 .findByProductionLotProductionLotId(productionLot.getProductionLotId())

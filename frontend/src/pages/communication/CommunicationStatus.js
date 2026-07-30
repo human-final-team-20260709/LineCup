@@ -18,14 +18,29 @@ const LOG_PAGE_SIZE = 10;
 /**
  * 유틸리티: 데이터 형식에 상관없이 리스트 반환
  */
-const getPageContent = (data) => (Array.isArray(data) ? data : data?.content ?? []);
+const getPageContent = (data) =>
+  Array.isArray(data) ? data : (data?.content ?? []);
 
 /**
  * 유틸리티: 상태값에 따른 디자인 톤 결정
  */
 const getToneForStatus = (status) => {
-  const errorStates = ["ERROR", "CRITICAL", "REJECTED", "UNHANDLED", "DISCONNECTED"];
-  const warningStates = ["HOLD", "WARNING", "PENDING", "ON_HOLD", "STOPPED", "INACTIVE", "REVIEW"];
+  const errorStates = [
+    "ERROR",
+    "CRITICAL",
+    "REJECTED",
+    "UNHANDLED",
+    "DISCONNECTED",
+  ];
+  const warningStates = [
+    "HOLD",
+    "WARNING",
+    "PENDING",
+    "ON_HOLD",
+    "STOPPED",
+    "INACTIVE",
+    "REVIEW",
+  ];
 
   if (!status || errorStates.includes(status)) return "error";
   if (warningStates.includes(status)) return "warning";
@@ -58,11 +73,14 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
     enabled: activeTab === "l2",
   });
 
-  const logParams = useMemo(() => ({
-    page: logPage,
-    size: LOG_PAGE_SIZE,
-    sort: "occurredAt,desc",
-  }), [logPage]);
+  const logParams = useMemo(
+    () => ({
+      page: logPage,
+      size: LOG_PAGE_SIZE,
+      sort: "occurredAt,desc",
+    }),
+    [logPage],
+  );
 
   const logQuery = useQuery({
     queryKey: queryKeys.communicationLogs(logParams),
@@ -87,7 +105,9 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
       <S.PageHeader>
         <S.TitleGroup>
           <S.PageTitle>통신 상태</S.PageTitle>
-          <S.PageSubtitle>L1 설비, L2 수집기, 백엔드 통신 상태를 5초마다 갱신합니다.</S.PageSubtitle>
+          <S.PageSubtitle>
+            L1 설비, L2 수집기, 백엔드 통신 상태를 10초마다 갱신합니다.
+          </S.PageSubtitle>
         </S.TitleGroup>
       </S.PageHeader>
 
@@ -113,7 +133,13 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
                   <S.Td>{device.port}</S.Td>
                   <S.Td>{toKst(device.lastReceivedAt)}</S.Td>
                   <S.Td>
-                    <S.StatusChip $tone={device.connectionStatus === "CONNECTED" ? "success" : "error"}>
+                    <S.StatusChip
+                      $tone={
+                        device.connectionStatus === "CONNECTED"
+                          ? "success"
+                          : "error"
+                      }
+                    >
                       {device.connectionStatusLabel}
                     </S.StatusChip>
                   </S.Td>
@@ -141,7 +167,10 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
             </S.TableHead>
             <tbody>
               {l2Collectors.map((collector, index) => (
-                <S.Tr key={collector.collectorId || index} $odd={index % 2 === 1}>
+                <S.Tr
+                  key={collector.collectorId || index}
+                  $odd={index % 2 === 1}
+                >
                   <S.Td>{collector.collectorCode}</S.Td>
                   <S.Td>{collector.name}</S.Td>
                   <S.Td>
@@ -149,7 +178,9 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
                       {collector.statusLabel}
                     </S.StatusChip>
                   </S.Td>
-                  <S.Td>{collector.connectedL1Count} / {collector.l1Total}</S.Td>
+                  <S.Td>
+                    {collector.connectedL1Count} / {collector.l1Total}
+                  </S.Td>
                   <S.Td>{collector.backendConnectionStatusLabel}</S.Td>
                   <S.Td>{toKst(collector.lastSentAt)}</S.Td>
                 </S.Tr>
@@ -177,7 +208,9 @@ export default function CommunicationStatus({ activeTab = "l1" }) {
               {logs.map((log, index) => (
                 <S.Tr key={log.logId || index} $odd={index % 2 === 1}>
                   <S.Td>{log.directionLabel}</S.Td>
-                  <S.Td>{log.sourceCode} {log.sourceName}</S.Td>
+                  <S.Td>
+                    {log.sourceCode} {log.sourceName}
+                  </S.Td>
                   <S.Td>
                     <S.StatusChip $tone={log.success ? "success" : "error"}>
                       {log.success ? "성공" : "실패"}

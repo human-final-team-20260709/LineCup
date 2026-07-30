@@ -32,6 +32,8 @@ typedef struct {
     int sensor_interval_ms;
     int inspection_interval_ms;
     int defect_rate_percent;
+    int telemetry_alarm_rate_per_10000;
+    int next_alarm_band;
     unsigned int seed;
     volatile sig_atomic_t *stop_requested;
     const NetWakeup *accept_wakeup;

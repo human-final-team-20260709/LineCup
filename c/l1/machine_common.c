@@ -33,6 +33,68 @@ static double random_between(unsigned int *seed, double minimum, double maximum)
     return minimum + (maximum - minimum) * ratio;
 }
 
+typedef enum {
+    TELEMETRY_BAND_CAUTION = 0,
+    TELEMETRY_BAND_WARNING = 1,
+    TELEMETRY_BAND_CRITICAL = 2
+} TelemetryAlarmBand;
+
+static double generate_normal_value(unsigned int *seed, const MachineMetric *metric)
+{
+    double margin = (metric->maximum - metric->minimum) * 0.02;
+    double step = 1.0 / metric->scale;
+    return random_between(
+        seed,
+        metric->minimum + margin + step,
+        metric->maximum - margin - step
+    );
+}
+
+static double generate_alarm_value(
+    MachineThreadArgs *args,
+    const MachineMetric *metric,
+    TelemetryAlarmBand band
+)
+{
+    double margin = (metric->maximum - metric->minimum) * 0.02;
+    double step = 1.0 / metric->scale;
+    int use_lower_boundary = (int)(random_next(&args->seed) % 2u);
+
+    if (band == TELEMETRY_BAND_CAUTION) {
+        return use_lower_boundary
+            ? random_between(&args->seed, metric->minimum, metric->minimum + margin)
+            : random_between(&args->seed, metric->maximum - margin, metric->maximum);
+    }
+    if (band == TELEMETRY_BAND_WARNING) {
+        return use_lower_boundary
+            ? random_between(&args->seed, metric->minimum - margin, metric->minimum - step)
+            : random_between(&args->seed, metric->maximum + step, metric->maximum + margin);
+    }
+    return use_lower_boundary
+        ? random_between(
+            &args->seed,
+            metric->minimum - (margin * 2.0),
+            metric->minimum - margin - step
+        )
+        : random_between(
+            &args->seed,
+            metric->maximum + margin + step,
+            metric->maximum + (margin * 2.0)
+        );
+}
+
+static double generate_metric_value(MachineThreadArgs *args, const MachineMetric *metric)
+{
+    uint32_t draw = random_next(&args->seed) % 10000u;
+    if (draw >= (uint32_t)args->telemetry_alarm_rate_per_10000) {
+        return generate_normal_value(&args->seed, metric);
+    }
+
+    TelemetryAlarmBand band = (TelemetryAlarmBand)args->next_alarm_band;
+    args->next_alarm_band = (args->next_alarm_band + 1) % 3;
+    return generate_alarm_value(args, metric, band);
+}
+
 static int send_value(MachineConnection *connection, uint8_t type, int32_t value)
 {
     uint8_t packet[MES_PACKET_SIZE];
@@ -136,6 +198,7 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
         return;
     }
 
+    int64_t next_state_at = platform_now_ms() + args->sensor_interval_ms;
     int64_t next_sensor_at = platform_now_ms();
     int64_t next_inspection_at = platform_now_ms();
 
@@ -150,10 +213,25 @@ static void run_connected_machine(MachineThreadArgs *args, socket_t client_socke
         if (!connected) break;
         int64_t now = platform_now_ms();
 
+        if (now >= next_state_at) {
+            pthread_mutex_lock(&connection.lock);
+            int state_send_result = send_value(
+                &connection,
+                MSG_MACHINE_STATE,
+                (int32_t)connection.state
+            );
+            pthread_mutex_unlock(&connection.lock);
+            if (state_send_result < 0) {
+                atomic_store(&connection.connected, 0);
+                break;
+            }
+            next_state_at = now + args->sensor_interval_ms;
+        }
+
         if (state == MACHINE_STATE_RUNNING && now >= next_sensor_at) {
             for (size_t i = 0; i < args->profile.metric_count; i++) {
                 const MachineMetric *metric = &args->profile.metrics[i];
-                double generated = random_between(&args->seed, metric->minimum, metric->maximum);
+                double generated = generate_metric_value(args, metric);
                 int32_t wire_value = (int32_t)llround(generated * metric->scale);
                 if (send_value(&connection, metric_message_type(metric->type), wire_value) < 0) {
                     atomic_store(&connection.connected, 0);

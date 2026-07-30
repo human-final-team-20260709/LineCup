@@ -4,7 +4,11 @@ import com.human.linecup.dto.request.AlarmCreateRequest;
 import com.human.linecup.dto.request.AlarmHandlingRequest;
 import com.human.linecup.dto.request.AlarmSearchRequest;
 import com.human.linecup.dto.response.AlarmDetailResponse;
+import com.human.linecup.dto.response.AlarmSearchPageResponse;
+import com.human.linecup.dto.response.AlarmSearchSummaryResponse;
 import com.human.linecup.dto.response.AlarmSummaryResponse;
+import com.human.linecup.dto.response.CurrentAlarmPageResponse;
+import com.human.linecup.dto.response.CurrentAlarmSummaryResponse;
 import com.human.linecup.entity.Alarm;
 import com.human.linecup.entity.AlarmSeverity;
 import com.human.linecup.entity.AlarmStatus;
@@ -142,7 +146,7 @@ public class AlarmService {
         return true;
     }
 
-    public Page<AlarmSummaryResponse> getAlarms(
+    public AlarmSearchPageResponse getAlarms(
             AlarmSearchRequest request,
             Pageable pageable
     ) {
@@ -152,19 +156,85 @@ public class AlarmService {
             requirePositiveId(condition.equipmentId(), "설비 ID");
         }
 
-        return alarmRepository.findAll(
-                        createSearchSpecification(condition),
+        Specification<Alarm> specification = createSearchSpecification(condition);
+        Page<AlarmSummaryResponse> alarmPage = alarmRepository.findAll(
+                        specification,
                         withDefaultSort(pageable)
                 )
                 .map(this::toSummary);
+
+        long totalCount = alarmPage.getTotalElements();
+        long handledCount;
+        if (Boolean.TRUE.equals(condition.handled())) {
+            handledCount = totalCount;
+        } else if (Boolean.FALSE.equals(condition.handled())) {
+            handledCount = 0L;
+        } else {
+            handledCount = alarmRepository.count(
+                    createSearchSpecification(withHandled(condition, true))
+            );
+        }
+
+        AlarmSearchSummaryResponse summary = new AlarmSearchSummaryResponse(
+                totalCount,
+                handledCount,
+                totalCount - handledCount
+        );
+
+        return new AlarmSearchPageResponse(
+                alarmPage.getContent(),
+                alarmPage.getNumber(),
+                alarmPage.getSize(),
+                alarmPage.getTotalElements(),
+                alarmPage.getTotalPages(),
+                alarmPage.getNumberOfElements(),
+                alarmPage.isFirst(),
+                alarmPage.isLast(),
+                alarmPage.isEmpty(),
+                summary
+        );
     }
 
-    public Page<AlarmSummaryResponse> getCurrentAlarms(Pageable pageable) {
-        return alarmRepository.findByStatusNotOrderByOccurredAtDescAlarmIdDesc(
+    public CurrentAlarmPageResponse getCurrentAlarms(Pageable pageable) {
+        Page<AlarmSummaryResponse> alarmPage =
+                alarmRepository.findByStatusNotOrderByOccurredAtDescAlarmIdDesc(
                         AlarmStatus.RESOLVED,
                         pageableOrDefault(pageable)
                 )
                 .map(this::toSummary);
+
+        long criticalCount = 0L;
+        long warningCount = 0L;
+        long cautionCount = 0L;
+
+        for (AlarmRepository.SeverityCount count
+                : alarmRepository.countCurrentBySeverity(AlarmStatus.RESOLVED)) {
+            switch (count.getSeverity()) {
+                case CRITICAL -> criticalCount = count.getAlarmCount();
+                case WARNING -> warningCount = count.getAlarmCount();
+                case CAUTION -> cautionCount = count.getAlarmCount();
+            }
+        }
+
+        CurrentAlarmSummaryResponse summary = new CurrentAlarmSummaryResponse(
+                criticalCount + warningCount + cautionCount,
+                criticalCount,
+                warningCount,
+                cautionCount
+        );
+
+        return new CurrentAlarmPageResponse(
+                alarmPage.getContent(),
+                alarmPage.getNumber(),
+                alarmPage.getSize(),
+                alarmPage.getTotalElements(),
+                alarmPage.getTotalPages(),
+                alarmPage.getNumberOfElements(),
+                alarmPage.isFirst(),
+                alarmPage.isLast(),
+                alarmPage.isEmpty(),
+                summary
+        );
     }
 
     public AlarmDetailResponse getAlarm(Long alarmId) {
@@ -277,6 +347,21 @@ public class AlarmService {
                     ? criteriaBuilder.conjunction()
                     : criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };
+    }
+
+    private AlarmSearchRequest withHandled(
+            AlarmSearchRequest condition,
+            boolean handled
+    ) {
+        return new AlarmSearchRequest(
+                condition.equipmentId(),
+                condition.severity(),
+                condition.status(),
+                handled,
+                condition.startAt(),
+                condition.endAt(),
+                condition.keyword()
+        );
     }
 
     private void validateHandlingTransition(

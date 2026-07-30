@@ -593,6 +593,7 @@ make
 | `MES_SENSOR_INTERVAL_MS` | `1000` | L1 센서 생성 주기 |
 | `MES_INSPECTION_INTERVAL_MS` | `5000` | 검사기 결과 생성 주기 |
 | `MES_DEFECT_RATE_PERCENT` | `5` | 검사기 불량 발생률 |
+| `MES_TELEMETRY_ALARM_RATE_PER_10000` | `15` | 센서 10,000건당 알람 후보 수(주의·경고·심각 순환) |
 | `MES_SPOOL_PATH` | `runtime/pending.jsonl` | 미전송 보존 파일 |
 | `MES_RANDOM_SEED` | 현재 시간 | 난수 재현용 seed |
 

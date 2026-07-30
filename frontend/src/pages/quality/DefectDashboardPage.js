@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import {
   FiAlertCircle,
   FiBarChart2,
@@ -8,8 +7,6 @@ import {
   FiClock,
   FiGrid,
   FiLayers,
-  FiList,
-  FiPlus,
   FiTrendingUp,
 } from "react-icons/fi";
 import { defectApi } from "../../api/services";
@@ -19,11 +16,9 @@ import { QueryStatus } from "../../components/ApiState";
 import { formatNumber } from "../../components/OperationalUi";
 import DefectDataTable from "./DefectDataTable";
 import {
-  Button,
   DashboardGrid,
   EmptyState,
   Eyebrow,
-  HeaderActions,
   MetricCard,
   MetricFoot,
   MetricGrid,
@@ -61,7 +56,6 @@ const asNumber = (value) => {
 };
 
 export default function DefectDashboardPage() {
-  const navigate = useNavigate();
   const periodKey = { scope: "today", date: currentKstDate() };
   const dashboardQuery = useQuery({
     queryKey: queryKeys.defectDashboard(),
@@ -77,15 +71,16 @@ export default function DefectDashboardPage() {
   const stats = statsQuery.data || {};
   const hasDashboardData = Boolean(dashboardQuery.data);
   const hasStatisticsData = Boolean(statsQuery.data);
-  const processQuantities = stats.processQuantities || [];
+  const typeQuantities = stats.typeCounts || [];
+  const topTypeQuantities = typeQuantities.slice(0, 5);
   const recentDefects = dashboard.recentDefects || [];
-  const processTotal = processQuantities.reduce(
-    (sum, item) => sum + asNumber(item.defectQty),
+  const typeTotal = typeQuantities.reduce(
+    (sum, item) => sum + asNumber(item.quantity),
     0,
   );
-  const processMaximum = Math.max(
+  const typeMaximum = Math.max(
     0,
-    ...processQuantities.map((item) => asNumber(item.defectQty)),
+    ...topTypeQuantities.map((item) => asNumber(item.quantity)),
   );
 
   return (
@@ -95,27 +90,10 @@ export default function DefectDashboardPage() {
           <Eyebrow>Quality Control</Eyebrow>
           <h1>불량 현황</h1>
           <p>
-            오늘 발생한 불량과 공정별 분포, 우선 처리가 필요한 최근 항목을
+            오늘 발생한 불량과 유형별 분포, 우선 처리가 필요한 최근 항목을
             한눈에 확인합니다.
           </p>
         </TitleGroup>
-        <HeaderActions>
-          <Button
-            type="button"
-            onClick={() => navigate("/quality/defects")}
-          >
-            <FiList aria-hidden="true" />
-            불량 목록
-          </Button>
-          <Button
-            type="button"
-            $primary
-            onClick={() => navigate("/quality/defects/new")}
-          >
-            <FiPlus aria-hidden="true" />
-            불량 등록
-          </Button>
-        </HeaderActions>
       </PageHeader>
 
       <MetricGrid
@@ -238,35 +216,36 @@ export default function DefectDashboardPage() {
         <Panel>
           <PanelHeader>
             <div>
-              <PanelLabel>Process Distribution</PanelLabel>
-              <h2>공정별 불량 수량</h2>
+              <PanelLabel>Type Distribution</PanelLabel>
+              <h2>유형별 불량 수량 TOP 5</h2>
             </div>
-            <PanelMeta>총 {formatNumber(processTotal)} EA</PanelMeta>
+            <PanelMeta>총 {formatNumber(typeTotal)} EA</PanelMeta>
           </PanelHeader>
           <QueryStatus query={statsQuery} />
-          {processQuantities.length > 0 ? (
+          {topTypeQuantities.length > 0 ? (
             <ProcessList>
-              {processQuantities.map((item) => {
-                const quantity = asNumber(item.defectQty);
-                const share = processTotal > 0
-                  ? (quantity / processTotal) * 100
+              {topTypeQuantities.map((item) => {
+                const quantity = asNumber(item.quantity);
+                const share = typeTotal > 0
+                  ? (quantity / typeTotal) * 100
                   : 0;
-                const relativeWidth = processMaximum > 0
-                  ? (quantity / processMaximum) * 100
+                const relativeWidth = typeMaximum > 0
+                  ? (quantity / typeMaximum) * 100
                   : 0;
+                const typeLabel = item.defectTypeLabel || "미지정 유형";
 
                 return (
-                  <ProcessItem key={item.processName}>
+                  <ProcessItem key={item.defectType || typeLabel}>
                     <ProcessHead>
                       <div>
-                        <strong>{item.processName || "미지정 공정"}</strong>
+                        <strong>{typeLabel}</strong>
                         <span>전체 불량의 {share.toFixed(1)}%</span>
                       </div>
                       <ProcessCount>{formatNumber(quantity)} EA</ProcessCount>
                     </ProcessHead>
                     <ProgressTrack
-                      aria-label={`${item.processName || "미지정 공정"} 불량 수량`}
-                      aria-valuemax={processMaximum || 1}
+                      aria-label={`${typeLabel} 불량 수량`}
+                      aria-valuemax={typeMaximum || 1}
                       aria-valuemin={0}
                       aria-valuenow={quantity}
                       role="progressbar"
@@ -283,8 +262,8 @@ export default function DefectDashboardPage() {
             && (
               <EmptyState>
                 <FiBarChart2 aria-hidden="true" />
-                <strong>공정별 불량이 없습니다.</strong>
-                <span>오늘 집계된 공정별 불량 수량이 표시됩니다.</span>
+                <strong>유형별 불량이 없습니다.</strong>
+                <span>오늘 집계된 불량 유형별 수량이 표시됩니다.</span>
               </EmptyState>
             )
           )}

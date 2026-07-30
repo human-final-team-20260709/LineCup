@@ -31,6 +31,21 @@ public interface RawMaterialLotRepository extends JpaRepository<RawMaterialLot, 
     @EntityGraph(attributePaths = "material")
     List<RawMaterialLot> findByMaterialMaterialIdOrderByExpiryDateAsc(Long materialId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "material")
+    @Query("""
+            select rml
+            from RawMaterialLot rml
+            where rml.material.materialId = :materialId
+              and rml.expiryDate >= :today
+              and rml.currentQty > 0
+            order by rml.expiryDate, rml.receivedDate, rml.materialLotId
+            """)
+    List<RawMaterialLot> findAvailableByMaterialIdForUpdate(
+            @Param("materialId") Long materialId,
+            @Param("today") LocalDate today
+    );
+
     @EntityGraph(attributePaths = "material")
     @Query("""
             select rml

@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import {
   FiFilter,
-  FiPlus,
   FiSearch,
 } from "react-icons/fi";
 import { defectApi } from "../../api/services";
@@ -13,7 +11,6 @@ import CommonPagination from "../../components/CommonPagination";
 import { pageContent } from "../../components/OperationalUi";
 import DefectDataTable from "./DefectDataTable";
 import {
-  Button,
   CardHeader,
   Count,
   Eyebrow,
@@ -40,7 +37,6 @@ const tableComponents = {
 };
 
 export default function DefectListPage() {
-  const navigate = useNavigate();
   const [draft, setDraft] = useState("");
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState("");
@@ -91,14 +87,6 @@ export default function DefectListPage() {
             조치 화면으로 이동합니다.
           </p>
         </TitleGroup>
-        <Button
-          type="button"
-          $primary
-          onClick={() => navigate("/quality/defects/new")}
-        >
-          <FiPlus aria-hidden="true" />
-          불량 등록
-        </Button>
       </PageHeader>
 
       <FilterPanel aria-label="불량 목록 검색 조건">

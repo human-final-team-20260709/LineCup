@@ -130,21 +130,11 @@ export default function DefectStatisticsPage() {
     currentProductPage * PRODUCT_PAGE_SIZE,
     (currentProductPage + 1) * PRODUCT_PAGE_SIZE,
   );
-  const processRates = asList(stats.processQuantities).map((item) => ({
-    ...item,
-    derivedRate:
-      totalProductionQty > 0
-        ? (asNumber(item.defectQty) / totalProductionQty) * 100
-        : null,
-  }));
   const typeCounts = asList(stats.typeCounts);
+  const topTypeCounts = typeCounts.slice(0, 5);
   const rankings = asList(stats.rankings);
   const maxDailyRate = Math.max(0, ...dailyRates.map((item) => asNumber(item.defectRate)));
   const maxProductRate = Math.max(0, ...productRates.map((item) => asNumber(item.defectRate)));
-  const maxProcessRate = Math.max(
-    0,
-    ...processRates.map((item) => asNumber(item.derivedRate)),
-  );
   const hasOperationalData =
     totalProductionQty > 0 ||
     totalDefectCount > 0 ||
@@ -404,111 +394,22 @@ export default function DefectStatisticsPage() {
                 )}
               </Panel>
 
-              <Panel $span={6} aria-labelledby="process-rate-title">
+              <Panel $span={12} aria-labelledby="type-count-title">
                 <PanelHeader>
                   <div>
-                    <PanelLabel>By process</PanelLabel>
-                    <h2 id="process-rate-title">
-                      공정별 불량률 · 전체 생산 기준
-                    </h2>
+                    <PanelLabel>Type distribution</PanelLabel>
+                    <h2 id="type-count-title">유형별 불량 수량 TOP 5</h2>
                     <PanelDescription>
-                      공정 생산량 미제공으로 전체 생산량을 공통 분모로 산정한
-                      참고 지표
+                      불량 수량 기준 상위 유형과 발생 건수
                     </PanelDescription>
                   </div>
+                  <Mono>총 {formatNumber(totalDefectQuantity)} EA</Mono>
                 </PanelHeader>
-                {processRates.length === 0 ? (
-                  <PanelEmpty>공정별 불량 데이터가 없습니다.</PanelEmpty>
-                ) : (
-                  <HorizontalList as="ul">
-                    {processRates.map((item) => {
-                      const hasProductionBase = item.derivedRate != null;
-                      return (
-                        <HorizontalItem as="li" key={item.processName}>
-                          <ItemHeader>
-                            <strong>
-                              {item.processName || "공정 미지정"}
-                            </strong>
-                            <Mono>
-                              {hasProductionBase
-                                ? formatPercent(item.derivedRate, 2)
-                                : "산정 불가"}
-                            </Mono>
-                          </ItemHeader>
-                          <ProgressTrack
-                            role={hasProductionBase ? "meter" : undefined}
-                            aria-label={
-                              hasProductionBase
-                                ? `${
-                                    item.processName || "공정"
-                                  } 전체 생산량 기준 불량률`
-                                : undefined
-                            }
-                            aria-valuemin={
-                              hasProductionBase ? 0 : undefined
-                            }
-                            aria-valuemax={
-                              hasProductionBase
-                                ? maxProcessRate || 1
-                                : undefined
-                            }
-                            aria-valuenow={
-                              hasProductionBase
-                                ? item.derivedRate
-                                : undefined
-                            }
-                            aria-valuetext={
-                              hasProductionBase
-                                ? formatPercent(item.derivedRate, 2)
-                                : undefined
-                            }
-                          >
-                            <ProgressFill
-                              $value={
-                                hasProductionBase
-                                  ? scaleToMax(
-                                      item.derivedRate,
-                                      maxProcessRate,
-                                    )
-                                  : 0
-                              }
-                              $warning
-                            />
-                          </ProgressTrack>
-                          <ItemDetail>
-                            {hasProductionBase
-                              ? `공정 불량 ${formatNumber(
-                                  item.defectQty,
-                                )} EA / 전체 생산 ${formatNumber(
-                                  totalProductionQty,
-                                )} EA`
-                              : `공정 불량 ${formatNumber(
-                                  item.defectQty,
-                                )} EA · 생산 실적이 없어 비율 산정 불가`}
-                          </ItemDetail>
-                        </HorizontalItem>
-                      );
-                    })}
-                  </HorizontalList>
-                )}
-              </Panel>
-
-              <Panel $span={6} aria-labelledby="type-count-title">
-                <PanelHeader>
-                  <div>
-                    <PanelLabel>Event count</PanelLabel>
-                    <h2 id="type-count-title">불량 유형별 발생 건수</h2>
-                    <PanelDescription>
-                      유형별 이벤트 건수와 불량 수량
-                    </PanelDescription>
-                  </div>
-                  <Mono>{formatNumber(totalDefectCount)} EVENTS</Mono>
-                </PanelHeader>
-                {typeCounts.length === 0 ? (
+                {topTypeCounts.length === 0 ? (
                   <PanelEmpty>유형별 불량 데이터가 없습니다.</PanelEmpty>
                 ) : (
                   <TypeGrid as="ul">
-                    {typeCounts.map((item, index) => (
+                    {topTypeCounts.map((item, index) => (
                       <TypeCard as="li" key={item.defectType}>
                         <TypeIcon aria-hidden="true">
                           {String(index + 1).padStart(2, "0")}

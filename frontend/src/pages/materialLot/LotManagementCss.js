@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { ModalPanel as OperationalModalPanel } from "../../components/OperationalUi";
 
 export const SearchArea = styled.div`
   display: flex;
@@ -412,6 +413,18 @@ export const SectionHeading = styled.header`
   }
 `;
 
+export const SectionActions = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+
+  @media (max-width: 560px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+`;
+
 export const ProcessTableViewport = styled.div`
   min-width: 0;
   overflow-x: auto;
@@ -500,7 +513,8 @@ export const ProcessIdentity = styled.div`
 
 export const UsageLayout = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.55fr);
+  grid-template-columns: ${({ $formOpen }) =>
+    $formOpen ? "minmax(0, 1.45fr) minmax(320px, 0.55fr)" : "minmax(0, 1fr)"};
   gap: 16px;
 
   > ${DetailSection} {
@@ -555,6 +569,7 @@ export const MaterialTable = styled.table`
 `;
 
 export const FormCard = styled.section`
+  display: ${({ $open }) => ($open ? "block" : "none")};
   min-width: 0;
   align-self: start;
   margin-top: 20px;
@@ -569,6 +584,19 @@ export const FormTitle = styled.h3`
   color: var(--color-text);
   font-size: 17px;
   line-height: 24px;
+`;
+
+export const UsageModalPanel = styled(OperationalModalPanel)`
+  display: flex;
+  width: min(1000px, calc(100vw - 40px));
+  height: min(680px, calc(100dvh - 40px));
+  max-height: none;
+  flex-direction: column;
+
+  @media (max-width: 560px) {
+    width: 100%;
+    height: calc(100dvh - 24px);
+  }
 `;
 
 export const FormDescription = styled.p`
@@ -625,11 +653,59 @@ export const FormField = styled.label`
 `;
 
 export const MaterialLotSearchBox = styled.div`
+  position: relative;
   min-width: 0;
+`;
+
+export const MaterialLotSelectTrigger = styled.button`
+  position: relative;
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
   overflow: hidden;
+  padding: 9px 34px 9px 10px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   background: var(--color-surface-lowest);
+  color: ${({ $placeholder }) =>
+    $placeholder ? "var(--color-text-dim)" : "var(--color-text)"};
+  font-size: 14px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &::after {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    color: var(--color-text-muted);
+    content: "⌄";
+    transform: translateY(-58%);
+  }
+
+  &:hover {
+    border-color: var(--color-border-soft);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(75, 226, 119, 0.14);
+  }
+`;
+
+export const MaterialLotDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 4px;
+  background: var(--color-surface-lowest);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
 
   > input {
     border: 0;

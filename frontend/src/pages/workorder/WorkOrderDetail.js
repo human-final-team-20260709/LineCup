@@ -525,8 +525,8 @@ export default function WorkOrderDetail() {
             <div>
               <CardTitle>목표 수량 변경</CardTitle>
               <CardDescription>
-                {order.status === "DONE"
-                  ? "완료된 작업지시의 목표 수량은 변경할 수 없습니다."
+                {order.status !== "PENDING"
+                  ? "대기 상태에서만 목표 수량을 변경할 수 있습니다."
                   : "전체 목표와 시간당 생산 목표를 조정합니다."}
               </CardDescription>
             </div>
@@ -552,7 +552,7 @@ export default function WorkOrderDetail() {
                 type="number"
                 min={Math.max(1, order.currentQty)}
                 defaultValue={order.targetQty}
-                disabled={order.status === "DONE"}
+                disabled={order.status !== "PENDING"}
                 required
               />
             </Field>
@@ -563,14 +563,14 @@ export default function WorkOrderDetail() {
                 type="number"
                 min="1"
                 defaultValue={order.hourlyTargetQty}
-                disabled={order.status === "DONE"}
+                disabled={order.status !== "PENDING"}
                 required
               />
             </Field>
             <StyledButton
               type="submit"
               $variant="primary"
-              disabled={mutationPending || order.status === "DONE"}
+              disabled={mutationPending || order.status !== "PENDING"}
             >
               저장
             </StyledButton>

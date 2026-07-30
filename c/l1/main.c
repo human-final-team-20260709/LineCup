@@ -35,6 +35,12 @@ int main(void)
     int sensor_interval = platform_env_int("MES_SENSOR_INTERVAL_MS", MES_DEFAULT_SENSOR_INTERVAL_MS, 50, 3600000);
     int inspection_interval = platform_env_int("MES_INSPECTION_INTERVAL_MS", MES_DEFAULT_INSPECTION_INTERVAL_MS, 50, 3600000);
     int defect_rate = platform_env_int("MES_DEFECT_RATE_PERCENT", MES_DEFAULT_DEFECT_RATE_PERCENT, 0, 100);
+    int telemetry_alarm_rate = platform_env_int(
+        "MES_TELEMETRY_ALARM_RATE_PER_10000",
+        MES_DEFAULT_TELEMETRY_ALARM_RATE_PER_10000,
+        0,
+        10000
+    );
     unsigned int base_seed = platform_env_uint("MES_RANDOM_SEED", (unsigned int)time(NULL));
 
     MachineProfile profiles[MES_MACHINE_COUNT] = {
@@ -52,6 +58,8 @@ int main(void)
         arguments[i].sensor_interval_ms = sensor_interval;
         arguments[i].inspection_interval_ms = inspection_interval;
         arguments[i].defect_rate_percent = defect_rate;
+        arguments[i].telemetry_alarm_rate_per_10000 = telemetry_alarm_rate;
+        arguments[i].next_alarm_band = i % 3;
         arguments[i].seed = base_seed + (unsigned int)(i * 7919 + 1);
         arguments[i].stop_requested = &stop_requested;
         arguments[i].accept_wakeup = &accept_wakeup;
