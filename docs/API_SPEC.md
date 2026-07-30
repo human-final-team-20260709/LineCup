@@ -152,7 +152,16 @@ Page 응답 예시:
 ## 7. 알람
 
 - 현재: `GET /alarms/current`
+  - 페이지 필드(`content`, `number`, `size`, `totalElements`, `totalPages`)와 함께
+    전체 미처리 알람 집계인 `summary`(`totalActive`, `criticalCount`,
+    `warningCount`, `cautionCount`)를 반환한다.
+  - `summary.totalActive`는 세 심각도 건수의 합계이며 페이지 이동과 관계없이
+    전체 미처리 알람을 기준으로 한다.
 - 검색·이력: `GET /alarms`
+  - 페이지 필드와 함께 현재 검색 조건 전체의 `summary`(`totalCount`,
+    `handledCount`, `pendingCount`)를 반환한다.
+  - 기간·설비·심각도·상태·처리 여부·검색어 조건은 목록과 요약에 동일하게
+    적용되며 `totalCount = handledCount + pendingCount`를 유지한다.
 - 상세: `GET /alarms/{alarmId}`, `GET /alarms/number/{alarmNo}`
 - 처리: `PATCH /alarms/{alarmId}/handling`
 - 통계: `GET /alarms/statistics?from={Instant}&to={Instant}`

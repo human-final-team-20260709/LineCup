@@ -89,10 +89,16 @@ export default function AlarmHistoryPage() {
   const rows = Array.isArray(query.data)
     ? query.data
     : query.data?.content || [];
-  const totalItems = query.data?.totalElements || 0;
+  const totalItems =
+    query.data?.summary?.totalCount ??
+    query.data?.totalElements ??
+    0;
   const totalPages = query.data?.totalPages || 0;
-  const handledCount = rows.filter((alarm) => alarm.handled).length;
-  const pendingCount = rows.length - handledCount;
+  const pageHandledCount = rows.filter((alarm) => alarm.handled).length;
+  const handledCount =
+    query.data?.summary?.handledCount ?? pageHandledCount;
+  const pendingCount =
+    query.data?.summary?.pendingCount ?? rows.length - pageHandledCount;
 
   useEffect(() => {
     if (totalPages > 0 && page >= totalPages) {
@@ -162,12 +168,12 @@ export default function AlarmHistoryPage() {
         <SummaryCard>
           <span>처리 완료</span>
           <strong>{handledCount.toLocaleString("ko-KR")}</strong>
-          <small>현재 페이지 {rows.length}건 중 처리 완료</small>
+          <small>현재 검색 조건의 전체 처리 완료 건수</small>
         </SummaryCard>
         <SummaryCard>
           <span>미처리</span>
           <strong>{pendingCount.toLocaleString("ko-KR")}</strong>
-          <small>담당자 확인 또는 조치가 필요한 건수</small>
+          <small>현재 검색 조건의 전체 미처리 건수</small>
         </SummaryCard>
       </SummaryGrid>
 

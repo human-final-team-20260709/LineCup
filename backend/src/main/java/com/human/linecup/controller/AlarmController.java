@@ -4,14 +4,14 @@ import com.human.linecup.dto.request.AlarmCreateRequest;
 import com.human.linecup.dto.request.AlarmHandlingRequest;
 import com.human.linecup.dto.request.AlarmSearchRequest;
 import com.human.linecup.dto.response.AlarmDetailResponse;
+import com.human.linecup.dto.response.AlarmSearchPageResponse;
 import com.human.linecup.dto.response.AlarmStatisticsResponse;
-import com.human.linecup.dto.response.AlarmSummaryResponse;
+import com.human.linecup.dto.response.CurrentAlarmPageResponse;
 import com.human.linecup.service.AlarmService;
 import com.human.linecup.service.AlarmStatisticsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -42,7 +42,7 @@ public class AlarmController {
     private final AlarmStatisticsService alarmStatisticsService;
 
     @GetMapping
-    public Page<AlarmSummaryResponse> getAlarms(
+    public AlarmSearchPageResponse getAlarms(
             @Valid @ModelAttribute AlarmSearchRequest request,
             @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
     ) {
@@ -50,7 +50,7 @@ public class AlarmController {
     }
 
     @GetMapping("/current")
-    public Page<AlarmSummaryResponse> getCurrentAlarms(
+    public CurrentAlarmPageResponse getCurrentAlarms(
             @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
     ) {
         return alarmService.getCurrentAlarms(pageable);

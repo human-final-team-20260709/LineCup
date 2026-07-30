@@ -124,7 +124,10 @@ export default function CurrentAlarmPage() {
 
   const pageRows = pageContent(query.data);
   const totalPages = Math.max(query.data?.totalPages || 1, 1);
-  const totalActive = query.data?.totalElements ?? pageRows.length;
+  const totalActive =
+    query.data?.summary?.totalActive ??
+    query.data?.totalElements ??
+    pageRows.length;
 
   useEffect(() => {
     if (page >= totalPages) {
@@ -132,7 +135,7 @@ export default function CurrentAlarmPage() {
     }
   }, [page, totalPages]);
 
-  const severityCounts = useMemo(
+  const pageSeverityCounts = useMemo(
     () =>
       pageRows.reduce(
         (counts, alarm) => {
@@ -147,6 +150,15 @@ export default function CurrentAlarmPage() {
       ),
     [pageRows],
   );
+
+  const severityCounts = {
+    CRITICAL:
+      query.data?.summary?.criticalCount ?? pageSeverityCounts.CRITICAL,
+    WARNING:
+      query.data?.summary?.warningCount ?? pageSeverityCounts.WARNING,
+    CAUTION:
+      query.data?.summary?.cautionCount ?? pageSeverityCounts.CAUTION,
+  };
 
   const rows = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLocaleLowerCase("ko-KR");
@@ -231,7 +243,7 @@ export default function CurrentAlarmPage() {
             <span>심각</span>
           </MetricHeader>
           <strong>{metricValue(severityCounts.CRITICAL)}</strong>
-          <small>현재 페이지 즉시 조치 대상</small>
+          <small>서버 기준 미처리 전체</small>
         </MetricCard>
         <MetricCard $tone="warning">
           <MetricHeader>
@@ -239,7 +251,7 @@ export default function CurrentAlarmPage() {
             <span>경고</span>
           </MetricHeader>
           <strong>{metricValue(severityCounts.WARNING)}</strong>
-          <small>현재 페이지 점검 필요</small>
+          <small>서버 기준 미처리 전체</small>
         </MetricCard>
         <MetricCard $tone="caution">
           <MetricHeader>
@@ -247,7 +259,7 @@ export default function CurrentAlarmPage() {
             <span>주의</span>
           </MetricHeader>
           <strong>{metricValue(severityCounts.CAUTION)}</strong>
-          <small>현재 페이지 기준값 접근</small>
+          <small>서버 기준 미처리 전체</small>
         </MetricCard>
       </MetricGrid>
 
