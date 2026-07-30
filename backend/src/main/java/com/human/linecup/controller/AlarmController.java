@@ -1,0 +1,92 @@
+package com.human.linecup.controller;
+
+import com.human.linecup.dto.request.AlarmCreateRequest;
+import com.human.linecup.dto.request.AlarmHandlingRequest;
+import com.human.linecup.dto.request.AlarmSearchRequest;
+import com.human.linecup.dto.response.AlarmDetailResponse;
+import com.human.linecup.dto.response.AlarmSearchPageResponse;
+import com.human.linecup.dto.response.AlarmStatisticsResponse;
+import com.human.linecup.dto.response.CurrentAlarmPageResponse;
+import com.human.linecup.service.AlarmService;
+import com.human.linecup.service.AlarmStatisticsService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+import java.time.Instant;
+
+import static org.springframework.data.domain.Sort.Direction.DESC;
+
+@RestController
+@RequestMapping("/api/alarms")
+@RequiredArgsConstructor
+@Validated
+public class AlarmController {
+
+    private final AlarmService alarmService;
+    private final AlarmStatisticsService alarmStatisticsService;
+
+    @GetMapping
+    public AlarmSearchPageResponse getAlarms(
+            @Valid @ModelAttribute AlarmSearchRequest request,
+            @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
+    ) {
+        return alarmService.getAlarms(request, pageable);
+    }
+
+    @GetMapping("/current")
+    public CurrentAlarmPageResponse getCurrentAlarms(
+            @PageableDefault(size = 20, sort = "occurredAt", direction = DESC) Pageable pageable
+    ) {
+        return alarmService.getCurrentAlarms(pageable);
+    }
+
+    @GetMapping("/statistics")
+    public AlarmStatisticsResponse getStatistics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to
+    ) {
+        return alarmStatisticsService.getStatistics(from, to);
+    }
+
+    @GetMapping("/number/{alarmNo}")
+    public AlarmDetailResponse getAlarmByNo(@PathVariable String alarmNo) {
+        return alarmService.getAlarmByNo(alarmNo);
+    }
+
+    @GetMapping("/{alarmId}")
+    public AlarmDetailResponse getAlarm(@PathVariable @Positive Long alarmId) {
+        return alarmService.getAlarm(alarmId);
+    }
+
+    @PostMapping
+    public ResponseEntity<AlarmDetailResponse> createAlarm(
+            @Valid @RequestBody AlarmCreateRequest request
+    ) {
+        AlarmDetailResponse response = alarmService.createAlarm(request);
+        return ResponseEntity.created(URI.create("/api/alarms/" + response.summary().alarmId())).body(response);
+    }
+
+    @PatchMapping("/{alarmId}/handling")
+    public AlarmDetailResponse updateHandling(
+            @PathVariable @Positive Long alarmId,
+            @Valid @RequestBody AlarmHandlingRequest request
+    ) {
+        return alarmService.updateHandling(alarmId, request);
+    }
+}

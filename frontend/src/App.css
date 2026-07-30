@@ -1,38 +1,154 @@
-.App {
-  text-align: center;
+:root {
+  color-scheme: dark;
+  --color-bg: #0b1326;
+  --color-surface-lowest: #060e20;
+  --color-surface-low: #131b2e;
+  --color-surface: #171f33;
+  --color-surface-high: #222a3d;
+  --color-border: #334155;
+  --color-border-soft: #3d4a3d;
+  --color-text: #dae2fd;
+  --color-text-muted: #bccbb9;
+  --color-text-dim: #869585;
+  --color-primary: #4be277;
+  --color-primary-ink: #003915;
+  --color-warning: #ffb95f;
+  --color-danger: #ffb4ab;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  margin: 0;
 }
 
-.App-link {
-  color: #61dafb;
+html {
+  background: var(--color-bg);
+  scroll-behavior: smooth;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: Inter, Pretendard, 'Noto Sans KR', system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.App {
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  overflow-x: clip;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  border: 0;
+}
+
+button,
+select {
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+table {
+  border-spacing: 0;
+}
+
+progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-surface-lowest);
+  color: var(--color-primary);
+  accent-color: var(--color-primary);
+}
+
+progress::-webkit-progress-bar {
+  border-radius: inherit;
+  background: var(--color-surface-lowest);
+}
+
+progress::-webkit-progress-value {
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+progress::-moz-progress-bar {
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+img,
+svg {
+  display: block;
+}
+
+::selection {
+  background: rgba(75, 226, 119, 0.28);
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-lowest);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--color-surface-lowest);
+  border-radius: 999px;
+  background: var(--color-border-soft);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

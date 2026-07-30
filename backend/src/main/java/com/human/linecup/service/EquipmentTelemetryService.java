@@ -1,0 +1,156 @@
+package com.human.linecup.service;
+
+import com.human.linecup.dto.request.TelemetryBatchRequest;
+import com.human.linecup.dto.request.TelemetryBatchRequest.TelemetrySampleRequest;
+import com.human.linecup.dto.response.TelemetryResponse;
+import com.human.linecup.entity.Equipment;
+import com.human.linecup.entity.EquipmentTelemetry;
+import com.human.linecup.entity.TelemetryMetricType;
+import com.human.linecup.entity.WorkOrder;
+import com.human.linecup.repository.EquipmentRepository;
+import com.human.linecup.repository.EquipmentTelemetryRepository;
+import com.human.linecup.repository.WorkOrderRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+/**
+ * 설비 텔레메트리(온도/습도/속도) 적재 및 조회를 담당한다.
+ * L2 수집기가 재전송하더라도 설비/작업지시/metric/측정 시각의 같은 샘플은 갱신되도록
+ * MySQL upsert를 사용한다. 요청 전체는 한 트랜잭션에서 승인된다.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class EquipmentTelemetryService {
+
+    private final EquipmentTelemetryRepository telemetryRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final WorkOrderRepository workOrderRepository;
+    private final AlarmService alarmService;
+
+    /**
+     * 배치 내 동일 설비/작업지시가 여러 샘플에 걸쳐 반복 등장하는 경우가 많아
+     * 요청 1건당 조회 1회로 끝나도록 로컬 캐시를 사용한다(N+1 방지).
+     */
+    @Transactional
+    public void ingest(TelemetryBatchRequest request) {
+        Map<String, Equipment> equipmentCache = new HashMap<>();
+        Map<Long, WorkOrder> workOrderCache = new HashMap<>();
+        for (TelemetrySampleRequest sample : request.samples()) {
+            Equipment equipment = equipmentCache.computeIfAbsent(
+                    sample.equipmentCode(),
+                    this::getEquipmentByCode
+            );
+            WorkOrder workOrder = workOrderCache.computeIfAbsent(
+                    sample.workOrderId(),
+                    this::getWorkOrder
+            );
+
+            telemetryRepository.upsertSample(
+                    equipment.getEquipmentId(),
+                    workOrder.getWorkOrderId(),
+                    sample.metricType().name(),
+                    sample.value(),
+                    sample.unit(),
+                    sample.measuredAt()
+            );
+            createAlarmIfNecessary(equipment, sample);
+        }
+    }
+
+    public List<TelemetryResponse> getLatestByEquipment(Long equipmentId) {
+        List<TelemetryResponse> latest = new ArrayList<>(TelemetryMetricType.values().length);
+        for (TelemetryMetricType metricType : TelemetryMetricType.values()) {
+            telemetryRepository
+                    .findFirstByEquipmentEquipmentIdAndMetricTypeOrderByMeasuredAtDescTelemetryIdDesc(
+                            equipmentId,
+                            metricType
+                    )
+                    .ifPresent(telemetry -> latest.add(toResponse(telemetry)));
+        }
+        return latest;
+    }
+
+    public List<TelemetryResponse> getHistoryByWorkOrder(Long workOrderId) {
+        return telemetryRepository.findByWorkOrderWorkOrderIdOrderByMeasuredAtAscTelemetryIdAsc(workOrderId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private Equipment getEquipmentByCode(String equipmentCode) {
+        return equipmentRepository.findByEquipmentCode(equipmentCode)
+                .orElseThrow(() -> new NoSuchElementException("설비를 찾을 수 없습니다. equipmentCode=" + equipmentCode));
+    }
+
+    private WorkOrder getWorkOrder(Long workOrderId) {
+        return workOrderRepository.findById(workOrderId)
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 작업지시입니다: " + workOrderId));
+    }
+
+    private void createAlarmIfNecessary(
+            Equipment equipment,
+            TelemetrySampleRequest sample
+    ) {
+        TelemetryAlarmPolicy.evaluate(
+                        equipment.getEquipmentCode(),
+                        sample.metricType(),
+                        sample.value()
+                )
+                .ifPresent(condition -> {
+                    String metricLabel = sample.metricType().getLabel();
+                    String message = equipment.getEquipmentName()
+                            + " "
+                            + metricLabel
+                            + " "
+                            + condition.messageLabel();
+                    TelemetryAlarmPolicy.OperatingRange range = condition.operatingRange();
+                    String description = String.format(
+                            Locale.ROOT,
+                            "%s에서 %s %s 상태가 감지되었습니다. 측정값은 %s %s이며 정상 범위는 %s~%s %s입니다.",
+                            equipment.getEquipmentCode(),
+                            metricLabel,
+                            condition.conditionLabel(),
+                            displayValue(sample.value()),
+                            sample.unit(),
+                            displayValue(range.minimum()),
+                            displayValue(range.maximum()),
+                            sample.unit()
+                    );
+                    alarmService.createTelemetryAlarmIfAbsent(
+                            equipment,
+                            message,
+                            description,
+                            condition.severity(),
+                            sample.measuredAt()
+                    );
+                });
+    }
+
+    private String displayValue(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
+    }
+
+    private TelemetryResponse toResponse(EquipmentTelemetry telemetry) {
+        return new TelemetryResponse(
+                telemetry.getTelemetryId(),
+                telemetry.getEquipment().getEquipmentId(),
+                telemetry.getEquipment().getEquipmentCode(),
+                telemetry.getWorkOrder().getWorkOrderId(),
+                telemetry.getMetricType(),
+                telemetry.getMetricType().getLabel(),
+                telemetry.getValue(),
+                telemetry.getUnit(),
+                telemetry.getMeasuredAt()
+        );
+    }
+}
